@@ -28,16 +28,16 @@ const ActionButton = ({ icon, label, onClick }: ActionButtonProps) => (
 );
 
 const AdBanner = () => (
-  <div className="bg-gradient-to-r from-[#0EA5E9] to-[#2563EB] rounded-lg p-8 text-white text-center max-w-4xl mx-auto my-8">
-    <h2 className="text-2xl font-bold mb-6">
+  <div className="bg-gradient-to-r from-[#0EA5E9] to-[#2563EB] rounded-lg p-6 text-white text-center max-w-3xl mx-auto my-8">
+    <h2 className="text-xl font-bold mb-4">
       Boost your business productivity with<br />
       Prabaraja additional features
     </h2>
     <a 
-      href="https://marketplace.prabaraja.com" 
+      href="https://goldadvertising.shop" 
       target="_blank" 
       rel="noopener noreferrer"
-      className="inline-block bg-white text-blue-600 px-6 py-3 rounded-lg font-medium hover:bg-blue-50 transition-colors duration-200"
+      className="inline-block bg-white text-blue-600 px-5 py-2 rounded-lg font-medium hover:bg-blue-50 transition-colors duration-200 text-sm"
     >
       Prabaraja Marketplace
     </a>

@@ -10,11 +10,9 @@ import {
   Users,
   Package,
   Database,
-  Settings,
-  ChevronLeft
+  Settings
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -35,10 +33,7 @@ const NavItem = ({ icon, label, href, isActive }: NavItemProps) => (
   </Link>
 );
 
-const Divider = () => <div className="h-px bg-sidebar-border my-3 mx-4" />;
-
 export const Sidebar = () => {
-  const [companyId] = useState('682598');
   const currentPath = window.location.pathname;
 
   const navItems = [
@@ -56,8 +51,8 @@ export const Sidebar = () => {
   ];
 
   return (
-    <div className="w-64 h-screen bg-sidebar-bg border-r border-sidebar-border flex flex-col">
-      <div className="flex-1 overflow-y-auto">
+    <div className="w-56 h-screen bg-sidebar-bg border-r border-sidebar-border flex flex-col">
+      <div className="flex-1 py-4 space-y-1">
         {navItems.map((item, i) => (
           <NavItem
             key={item.href}
@@ -67,11 +62,6 @@ export const Sidebar = () => {
             isActive={currentPath === item.href}
           />
         ))}
-      </div>
-      <Divider />
-      <div className="p-4 flex items-center gap-2 text-sidebar-text">
-        <ChevronLeft size={16} />
-        <span className="text-sm">Company ID:{companyId}</span>
       </div>
     </div>
   );
