@@ -18,7 +18,7 @@ interface ActionButtonProps {
 const ActionButton = ({ icon, label, onClick }: ActionButtonProps) => (
   <button
     onClick={onClick}
-    className="flex flex-col items-center p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 gap-3 border border-gray-100"
+    className="flex flex-col items-center p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 gap-3 border border-gray-100 w-full max-w-[280px]"
   >
     <div className="text-blue-500">
       {icon}
