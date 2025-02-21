@@ -26,8 +26,8 @@ interface NavItemProps {
 const NavItem = ({ icon, label, href, isActive }: NavItemProps) => (
   <Link
     to={href}
-    className={`flex items-center gap-3 px-4 py-3 text-sidebar-text hover:bg-sidebar-hover transition-colors duration-200 ${
-      isActive ? 'bg-sidebar-active' : ''
+    className={`flex items-center gap-3 px-4 py-3 text-sidebar-text hover:bg-sidebar-hover transition-colors duration-200 mx-2 rounded-[20px] ${
+      isActive ? 'bg-sidebar-active p-[10px]' : ''
     }`}
   >
     {icon}

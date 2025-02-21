@@ -27,6 +27,23 @@ const ActionButton = ({ icon, label, onClick }: ActionButtonProps) => (
   </button>
 );
 
+const AdBanner = () => (
+  <div className="bg-gradient-to-r from-[#0EA5E9] to-[#2563EB] rounded-lg p-8 text-white text-center max-w-4xl mx-auto my-8">
+    <h2 className="text-2xl font-bold mb-6">
+      Boost your business productivity with<br />
+      Prabaraja additional features
+    </h2>
+    <a 
+      href="https://marketplace.prabaraja.com" 
+      target="_blank" 
+      rel="noopener noreferrer"
+      className="inline-block bg-white text-blue-600 px-6 py-3 rounded-lg font-medium hover:bg-blue-50 transition-colors duration-200"
+    >
+      Prabaraja Marketplace
+    </a>
+  </div>
+);
+
 const Index = () => {
   const handleAction = (action: string) => {
     console.log(`Action clicked: ${action}`);
@@ -45,7 +62,7 @@ const Index = () => {
     <div className="flex min-h-screen">
       <Sidebar />
       <main className="flex-1">
-        <div className="bg-gradient-to-r from-white via-white to-[#28abe2] bg-[length:200%_100%] bg-[100%] p-6">
+        <div className="bg-gradient-to-b from-white via-white to-[#28abe2] bg-[length:100%_200%] bg-[100%] p-6">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-2xl font-semibold mb-2">Hello, Lutfiana Widya</h1>
             <p className="text-gray-600">What activity do you want to do?</p>
@@ -53,7 +70,7 @@ const Index = () => {
         </div>
         
         <div className="max-w-4xl mx-auto p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
             {actions.map((action) => (
               <ActionButton
                 key={action.action}
@@ -64,6 +81,8 @@ const Index = () => {
             ))}
           </div>
         </div>
+
+        <AdBanner />
       </main>
     </div>
   );
