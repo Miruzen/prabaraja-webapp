@@ -9,7 +9,6 @@ import {
   MessageSquare,
   Users,
   Package,
-  Truck,
   Database,
   Settings,
   ChevronLeft
@@ -52,7 +51,6 @@ export const Sidebar = () => {
     { icon: <MessageSquare size={20} />, label: 'Expenses', href: '/expenses' },
     { icon: <Users size={20} />, label: 'Contacts', href: '/contacts' },
     { icon: <Package size={20} />, label: 'Products', href: '/products' },
-    { icon: <Truck size={20} />, label: 'Fulfillments', href: '/fulfillments' },
     { icon: <Database size={20} />, label: 'Assets', href: '/assets' },
     { icon: <Settings size={20} />, label: 'Settings', href: '/settings' },
   ];
