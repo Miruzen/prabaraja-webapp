@@ -38,7 +38,7 @@ export const Sidebar = () => {
 
   const navItems = [
     { icon: <Home size={20} />, label: 'Home', href: '/' },
-    { icon: <LayoutDashboard size={20} />, label: 'Dashboard', href: '/dashboard' },
+    { icon: <LayoutDashboard size={20} />, label: 'Dashboard', href: '/Dashboard' },
     { icon: <FileText size={20} />, label: 'Reports', href: '/reports' },
     { icon: <Wallet size={20} />, label: 'Cash & bank', href: '/cash-bank' },
     { icon: <ShoppingBag size={20} />, label: 'Sales', href: '/sales' },
