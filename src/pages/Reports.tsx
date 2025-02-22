@@ -8,16 +8,15 @@ import { Sidebar } from "@/components/Sidebar";
 interface Account {
   code: string;
   name: string;
-  statementBalance: string;
   balance: string;
 }
 
 const accounts: Account[] = [
-  { code: "1-10001", name: "Cash", statementBalance: "Rp.0,00", balance: "Rp.4.490.871,00" },
-  { code: "1-10002", name: "Bank Account", statementBalance: "Rp.0,00", balance: "Rp.1.800.002,00" },
-  { code: "1-10003", name: "Giro", statementBalance: "Rp.0,00", balance: "Rp.184.651.887,42" },
-  { code: "1-10004", name: "Test AKUN", statementBalance: "Rp.0,00", balance: "Rp.0,00" },
-  { code: "1-10012", name: "Test BCA", statementBalance: "Rp.0,00", balance: "(Rp.151.623.322,00)" },
+  { code: "1-10001", name: "Cash", balance: "Rp.4.490.871,00" },
+  { code: "1-10002", name: "Bank Account", balance: "Rp.1.800.002,00" },
+  { code: "1-10003", name: "Giro", balance: "Rp.184.651.887,42" },
+  { code: "1-10004", name: "Test AKUN", balance: "Rp.0,00" },
+  { code: "1-10012", name: "Test BCA", balance: "(Rp.151.623.322,00)" },
 ];
 
 const Reports = () => {
@@ -25,11 +24,15 @@ const Reports = () => {
     <div className="flex h-screen bg-background">
       <Sidebar />
       <div className="flex-1 overflow-auto">
+        {/* Header similar to home page */}
+        <div className="bg-gradient-to-r from-[#818CF8] to-[#C084FC] p-6">
+          <h1 className="text-2xl font-semibold text-white">Cash & Bank</h1>
+        </div>
+
         <div className="p-6">
           <div className="mb-6">
             <div className="flex justify-between items-center mb-4">
-              <h1 className="text-2xl font-semibold">Cash & Bank</h1>
-              <Button className="bg-[#6366F1] text-white">
+              <Button className="bg-[#6366F1] text-white ml-auto">
                 Create Account <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
             </div>
@@ -39,8 +42,7 @@ const Reports = () => {
                 <TableRow>
                   <TableHead>Account code</TableHead>
                   <TableHead>Account name</TableHead>
-                  <TableHead>Statement balance</TableHead>
-                  <TableHead>Balance in Jurnal</TableHead>
+                  <TableHead>Balance in Prabasena</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
@@ -49,12 +51,7 @@ const Reports = () => {
                   <TableRow key={account.code}>
                     <TableCell>{account.code}</TableCell>
                     <TableCell>{account.name}</TableCell>
-                    <TableCell>
-                      <Button variant="outline" className="text-[#6366F1]">
-                        Connect to bank
-                      </Button>
-                    </TableCell>
-                    <TableCell>{account.statementBalance}</TableCell>
+                    <TableCell>{account.balance}</TableCell>
                     <TableCell>
                       <Button variant="outline" className="ml-auto">
                         Create Transaction <ChevronDown className="ml-2 h-4 w-4" />
