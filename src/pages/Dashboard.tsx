@@ -36,7 +36,6 @@ const Dashboard = () => {
     <div className="flex min-h-screen">
       <Sidebar />
       <main className="flex-1">
-        {/* Added header */}
         <div className="bg-gradient-to-r from-[#818CF8] to-[#C084FC] p-6">
           <h1 className="text-2xl font-semibold text-white">Dashboard Overview</h1>
         </div>
@@ -46,25 +45,25 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <StatCard 
                 title="Total Sales (Current Month)" 
-                amount="$45,231.89" 
+                amount="Rp 45.231.890" 
                 trend="+20.1% vs last month"
                 isPositive={true}
               />
               <StatCard 
                 title="Total Sales (Previous Month)" 
-                amount="$37,651.72" 
+                amount="Rp 37.651.720" 
                 trend="+12.5% vs previous"
                 isPositive={true}
               />
               <StatCard 
                 title="Payments Received (Current Month)" 
-                amount="$28,458.92" 
+                amount="Rp 28.458.920" 
                 trend="-4.3% vs last month"
                 isPositive={false}
               />
               <StatCard 
                 title="Payments Received (Previous Month)" 
-                amount="$31,892.45" 
+                amount="Rp 31.892.450" 
                 trend="+8.7% vs previous"
                 isPositive={true}
               />
@@ -78,7 +77,7 @@ const Dashboard = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis />
-                    <Tooltip />
+                    <Tooltip formatter={(value) => `Rp ${value.toLocaleString()}`} />
                     <Area 
                       type="monotone" 
                       dataKey="profit" 

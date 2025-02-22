@@ -12,11 +12,11 @@ interface Account {
 }
 
 const accounts: Account[] = [
-  { code: "1-10001", name: "Cash", balance: "Rp.4.490.871,00" },
-  { code: "1-10002", name: "Bank Account", balance: "Rp.1.800.002,00" },
-  { code: "1-10003", name: "Giro", balance: "Rp.184.651.887,42" },
-  { code: "1-10004", name: "Test AKUN", balance: "Rp.0,00" },
-  { code: "1-10012", name: "Test BCA", balance: "(Rp.151.623.322,00)" },
+  { code: "1-10001", name: "Cash", balance: "Rp 4.490.871" },
+  { code: "1-10002", name: "Bank Account", balance: "Rp 1.800.002" },
+  { code: "1-10003", name: "Giro", balance: "Rp 184.651.887" },
+  { code: "1-10004", name: "Test AKUN", balance: "Rp 0" },
+  { code: "1-10012", name: "Test BCA", balance: "(Rp 151.623.322)" },
 ];
 
 const Reports = () => {
@@ -24,7 +24,6 @@ const Reports = () => {
     <div className="flex h-screen bg-background">
       <Sidebar />
       <div className="flex-1 overflow-auto">
-        {/* Header similar to home page */}
         <div className="bg-gradient-to-r from-[#818CF8] to-[#C084FC] p-6">
           <h1 className="text-2xl font-semibold text-white">Cash & Bank</h1>
         </div>
@@ -75,7 +74,7 @@ const Reports = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-sm text-gray-500">Total</div>
-                <div className="text-xl font-semibold">Rp.30.337.696,42</div>
+                <div className="text-xl font-semibold">Rp 30.337.696</div>
               </CardContent>
             </Card>
 
@@ -90,7 +89,7 @@ const Reports = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-sm text-gray-500">Total</div>
-                <div className="text-xl font-semibold">Rp.130.545.869,42</div>
+                <div className="text-xl font-semibold">Rp 130.545.869</div>
               </CardContent>
             </Card>
           </div>

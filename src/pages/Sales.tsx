@@ -1,4 +1,3 @@
-
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -22,8 +21,8 @@ const salesData: SalesData[] = [
     customer: "AABVCDD",
     dueDate: "18/02/2025",
     status: "Paid",
-    balanceDue: "Rp. 0,00",
-    total: "Rp. 13.440,00"
+    balanceDue: "Rp 0",
+    total: "Rp 13.440"
   },
   {
     date: "18/02/2025",
@@ -31,8 +30,8 @@ const salesData: SalesData[] = [
     customer: "AABVCDD",
     dueDate: "18/02/2025",
     status: "Paid",
-    balanceDue: "Rp. 0,00",
-    total: "Rp. 133.440,00"
+    balanceDue: "Rp 0",
+    total: "Rp 133.440"
   },
   {
     date: "14/02/2025",
@@ -40,8 +39,8 @@ const salesData: SalesData[] = [
     customer: "Nanda goaw putra",
     dueDate: "16/03/2025",
     status: "Paid",
-    balanceDue: "Rp. 0,00",
-    total: "Rp. 106.560,00"
+    balanceDue: "Rp 0",
+    total: "Rp 106.560"
   },
 ];
 
@@ -133,7 +132,7 @@ const Sales = () => {
                   </div>
                   <div>
                     <div className="text-sm text-gray-500">Total</div>
-                    <div className="text-xl font-semibold">Rp. 0,00</div>
+                    <div className="text-xl font-semibold">Rp 0</div>
                   </div>
                 </CardContent>
               </Card>
@@ -146,7 +145,7 @@ const Sales = () => {
                   </div>
                   <div>
                     <div className="text-sm text-gray-500">Total</div>
-                    <div className="text-xl font-semibold">Rp. 310.860,00</div>
+                    <div className="text-xl font-semibold">Rp 310.860</div>
                   </div>
                 </CardContent>
               </Card>
