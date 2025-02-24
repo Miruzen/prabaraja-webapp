@@ -359,8 +359,6 @@ const Products = () => {
       </Card>
     </div>
   </div>
-  </div>
-  </div>
   )
 }
 
