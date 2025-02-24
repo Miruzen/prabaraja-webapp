@@ -63,7 +63,7 @@ const ITEMS_PER_PAGE = 10;
 
 const Contacts = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
 
   const formatCurrency = (amount: number) => {
@@ -75,13 +75,13 @@ const Contacts = () => {
   const getCategoryColor = (category: string) => {
     switch (category) {
       case "Employee":
-        return "#0EA5E9"; // Ocean Blue
+        return "#0EA5E9";
       case "Customer":
-        return "#8B5CF6"; // Vivid Purple
+        return "#8B5CF6";
       case "Vendor":
-        return "#F97316"; // Bright Orange
+        return "#F97316";
       default:
-        return "#64748B"; // Default gray
+        return "#64748B";
     }
   };
 
@@ -89,7 +89,7 @@ const Contacts = () => {
     const matchesSearch = contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       contact.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       contact.number.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = !selectedCategory || contact.category === selectedCategory;
+    const matchesCategory = selectedCategory === "all" || contact.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -125,7 +125,7 @@ const Contacts = () => {
                   <SelectValue placeholder="Filter by category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
+                  <SelectItem value="all">All Categories</SelectItem>
                   <SelectItem value="Customer">Customer</SelectItem>
                   <SelectItem value="Vendor">Vendor</SelectItem>
                   <SelectItem value="Employee">Employee</SelectItem>
@@ -203,3 +203,4 @@ const Contacts = () => {
 };
 
 export default Contacts;
+
