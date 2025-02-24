@@ -1,8 +1,7 @@
 import { Sidebar } from "@/components/Sidebar";
-import { BoxesIcon, ChevronDown, CirclePlus, PackagePlus, WarehouseIcon } from "lucide-react";
-import { Plus } from "lucide-react";
-import React, { useState } from "react" 
-import { Check, X, Search, Filter } from "lucide-react"
+import { useNavigate } from "react-router-dom";
+import React, { useState } from "react"
+import { Check, X, Search, Filter, ChevronDown, Warehouse, PackagePlus, CirclePlus } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -31,7 +30,7 @@ import {
 } from "@/components/ui/pagination"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
-import { useNavigate } from "react-router-dom";
+import Index from "./Index";
 
 // Mock data for demonstration
 const products = [
@@ -70,95 +69,8 @@ const products = [
   },
 ]
 
-export  function ActionDropDown() { 
-  const [isOpen, setIsOpen] = useState(false) ; 
-  const navigate = useNavigate() ; 
-
-  const handleOptionClick = (path) => {
-    navigate(path) ;
-    setIsOpen(false);
-  };
-
-  return ( 
-    <div className="p-6">
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <div className="relative">
-            {/* Action Button */}
-            <Button
-              className="bg-[#6366F1] text-white ml-auto flex items-center"
-              onClick={() => setIsOpen(!isOpen)}
-            >
-              Action <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-
-            {/* Dropdown Menu */}
-            {isOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
-                <div className="py-1">
-                  {/* Option 1: Add New Product */}
-                  <button
-                    className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => handleOptionClick('/add-product')}
-                  >
-                    {getCategoryIcon("NProducts")} 
-                    Add New Product
-                  </button>
-
-                  {/* Option 2: Add New Warehouse */}
-                  <button
-                    className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => handleOptionClick('/add-warehouse')}
-                  >
-                    {getCategoryIcon("Warehouse")}
-                    Add New Warehouse
-                  </button>
-
-                  {/* Option 3: Adjust Stock */}
-                  <button
-                    className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => handleOptionClick('/adjust-stock')}
-                  >
-                    {getCategoryIcon("Stocks")}
-                    Adjust Stock
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 const categories = ["All", "Electronics", "Office", "Furniture"]
 const units = ["Unit", "Box", "Pack", "Piece"]
-
-const getCategoryColor = (category: string) => {
-  switch (category) {
-    case "Stocks":
-      return "#0EA5E9";
-    case "Warehouse":
-      return "#8B5CF6";
-    case "NProducts":
-      return "#F97316";
-    default:
-      return "#64748B";
-  }
-};
-
-const getCategoryIcon = (category: string) => {
-  switch (category) {
-    case "Stock":
-      return <CirclePlus size={16} color={getCategoryColor("Stocks")} />;
-    case "Warehouse":
-      return <WarehouseIcon size={16} color={getCategoryColor("Warehouse")} />;
-    case "NProducts":
-      return <PackagePlus size={16} color={getCategoryColor("NProducts")} />;
-    default:
-      return <Plus size={16} color={getCategoryColor("default")} />;
-  }
-}
 
 const Products = () => {
   const [selectedCategory, setSelectedCategory] = React.useState("All")
@@ -187,6 +99,44 @@ const Products = () => {
       minimumFractionDigits: 0,
     }).format(amount)
   }
+  
+  const ChveronDropdown = ({ options}) => {
+    const [isOpen, SetIsOpen ] = useState(false);
+    const handleOptionClick = (action) => {
+      action();
+      SetIsOpen(false) ;
+    
+  };
+
+  const ProductsPage = () => {
+    const navigate = useNavigate();
+  
+    // Define dropdown options
+    const dropdownOptions = [
+      {
+        label: "Add New Product",
+        action: () => navigate("/add-product"),
+        icon: <PackagePlus size={16} color="#F97316" />,
+      },
+      {
+        label: "Add New Warehouse",
+        action: () => navigate("/add-warehouse"),
+        icon: <Warehouse size={16} color="#8B5CF6" />,
+      },
+      {
+        label: "Adjust Stock",
+        action: () => navigate("/adjust-stock"),
+        icon: <CirclePlus size={16} color="#0EA5E9" />,
+      },
+    ];
+  
+    return (
+      <div>
+        <h1 className="text-2xl font-semibold mb-4">Products Management</h1>
+        <ChveronDropdown options={dropdownOptions} />
+      </div>
+    );
+  };
 
   return (
   <div className="flex min-h-screen">
@@ -195,47 +145,28 @@ const Products = () => {
         <div className="bg-gradient-to-r from-[#818CF8] to-[#C084FC] p-6">
           <h1 className="text-2xl font-semibold text-white">Products</h1>
         </div>
-    
-      {/* <div className="p-6">
-        <div className="mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <Button className="bg-[#6366F1] text-white ml-auto">
-              Action <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </div> */}
 
-      {/* <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-[180px] gap-4">
-                  <SelectValue placeholder="Filter by category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">
-                    <span className="flex items-center gap-2">
-                      <Plus size={16} clasName ="text-black-400" />
-                      Create Products
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="Customer">
-                    <span className="flex items-center gap-2">
-                      {getCategoryIcon("NProducts")}
-                      Add Products
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="Vendor">
-                    <span className="flex items-center gap-2">
-                      {getCategoryIcon("Warehouse")}
-                      Add Warehouse
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="Employee">
-                    <span className="flex items-center gap-2">
-                      {getCategoryIcon("Stocks")}
-                      Adjust Stock
-                    </span>
-                  </SelectItem>
-                </SelectContent>
-              </Select> */}
+      <div className="relative" >
+        <Button className="bg-[bg#6366F1] text-white flex items-center"
+          onClick={() => SetIsOpen(!isOpen)} >
+          Action <ChevronDown className="m1-2 h-4 w-4" />
+        </Button>
 
+        {isOpen && (
+          <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
+            <div className="py-1">
+              {options.map((option, index)=> (
+                <button key={index} className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                onClick={()=> handleOptionClick(option.action)}>
+                  {option.icon && <span>{option.icon}</span>}
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+      
       <Card>
         <CardContent className="p-6">
           <div className="flex justify-between gap-4 mb-6">
@@ -261,6 +192,10 @@ const Products = () => {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline">Adjust Stock</Button>
+              <Button variant="outline">Add Warehouse</Button>
             </div>
           </div>
 
@@ -360,6 +295,7 @@ const Products = () => {
     </div>
   </div>
   )
+}
 }
 
 export default Products
