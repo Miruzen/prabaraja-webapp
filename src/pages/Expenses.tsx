@@ -42,8 +42,8 @@ const Expenses = () => {
     <div className="flex h-screen bg-background">
       <Sidebar />
       <div className="flex-1 overflow-auto">
-        <div className="bg-gradient-to-rfrom-[#818CF8] to-[#C084FC] p-6">
-          <h1 className="text-2xl font-semibold text-black">List of Expense</h1>
+        <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
+          <h1 className="text-2xl font-semibold text-white">List of Expense</h1>
         </div>
 
         <div className="p-6">
