@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,7 +10,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { UserPlus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { User, UserPlus } from "lucide-react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 // Mock data - replace with actual data when connected to backend
 const contacts = [
@@ -20,7 +37,7 @@ const contacts = [
     number: "CUST-001",
     email: "contact@majujaya.com",
     address: "Jl. Sudirman No. 123, Jakarta",
-    balance: 5000000, // positive means they owe us
+    balance: 5000000,
   },
   {
     id: 2,
@@ -29,7 +46,7 @@ const contacts = [
     number: "VEN-001",
     email: "info@suksesmakmur.com",
     address: "Jl. Gatot Subroto No. 45, Bandung",
-    balance: -2500000, // negative means we owe them
+    balance: -2500000,
   },
   {
     id: 3,
@@ -42,28 +59,81 @@ const contacts = [
   },
 ];
 
+const ITEMS_PER_PAGE = 10;
+
 const Contacts = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState(1);
+
   const formatCurrency = (amount: number) => {
     const absAmount = Math.abs(amount);
     const formatted = new Intl.NumberFormat('id-ID').format(absAmount);
     return `${amount < 0 ? '-' : ''}Rp ${formatted}`;
   };
 
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case "Employee":
+        return "#0EA5E9"; // Ocean Blue
+      case "Customer":
+        return "#8B5CF6"; // Vivid Purple
+      case "Vendor":
+        return "#F97316"; // Bright Orange
+      default:
+        return "#64748B"; // Default gray
+    }
+  };
+
+  const filteredContacts = contacts.filter(contact => {
+    const matchesSearch = contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      contact.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      contact.number.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = !selectedCategory || contact.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  const totalPages = Math.ceil(filteredContacts.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedContacts = filteredContacts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
   return (
     <div className="flex min-h-screen">
       <Sidebar />
       <main className="flex-1">
         <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-semibold text-white">Contacts</h1>
-            <Button className="bg-white text-primary hover:bg-gray-100">
-              <UserPlus className="mr-2" />
-              Create Contact
-            </Button>
-          </div>
+          <h1 className="text-2xl font-semibold text-white mb-4">Contacts</h1>
         </div>
         
         <div className="p-6">
+          <div className="flex flex-col gap-4 mb-6">
+            <div className="flex flex-wrap gap-4">
+              <Button className="bg-white text-primary hover:bg-gray-100">
+                <UserPlus className="mr-2" />
+                Create Contact
+              </Button>
+              <div className="flex-1 max-w-md">
+                <Input
+                  placeholder="Search contacts..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Categories</SelectItem>
+                  <SelectItem value="Customer">Customer</SelectItem>
+                  <SelectItem value="Vendor">Vendor</SelectItem>
+                  <SelectItem value="Employee">Employee</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <div className="rounded-lg border bg-card">
             <Table>
               <TableHeader>
@@ -77,9 +147,14 @@ const Contacts = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {contacts.map((contact) => (
+                {paginatedContacts.map((contact) => (
                   <TableRow key={contact.id}>
-                    <TableCell className="font-medium">{contact.category}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <User size={20} color={getCategoryColor(contact.category)} />
+                        {contact.category}
+                      </div>
+                    </TableCell>
                     <TableCell>{contact.name}</TableCell>
                     <TableCell>{contact.number}</TableCell>
                     <TableCell>{contact.email}</TableCell>
@@ -91,6 +166,35 @@ const Contacts = () => {
                 ))}
               </TableBody>
             </Table>
+          </div>
+
+          <div className="mt-4 flex justify-end">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <PaginationItem key={i + 1}>
+                    <PaginationLink
+                      onClick={() => setCurrentPage(i + 1)}
+                      isActive={currentPage === i + 1}
+                    >
+                      {i + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           </div>
         </div>
       </main>
