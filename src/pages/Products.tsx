@@ -1,6 +1,7 @@
 import { Sidebar } from "@/components/Sidebar";
 import { useNavigate } from "react-router-dom";
 import React, { useState } from "react"
+import ChevronDropdown from "@/components/ChevronDropdown" ;
 import { Check, X, Search, Filter, ChevronDown, Warehouse, PackagePlus, CirclePlus } from "lucide-react"
 import {
   Table,
@@ -79,14 +80,6 @@ const Products = () => {
   const navigate = useNavigate();
   const itemsPerPage = 10
 
-  const ChveronDropdown = ({ options}) => {
-    const [isOpen, SetIsOpen ] = useState(false);
-    const handleOptionClick = (action) => {
-      action();
-      SetIsOpen(false) ;
-    
-  };
-
   // Filter products based on category and search query
   const filteredProducts = products.filter(
     (product) =>
@@ -135,26 +128,13 @@ const Products = () => {
           <h1 className="text-2xl font-semibold text-white">Products</h1>
         </div>
 
-      <div className="p-6 space-y-6" >
-        <Button className="bg-[bg#6366F1] text-white flex items-center"
-          onClick={() => SetIsOpen(!isOpen)} >
-          Action <ChevronDown className="m1-2 h-4 w-4" options={dropdownOptions}/>
-        </Button>
-
-        {isOpen && (
-          <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
-            <div className="py-1">
-              {options.map((option, index)=> (
-                <button key={index} className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                onClick={()=> handleOptionClick(option.action)}>
-                  {option.icon && <span>{option.icon}</span>}
-                  {option.label}
-                </button>
-              ))}
+        <div className="p-6">
+          <div className="mb-6">
+            <div className="flex justify-between items-center mb-4">
+              {/* Use the ChevronDropdown component here */}
+              <ChevronDropdown options={dropdownOptions} />
             </div>
           </div>
-        )}
-      </div>
       
       <Card>
         <CardContent className="p-6">
@@ -283,9 +263,8 @@ const Products = () => {
       </Card>
     </div>
   </div>
-  )
-}
-}
+</div>
 
+  )}
 export default Products
 
