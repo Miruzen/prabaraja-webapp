@@ -1,7 +1,7 @@
 import { Sidebar } from "@/components/Sidebar";
 import { BoxesIcon, ChevronDown, CirclePlus, PackagePlus, WarehouseIcon } from "lucide-react";
 import { Plus } from "lucide-react";
-import React from "react"
+import React, { useState } from "react" 
 import { Check, X, Search, Filter } from "lucide-react"
 import {
   Table,
@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/pagination"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
+import { useNavigate } from "react-router-dom";
 
 // Mock data for demonstration
 const products = [
@@ -69,16 +70,77 @@ const products = [
   },
 ]
 
+export  function ActionDropDown() { 
+  const [isOpen, setIsOpen] = useState(false) ; 
+  const navigate = useNavigate() ; 
+
+  const handleOptionClick = (path) => {
+    navigate(path) ;
+    setIsOpen(false);
+  };
+
+  return ( 
+    <div className="p-6">
+      <div className="mb-6">
+        <div className="flex justify-between items-center mb-4">
+          <div className="relative">
+            {/* Action Button */}
+            <Button
+              className="bg-[#6366F1] text-white ml-auto flex items-center"
+              onClick={() => setIsOpen(!isOpen)}
+            >
+              Action <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+
+            {/* Dropdown Menu */}
+            {isOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
+                <div className="py-1">
+                  {/* Option 1: Add New Product */}
+                  <button
+                    className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => handleOptionClick('/add-product')}
+                  >
+                    {getCategoryIcon("NProducts")} 
+                    Add New Product
+                  </button>
+
+                  {/* Option 2: Add New Warehouse */}
+                  <button
+                    className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => handleOptionClick('/add-warehouse')}
+                  >
+                    {getCategoryIcon("Warehouse")}
+                    Add New Warehouse
+                  </button>
+
+                  {/* Option 3: Adjust Stock */}
+                  <button
+                    className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => handleOptionClick('/adjust-stock')}
+                  >
+                    {getCategoryIcon("Stocks")}
+                    Adjust Stock
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 const categories = ["All", "Electronics", "Office", "Furniture"]
 const units = ["Unit", "Box", "Pack", "Piece"]
 
 const getCategoryColor = (category: string) => {
   switch (category) {
-    case "Employee":
+    case "Stocks":
       return "#0EA5E9";
-    case "Customer":
+    case "Warehouse":
       return "#8B5CF6";
-    case "Vendor":
+    case "NProducts":
       return "#F97316";
     default:
       return "#64748B";
@@ -88,11 +150,11 @@ const getCategoryColor = (category: string) => {
 const getCategoryIcon = (category: string) => {
   switch (category) {
     case "Stock":
-      return <CirclePlus size={16} color={getCategoryColor("Employee")} />;
+      return <CirclePlus size={16} color={getCategoryColor("Stocks")} />;
     case "Warehouse":
-      return <WarehouseIcon size={16} color={getCategoryColor("Customer")} />;
+      return <WarehouseIcon size={16} color={getCategoryColor("Warehouse")} />;
     case "NProducts":
-      return <PackagePlus size={16} color={getCategoryColor("Vendor")} />;
+      return <PackagePlus size={16} color={getCategoryColor("NProducts")} />;
     default:
       return <Plus size={16} color={getCategoryColor("default")} />;
   }
@@ -138,17 +200,18 @@ const Products = () => {
         <div className="mb-6">
           <div className="flex justify-between items-center mb-4">
             <Button className="bg-[#6366F1] text-white ml-auto">
-              Create Account <ChevronDown className="ml-2 h-4 w-4" />
+              Action <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
           </div> */}
-      <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-[180px]">
+
+      {/* <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-[180px] gap-4">
                   <SelectValue placeholder="Filter by category" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">
                     <span className="flex items-center gap-2">
-                      <Plus size={16} clasName ="text-gray-400" />
+                      <Plus size={16} clasName ="text-black-400" />
                       Create Products
                     </span>
                   </SelectItem>
@@ -166,12 +229,12 @@ const Products = () => {
                   </SelectItem>
                   <SelectItem value="Employee">
                     <span className="flex items-center gap-2">
-                      {getCategoryIcon("Employee")}
+                      {getCategoryIcon("Stocks")}
                       Adjust Stock
                     </span>
                   </SelectItem>
                 </SelectContent>
-              </Select>
+              </Select> */}
 
       <Card>
         <CardContent className="p-6">
@@ -198,10 +261,6 @@ const Products = () => {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline">Adjust Stock</Button>
-              <Button variant="outline">Add Warehouse</Button>
             </div>
           </div>
 
@@ -299,6 +358,8 @@ const Products = () => {
         </CardContent>
       </Card>
     </div>
+  </div>
+  </div>
   </div>
   )
 }
