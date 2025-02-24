@@ -28,7 +28,7 @@ const ActionButton = ({ icon, label, onClick }: ActionButtonProps) => (
 );
 
 const AdBanner = () => (
-  <div className="bg-gradient-to-r from-[#0EA5E9] to-[#2563EB] rounded-lg p-6 text-white text-center max-w-3xl mx-auto my-8">
+  <div className="bg-gradient-to-r from-[#818CF8] to-[#C084FC] rounded-lg p-6 text-white text-center max-w-3xl mx-auto my-8">
     <h2 className="text-xl font-bold mb-4">
       Boost your business productivity with<br />
       Prabaraja additional features
@@ -64,7 +64,7 @@ const Index = () => {
       <main className="flex-1">
         <div className="bg-gradient-to-b from-white via-white to-[#28abe2] bg-[length:100%_200%] bg-[100%] p-6">
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-2xl font-semibold mb-2">Hello, Lutfiana Widya</h1>
+            <h1 className="text-2xl font-semibold mb-2">Hello, User</h1>
             <p className="text-gray-600">What activity do you want to do?</p>
           </div>
         </div>
