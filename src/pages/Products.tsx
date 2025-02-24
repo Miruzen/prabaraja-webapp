@@ -76,7 +76,16 @@ const Products = () => {
   const [selectedCategory, setSelectedCategory] = React.useState("All")
   const [searchQuery, setSearchQuery] = React.useState("")
   const [currentPage, setCurrentPage] = React.useState(1)
+  const navigate = useNavigate();
   const itemsPerPage = 10
+
+  const ChveronDropdown = ({ options}) => {
+    const [isOpen, SetIsOpen ] = useState(false);
+    const handleOptionClick = (action) => {
+      action();
+      SetIsOpen(false) ;
+    
+  };
 
   // Filter products based on category and search query
   const filteredProducts = products.filter(
@@ -85,6 +94,24 @@ const Products = () => {
       product.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
+  //Dropdown option
+  const dropdownOptions = [
+    {
+      label: "Add New Product",
+      action: () => navigate("/add-product"),
+      icon: <PackagePlus size={16} color="#F97316" />,
+    },
+    {
+      label: "Add New Warehouse",
+      action: () => navigate("/add-warehouse"),
+      icon: <Warehouse size={16} color="#8B5CF6" />,
+    },
+    {
+      label: "Adjust Stock",
+      action: () => navigate("/adjust-stock"),
+      icon: <CirclePlus size={16} color="#0EA5E9" />,
+    },
+  ]
   // Calculate pagination
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
@@ -99,44 +126,6 @@ const Products = () => {
       minimumFractionDigits: 0,
     }).format(amount)
   }
-  
-  const ChveronDropdown = ({ options}) => {
-    const [isOpen, SetIsOpen ] = useState(false);
-    const handleOptionClick = (action) => {
-      action();
-      SetIsOpen(false) ;
-    
-  };
-
-  const ProductsPage = () => {
-    const navigate = useNavigate();
-  
-    // Define dropdown options
-    const dropdownOptions = [
-      {
-        label: "Add New Product",
-        action: () => navigate("/add-product"),
-        icon: <PackagePlus size={16} color="#F97316" />,
-      },
-      {
-        label: "Add New Warehouse",
-        action: () => navigate("/add-warehouse"),
-        icon: <Warehouse size={16} color="#8B5CF6" />,
-      },
-      {
-        label: "Adjust Stock",
-        action: () => navigate("/adjust-stock"),
-        icon: <CirclePlus size={16} color="#0EA5E9" />,
-      },
-    ];
-  
-    return (
-      <div>
-        <h1 className="text-2xl font-semibold mb-4">Products Management</h1>
-        <ChveronDropdown options={dropdownOptions} />
-      </div>
-    );
-  };
 
   return (
   <div className="flex min-h-screen">
@@ -149,7 +138,7 @@ const Products = () => {
       <div className="relative" >
         <Button className="bg-[bg#6366F1] text-white flex items-center"
           onClick={() => SetIsOpen(!isOpen)} >
-          Action <ChevronDown className="m1-2 h-4 w-4" />
+          Action <ChevronDown className="m1-2 h-4 w-4" options={dropdownOptions}/>
         </Button>
 
         {isOpen && (
