@@ -135,7 +135,7 @@ const Products = () => {
           <h1 className="text-2xl font-semibold text-white">Products</h1>
         </div>
 
-      <div className="relative" >
+      <div className="p-6 space-y-6" >
         <Button className="bg-[bg#6366F1] text-white flex items-center"
           onClick={() => SetIsOpen(!isOpen)} >
           Action <ChevronDown className="m1-2 h-4 w-4" options={dropdownOptions}/>
@@ -182,10 +182,10 @@ const Products = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex gap-2">
+            {/* <div className="flex gap-2">
               <Button variant="outline">Adjust Stock</Button>
               <Button variant="outline">Add Warehouse</Button>
-            </div>
+            </div> */}
           </div>
 
           <Table>
