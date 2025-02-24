@@ -12,7 +12,7 @@ const ChevronDropdown = ({ options }) => {
   };
 
   return (
-    <div className="relative">
+    <div className="relative"> {/* Parent container with relative positioning */}
       {/* Dropdown Button */}
       <Button
         className="bg-[#6366F1] text-white flex items-center"
@@ -23,7 +23,7 @@ const ChevronDropdown = ({ options }) => {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
+        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
           <div className="py-1">
             {options.map((option, index) => (
               <button
