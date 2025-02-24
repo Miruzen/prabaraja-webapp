@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
@@ -18,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { User, UserPlus } from "lucide-react";
+import { Search, User, UserPlus, Users, Building2 } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -28,7 +27,6 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-// Mock data - replace with actual data when connected to backend
 const contacts = [
   {
     id: 1,
@@ -59,12 +57,13 @@ const contacts = [
   },
 ];
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE_OPTIONS = [5, 10, 15];
 
 const Contacts = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE_OPTIONS[1]);
 
   const formatCurrency = (amount: number) => {
     const absAmount = Math.abs(amount);
@@ -85,6 +84,19 @@ const Contacts = () => {
     }
   };
 
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case "Employee":
+        return <User size={16} color={getCategoryColor("Employee")} />;
+      case "Customer":
+        return <Users size={16} color={getCategoryColor("Customer")} />;
+      case "Vendor":
+        return <Building2 size={16} color={getCategoryColor("Vendor")} />;
+      default:
+        return <User size={16} color={getCategoryColor("default")} />;
+    }
+  };
+
   const filteredContacts = contacts.filter(contact => {
     const matchesSearch = contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       contact.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -93,9 +105,9 @@ const Contacts = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const totalPages = Math.ceil(filteredContacts.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedContacts = filteredContacts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredContacts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedContacts = filteredContacts.slice(startIndex, startIndex + itemsPerPage);
 
   return (
     <div className="flex min-h-screen">
@@ -107,28 +119,72 @@ const Contacts = () => {
         
         <div className="p-6">
           <div className="flex flex-col gap-4 mb-6">
-            <div className="flex flex-wrap gap-4">
-              <Button className="bg-white text-primary hover:bg-gray-100">
+            <div className="bg-[#F8F7FF] p-5 rounded-lg inline-block">
+              <Button className="bg-[#8B5CF6] text-white hover:bg-[#7C3AED]">
                 <UserPlus className="mr-2" />
                 Create Contact
               </Button>
-              <div className="flex-1 max-w-md">
+            </div>
+
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="relative w-full max-w-xs">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                 <Input
                   placeholder="Search contacts..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full"
+                  className="pl-10"
                 />
               </div>
+
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Filter by category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="Customer">Customer</SelectItem>
-                  <SelectItem value="Vendor">Vendor</SelectItem>
-                  <SelectItem value="Employee">Employee</SelectItem>
+                  <SelectItem value="all">
+                    <span className="flex items-center gap-2">
+                      <User size={16} className="text-gray-400" />
+                      All Categories
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="Customer">
+                    <span className="flex items-center gap-2">
+                      {getCategoryIcon("Customer")}
+                      Customer
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="Vendor">
+                    <span className="flex items-center gap-2">
+                      {getCategoryIcon("Vendor")}
+                      Vendor
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="Employee">
+                    <span className="flex items-center gap-2">
+                      {getCategoryIcon("Employee")}
+                      Employee
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select 
+                value={itemsPerPage.toString()} 
+                onValueChange={(value) => {
+                  setItemsPerPage(Number(value));
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Rows per page" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ITEMS_PER_PAGE_OPTIONS.map((option) => (
+                    <SelectItem key={option} value={option.toString()}>
+                      {option} rows
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -151,7 +207,7 @@ const Contacts = () => {
                   <TableRow key={contact.id}>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
-                        <User size={20} color={getCategoryColor(contact.category)} />
+                        {getCategoryIcon(contact.category)}
                         {contact.category}
                       </div>
                     </TableCell>
@@ -203,4 +259,3 @@ const Contacts = () => {
 };
 
 export default Contacts;
-
