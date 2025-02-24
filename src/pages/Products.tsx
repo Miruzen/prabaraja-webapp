@@ -1,4 +1,6 @@
 import { Sidebar } from "@/components/Sidebar";
+import { BoxesIcon, ChevronDown, CirclePlus, PackagePlus, WarehouseIcon } from "lucide-react";
+import { Plus } from "lucide-react";
 import React from "react"
 import { Check, X, Search, Filter } from "lucide-react"
 import {
@@ -70,6 +72,32 @@ const products = [
 const categories = ["All", "Electronics", "Office", "Furniture"]
 const units = ["Unit", "Box", "Pack", "Piece"]
 
+const getCategoryColor = (category: string) => {
+  switch (category) {
+    case "Employee":
+      return "#0EA5E9";
+    case "Customer":
+      return "#8B5CF6";
+    case "Vendor":
+      return "#F97316";
+    default:
+      return "#64748B";
+  }
+};
+
+const getCategoryIcon = (category: string) => {
+  switch (category) {
+    case "Stock":
+      return <CirclePlus size={16} color={getCategoryColor("Employee")} />;
+    case "Warehouse":
+      return <WarehouseIcon size={16} color={getCategoryColor("Customer")} />;
+    case "NProducts":
+      return <PackagePlus size={16} color={getCategoryColor("Vendor")} />;
+    default:
+      return <Plus size={16} color={getCategoryColor("default")} />;
+  }
+}
+
 const Products = () => {
   const [selectedCategory, setSelectedCategory] = React.useState("All")
   const [searchQuery, setSearchQuery] = React.useState("")
@@ -101,11 +129,49 @@ const Products = () => {
   return (
   <div className="flex min-h-screen">
     <Sidebar />
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Products</h1>
-        <Button>Add New Product</Button>
-      </div>
+    <div className="flex-1 overflow-auto">
+        <div className="bg-gradient-to-r from-[#818CF8] to-[#C084FC] p-6">
+          <h1 className="text-2xl font-semibold text-white">Products</h1>
+        </div>
+    
+      {/* <div className="p-6">
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <Button className="bg-[#6366F1] text-white ml-auto">
+              Create Account <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+          </div> */}
+      <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    <span className="flex items-center gap-2">
+                      <Plus size={16} clasName ="text-gray-400" />
+                      Create Products
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="Customer">
+                    <span className="flex items-center gap-2">
+                      {getCategoryIcon("NProducts")}
+                      Add Products
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="Vendor">
+                    <span className="flex items-center gap-2">
+                      {getCategoryIcon("Warehouse")}
+                      Add Warehouse
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="Employee">
+                    <span className="flex items-center gap-2">
+                      {getCategoryIcon("Employee")}
+                      Adjust Stock
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
 
       <Card>
         <CardContent className="p-6">
