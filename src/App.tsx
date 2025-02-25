@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound";
 import Expenses from "./pages/Expenses";
 import Contacts from "./pages/Contacts";
 import Products from "./pages/Products";
+import Assets from "./pages/Assets";
 
 const queryClient = new QueryClient();
 
