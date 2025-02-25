@@ -9,21 +9,41 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { toast } from "sonner";
+
+interface Asset {
+  detail: string;
+  warrantyDeadline: string;
+  price: number;
+}
 
 interface AddAssetDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSubmit: (asset: Asset) => void;
 }
 
-export const AddAssetDialog = ({ open, onOpenChange }: AddAssetDialogProps) => {
+export const AddAssetDialog = ({ open, onOpenChange, onSubmit }: AddAssetDialogProps) => {
   const [assetDetail, setAssetDetail] = useState("");
   const [price, setPrice] = useState("");
   const [warrantyDate, setWarrantyDate] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Add asset handling logic here
-    onOpenChange(false);
+    
+    if (!assetDetail || !price || !warrantyDate) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    onSubmit({
+      detail: assetDetail,
+      warrantyDeadline: warrantyDate,
+      price: Number(price),
+    });
+
+    toast.success("Asset added successfully");
+
     // Reset form
     setAssetDetail("");
     setPrice("");

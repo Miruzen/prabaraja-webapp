@@ -15,7 +15,10 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { Button } from "@/components/ui/button";
+import { Trash } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface SoldAsset {
   id: string;
@@ -26,25 +29,14 @@ interface SoldAsset {
   sellingPrice: number;
 }
 
-// Mock data - replace with actual data fetching
-const mockSoldAssets: SoldAsset[] = [
-  {
-    id: "1",
-    dateSold: "2024-02-15",
-    detail: "Old Office Laptop",
-    transactionNo: "TRX-001",
-    boughtPrice: 15000000,
-    sellingPrice: 8000000,
-  },
-  // Add more mock data as needed
-];
-
 interface SoldAssetsTableProps {
   itemsPerPage: number;
   search: string;
+  soldAssets: SoldAsset[];
+  onDeleteSoldAsset: (id: string) => void;
 }
 
-export const SoldAssetsTable = ({ itemsPerPage, search }: SoldAssetsTableProps) => {
+export const SoldAssetsTable = ({ itemsPerPage, search, soldAssets, onDeleteSoldAsset }: SoldAssetsTableProps) => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const formatCurrency = (amount: number) => {
@@ -55,7 +47,7 @@ export const SoldAssetsTable = ({ itemsPerPage, search }: SoldAssetsTableProps) 
     }).format(amount);
   };
 
-  const filteredAssets = mockSoldAssets.filter((asset) =>
+  const filteredAssets = soldAssets.filter((asset) =>
     asset.detail.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -66,6 +58,19 @@ export const SoldAssetsTable = ({ itemsPerPage, search }: SoldAssetsTableProps) 
     startIndex + itemsPerPage
   );
 
+  const handleDelete = (id: string) => {
+    onDeleteSoldAsset(id);
+    toast.success("Sold asset record deleted successfully");
+  };
+
+  if (filteredAssets.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        No sold assets recorded yet.
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <Table>
@@ -75,6 +80,7 @@ export const SoldAssetsTable = ({ itemsPerPage, search }: SoldAssetsTableProps) 
             <TableHead>Asset Detail</TableHead>
             <TableHead>Transaction No</TableHead>
             <TableHead>Profit/Loss</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -88,9 +94,18 @@ export const SoldAssetsTable = ({ itemsPerPage, search }: SoldAssetsTableProps) 
                 <TableCell className={profitLoss >= 0 ? "text-green-600" : "text-red-600"}>
                   {formatCurrency(profitLoss)}
                 </TableCell>
+                <TableCell className="text-right">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDelete(asset.id)}
+                    className="text-red-500 hover:text-red-700 hover:bg-red-100"
+                  >
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                </TableCell>
               </TableRow>
-            );
-          })}
+            )})}
         </TableBody>
       </Table>
 
@@ -99,14 +114,22 @@ export const SoldAssetsTable = ({ itemsPerPage, search }: SoldAssetsTableProps) 
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentPage((p) => Math.max(1, p - 1));
+                }}
+                aria-disabled={currentPage === 1}
               />
             </PaginationItem>
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
               <PaginationItem key={page}>
                 <PaginationLink
-                  onClick={() => setCurrentPage(page)}
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setCurrentPage(page);
+                  }}
                   isActive={currentPage === page}
                 >
                   {page}
@@ -115,8 +138,12 @@ export const SoldAssetsTable = ({ itemsPerPage, search }: SoldAssetsTableProps) 
             ))}
             <PaginationItem>
               <PaginationNext
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentPage((p) => Math.min(totalPages, p + 1));
+                }}
+                aria-disabled={currentPage === totalPages}
               />
             </PaginationItem>
           </PaginationContent>

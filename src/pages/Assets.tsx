@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Sidebar } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -14,11 +14,53 @@ import { AssetsTable } from "@/components/AssetsTable";
 import { SoldAssetsTable } from "@/components/SoldAssetsTable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddAssetDialog } from "@/components/AddAssetDialog";
+import Sidebar from "@/components/Sidebar";
+
+interface Asset {
+  id: string;
+  dateAdded: string;
+  detail: string;
+  warrantyDeadline: string;
+  price: number;
+  depreciation: number;
+}
+
+interface SoldAsset {
+  id: string;
+  dateSold: string;
+  detail: string;
+  transactionNo: string;
+  boughtPrice: number;
+  sellingPrice: number;
+}
 
 const Assets = () => {
   const [search, setSearch] = useState("");
   const [itemsPerPage, setItemsPerPage] = useState("10");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [soldAssets, setSoldAssets] = useState<SoldAsset[]>([]);
+
+  const handleAddAsset = (newAsset: Omit<Asset, "id" | "dateAdded" | "depreciation">) => {
+    const asset: Asset = {
+      id: Math.random().toString(36).substr(2, 9),
+      dateAdded: new Date().toISOString(),
+      detail: newAsset.detail,
+      warrantyDeadline: newAsset.warrantyDeadline,
+      price: Number(newAsset.price),
+      depreciation: Number(newAsset.price) * 0.2, // Simple 20% depreciation
+    };
+    setAssets([...assets, asset]);
+    setIsAddDialogOpen(false);
+  };
+
+  const handleDeleteAsset = (id: string) => {
+    setAssets(assets.filter(asset => asset.id !== id));
+  };
+
+  const handleDeleteSoldAsset = (id: string) => {
+    setSoldAssets(soldAssets.filter(asset => asset.id !== id));
+  };
 
   return (
     <div className="min-h-screen">
@@ -57,9 +99,9 @@ const Assets = () => {
                   <SelectValue placeholder="Items per page" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="5">5 items </SelectItem>
-                  <SelectItem value="10">10 items </SelectItem>
-                  <SelectItem value="15">15 items </SelectItem>
+                  <SelectItem value="5">5 items</SelectItem>
+                  <SelectItem value="10">10 items</SelectItem>
+                  <SelectItem value="15">15 items</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -72,15 +114,29 @@ const Assets = () => {
               <TabsTrigger value="sold">Sold Assets</TabsTrigger>
             </TabsList>
             <TabsContent value="current">
-              <AssetsTable itemsPerPage={Number(itemsPerPage)} search={search} />
+              <AssetsTable 
+                itemsPerPage={Number(itemsPerPage)} 
+                search={search} 
+                assets={assets}
+                onDeleteAsset={handleDeleteAsset}
+              />
             </TabsContent>
             <TabsContent value="sold">
-              <SoldAssetsTable itemsPerPage={Number(itemsPerPage)} search={search} />
+              <SoldAssetsTable 
+                itemsPerPage={Number(itemsPerPage)} 
+                search={search}
+                soldAssets={soldAssets}
+                onDeleteSoldAsset={handleDeleteSoldAsset}
+              />
             </TabsContent>
           </Tabs>
         </div>
       </div>
-      <AddAssetDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
+      <AddAssetDialog 
+        open={isAddDialogOpen} 
+        onOpenChange={setIsAddDialogOpen} 
+        onSubmit={handleAddAsset}
+      />
     </div>
   );
 };
