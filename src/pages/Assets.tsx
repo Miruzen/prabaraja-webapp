@@ -15,6 +15,7 @@ import { AssetsTable } from "@/components/AssetsTable";
 import { SoldAssetsTable } from "@/components/SoldAssetsTable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddAssetDialog } from "@/components/AddAssetDialog";
+import { toast } from "sonner";
 
 interface Asset {
   id: string;
@@ -48,18 +49,34 @@ const Assets = () => {
       detail: newAsset.detail,
       warrantyDeadline: newAsset.warrantyDeadline,
       price: Number(newAsset.price),
-      depreciation: Number(newAsset.price) * 0.2, // Simple 20% depreciation
+      depreciation: Number(newAsset.price) * 0.2,
     };
     setAssets([...assets, asset]);
     setIsAddDialogOpen(false);
   };
 
   const handleDeleteAsset = (id: string) => {
-    setAssets(assets.filter(asset => asset.id !== id));
+    toast.warning("Are you sure you want to delete this asset?", {
+      action: {
+        label: "Delete",
+        onClick: () => {
+          setAssets(assets.filter(asset => asset.id !== id));
+          toast.success("Asset deleted successfully");
+        },
+      },
+    });
   };
 
   const handleDeleteSoldAsset = (id: string) => {
-    setSoldAssets(soldAssets.filter(asset => asset.id !== id));
+    toast.warning("Are you sure you want to delete this sold asset record?", {
+      action: {
+        label: "Delete",
+        onClick: () => {
+          setSoldAssets(soldAssets.filter(asset => asset.id !== id));
+          toast.success("Sold asset record deleted successfully");
+        },
+      },
+    });
   };
 
   return (
@@ -144,4 +161,3 @@ const Assets = () => {
 };
 
 export default Assets;
-
