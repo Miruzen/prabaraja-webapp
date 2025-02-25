@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Sidebar } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -22,6 +22,7 @@ const Assets = () => {
 
   return (
     <div className="min-h-screen">
+      <Sidebar>
       {/* Header */}
       <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
         <div className="max-w-7xl mx-auto">
@@ -79,7 +80,7 @@ const Assets = () => {
           </Tabs>
         </div>
       </div>
-
+      </Sidebar>
       <AddAssetDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
     </div>
   );
