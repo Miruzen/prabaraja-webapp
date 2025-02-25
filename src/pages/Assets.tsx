@@ -22,7 +22,7 @@ const Assets = () => {
 
   return (
     <div className="min-h-screen">
-      <Sidebar>
+      <Sidebar />
       {/* Header */}
       <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
         <div className="max-w-7xl mx-auto">
@@ -57,9 +57,9 @@ const Assets = () => {
                   <SelectValue placeholder="Items per page" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="5">5 items per page</SelectItem>
-                  <SelectItem value="10">10 items per page</SelectItem>
-                  <SelectItem value="15">15 items per page</SelectItem>
+                  <SelectItem value="5">5 items </SelectItem>
+                  <SelectItem value="10">10 items </SelectItem>
+                  <SelectItem value="15">15 items </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -80,7 +80,6 @@ const Assets = () => {
           </Tabs>
         </div>
       </div>
-      </Sidebar>
       <AddAssetDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
     </div>
   );
