@@ -2,7 +2,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+<<<<<<< HEAD
+import { Sidebar } from "@/components/Sidebar";
 import { Plus, Search } from "lucide-react";
+=======
+import { Plus, Search } from "lucide-react";
+>>>>>>> d9541803bb4f9f032e568b22a87d789537b53701
 import {
   Select,
   SelectContent,
