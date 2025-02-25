@@ -2,12 +2,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-<<<<<<< HEAD
 import { Sidebar } from "@/components/Sidebar";
 import { Plus, Search } from "lucide-react";
-=======
-import { Plus, Search } from "lucide-react";
->>>>>>> d9541803bb4f9f032e568b22a87d789537b53701
 import {
   Select,
   SelectContent,
@@ -19,7 +15,6 @@ import { AssetsTable } from "@/components/AssetsTable";
 import { SoldAssetsTable } from "@/components/SoldAssetsTable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddAssetDialog } from "@/components/AddAssetDialog";
-import Sidebar from "@/components/Sidebar";
 
 interface Asset {
   id: string;
