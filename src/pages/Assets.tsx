@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,6 +63,12 @@ const Assets = () => {
           toast.success("Asset deleted successfully");
         },
       },
+      cancel: {
+        label: "No",
+        onClick: () => {
+          toast.info("Deletion cancelled");
+        },
+      },
     });
   };
 
@@ -74,6 +79,12 @@ const Assets = () => {
         onClick: () => {
           setSoldAssets(soldAssets.filter(asset => asset.id !== id));
           toast.success("Sold asset record deleted successfully");
+        },
+      },
+      cancel: {
+        label: "No",
+        onClick: () => {
+          toast.info("Deletion cancelled");
         },
       },
     });

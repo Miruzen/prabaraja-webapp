@@ -18,9 +18,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Filter } from "lucide-react";
+import { Search, Plus, Filter, Circle } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface Transaction {
   id: string;
@@ -28,10 +29,11 @@ interface Transaction {
   number: string;
   approver: string;
   dueDate: Date | null;
-  status: string;
+  status: "pending" | "completed" | "cancelled";
   itemCount: number;
   priority: "High" | "Medium" | "Low";
   tags: string[];
+  type: "invoice" | "shipment" | "order" | "offer" | "request";
 }
 
 const formatCurrency = (amount: number) => {
@@ -42,14 +44,55 @@ const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
+// Mock data
+const mockTransactions: Transaction[] = [
+  {
+    id: "1",
+    date: new Date(),
+    number: "PO-2024001",
+    approver: "John Doe",
+    dueDate: new Date(),
+    status: "pending",
+    itemCount: 5,
+    priority: "High",
+    tags: ["Office Supplies"],
+    type: "invoice",
+  },
+  {
+    id: "2",
+    date: new Date(),
+    number: "SH-2024001",
+    approver: "Jane Smith",
+    dueDate: new Date(),
+    status: "completed",
+    itemCount: 3,
+    priority: "Medium",
+    tags: ["Electronics"],
+    type: "shipment",
+  },
+  // Add more mock data for different types
+];
+
+const statusColors = {
+  pending: "bg-yellow-500",
+  completed: "bg-green-500",
+  cancelled: "bg-red-500",
+};
+
 const Purchases = () => {
   const [activeTab, setActiveTab] = useState("invoices");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  // Mock data for demonstration
+  // Mock data for statistics
   const unpaidAmount = 15000000;
   const overdueCount = 3;
   const last30DaysPayments = 45000000;
+
+  const filteredTransactions = mockTransactions.filter(transaction => {
+    const matchesType = activeTab === transaction.type + "s";
+    const matchesStatus = statusFilter === "all" || statusFilter === transaction.status;
+    return matchesType && matchesStatus;
+  });
 
   return (
     <div className="flex h-screen w-full">
@@ -97,7 +140,7 @@ const Purchases = () => {
           {/* Tabs and Filters */}
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <Tabs defaultValue="invoices" className="w-full">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList>
                   <TabsTrigger value="invoices">Invoices</TabsTrigger>
                   <TabsTrigger value="shipments">Shipments</TabsTrigger>
@@ -123,10 +166,29 @@ const Purchases = () => {
                   <SelectValue placeholder="Status filter" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="all">
+                    <span className="flex items-center gap-2">
+                      All Status
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="pending">
+                    <span className="flex items-center gap-2">
+                      <Circle className={cn("h-3 w-3 fill-current text-yellow-500")} />
+                      Pending
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="completed">
+                    <span className="flex items-center gap-2">
+                      <Circle className={cn("h-3 w-3 fill-current text-green-500")} />
+                      Completed
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="cancelled">
+                    <span className="flex items-center gap-2">
+                      <Circle className={cn("h-3 w-3 fill-current text-red-500")} />
+                      Cancelled
+                    </span>
+                  </SelectItem>
                 </SelectContent>
               </Select>
               <Button variant="outline">
@@ -151,25 +213,41 @@ const Purchases = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {/* Example row */}
-                  <TableRow>
-                    <TableCell>{format(new Date(), 'dd/MM/yyyy')}</TableCell>
-                    <TableCell>PO-2024001</TableCell>
-                    <TableCell>John Doe</TableCell>
-                    <TableCell>{format(new Date(), 'dd/MM/yyyy')}</TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                        Pending
-                      </span>
-                    </TableCell>
-                    <TableCell>5 items</TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                        High
-                      </span>
-                    </TableCell>
-                    <TableCell>Office Supplies</TableCell>
-                  </TableRow>
+                  {filteredTransactions.map((transaction) => (
+                    <TableRow key={transaction.id}>
+                      <TableCell>{format(transaction.date, 'dd/MM/yyyy')}</TableCell>
+                      <TableCell>{transaction.number}</TableCell>
+                      <TableCell>{transaction.approver}</TableCell>
+                      <TableCell>{transaction.dueDate ? format(transaction.dueDate, 'dd/MM/yyyy') : '-'}</TableCell>
+                      <TableCell>
+                        <span className={cn(
+                          "inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-xs font-medium",
+                          {
+                            "bg-yellow-100 text-yellow-800": transaction.status === "pending",
+                            "bg-green-100 text-green-800": transaction.status === "completed",
+                            "bg-red-100 text-red-800": transaction.status === "cancelled",
+                          }
+                        )}>
+                          <Circle className={cn("h-2 w-2 fill-current", statusColors[transaction.status])} />
+                          {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
+                        </span>
+                      </TableCell>
+                      <TableCell>{transaction.itemCount} items</TableCell>
+                      <TableCell>
+                        <span className={cn(
+                          "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+                          {
+                            "bg-red-100 text-red-800": transaction.priority === "High",
+                            "bg-yellow-100 text-yellow-800": transaction.priority === "Medium",
+                            "bg-green-100 text-green-800": transaction.priority === "Low",
+                          }
+                        )}>
+                          {transaction.priority}
+                        </span>
+                      </TableCell>
+                      <TableCell>{transaction.tags.join(", ")}</TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </div>
