@@ -32,15 +32,15 @@ export function AccountActionDropdown({ onSelect }: AccountActionDropdownProps) 
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => onSelect("transfer")} className="cursor-pointer">
-          <ArrowRightLeft className="mr-2 h-4 w-4" />
+          <ArrowRightLeft className="mr-2 h-4 w-4 text-[#3B82F6]" />
           Transfer Funds
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onSelect("receive")} className="cursor-pointer">
-          <PiggyBank className="mr-2 h-4 w-4" />
+          <PiggyBank className="mr-2 h-4 w-4 text-[#10B981]" />
           Receive Money
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onSelect("analysis")} className="cursor-pointer">
-          <BarChart className="mr-2 h-4 w-4" />
+          <BarChart className="mr-2 h-4 w-4 text-[#8B5CF6]" />
           Cashflow Analysis
         </DropdownMenuItem>
       </DropdownMenuContent>
