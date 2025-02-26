@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,7 @@ import { AssetsTable } from "@/components/AssetsTable";
 import { SoldAssetsTable } from "@/components/SoldAssetsTable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddAssetDialog } from "@/components/AddAssetDialog";
+import { DeleteAssetDialog } from "@/components/DeleteAssetDialog";
 import { toast } from "sonner";
 
 interface Asset {
@@ -40,6 +42,8 @@ const Assets = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [soldAssets, setSoldAssets] = useState<SoldAsset[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [assetToDelete, setAssetToDelete] = useState<string | null>(null);
 
   const handleAddAsset = (newAsset: Omit<Asset, "id" | "dateAdded" | "depreciation">) => {
     const asset: Asset = {
@@ -55,21 +59,17 @@ const Assets = () => {
   };
 
   const handleDeleteAsset = (id: string) => {
-    toast.warning("Are you sure you want to delete this asset?", {
-      action: {
-        label: "Delete",
-        onClick: () => {
-          setAssets(assets.filter(asset => asset.id !== id));
-          toast.success("Asset deleted successfully");
-        },
-      },
-      cancel: {
-        label: "No",
-        onClick: () => {
-          toast.info("Deletion cancelled");
-        },
-      },
-    });
+    setAssetToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (assetToDelete) {
+      setAssets(assets.filter(asset => asset.id !== assetToDelete));
+      setDeleteDialogOpen(false);
+      setAssetToDelete(null);
+      toast.success("Asset deleted successfully");
+    }
   };
 
   const handleDeleteSoldAsset = (id: string) => {
@@ -166,6 +166,11 @@ const Assets = () => {
         open={isAddDialogOpen} 
         onOpenChange={setIsAddDialogOpen} 
         onSubmit={handleAddAsset}
+      />
+      <DeleteAssetDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={confirmDelete}
       />
     </div>
   );

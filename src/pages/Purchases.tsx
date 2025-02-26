@@ -1,4 +1,3 @@
-
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +21,8 @@ import { Search, Plus, Filter, Circle } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { AddPurchaseDialog } from "@/components/AddPurchaseDialog";
+import { toast } from "sonner";
 
 interface Transaction {
   id: string;
@@ -44,35 +45,6 @@ const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
-// Mock data
-const mockTransactions: Transaction[] = [
-  {
-    id: "1",
-    date: new Date(),
-    number: "PO-2024001",
-    approver: "John Doe",
-    dueDate: new Date(),
-    status: "pending",
-    itemCount: 5,
-    priority: "High",
-    tags: ["Office Supplies"],
-    type: "invoice",
-  },
-  {
-    id: "2",
-    date: new Date(),
-    number: "SH-2024001",
-    approver: "Jane Smith",
-    dueDate: new Date(),
-    status: "completed",
-    itemCount: 3,
-    priority: "Medium",
-    tags: ["Electronics"],
-    type: "shipment",
-  },
-  // Add more mock data for different types
-];
-
 const statusColors = {
   pending: "bg-yellow-500",
   completed: "bg-green-500",
@@ -82,17 +54,55 @@ const statusColors = {
 const Purchases = () => {
   const [activeTab, setActiveTab] = useState("invoices");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [transactions, setTransactions] = useState<Transaction[]>([
+    {
+      id: "1",
+      date: new Date(),
+      number: "PO-2024001",
+      approver: "John Doe",
+      dueDate: new Date(),
+      status: "pending",
+      itemCount: 5,
+      priority: "High",
+      tags: ["Office Supplies"],
+      type: "invoice",
+    },
+    {
+      id: "2",
+      date: new Date(),
+      number: "SH-2024001",
+      approver: "Jane Smith",
+      dueDate: new Date(),
+      status: "completed",
+      itemCount: 3,
+      priority: "Medium",
+      tags: ["Electronics"],
+      type: "shipment",
+    },
+  ]);
 
   // Mock data for statistics
   const unpaidAmount = 15000000;
   const overdueCount = 3;
   const last30DaysPayments = 45000000;
 
-  const filteredTransactions = mockTransactions.filter(transaction => {
+  const filteredTransactions = transactions.filter(transaction => {
     const matchesType = activeTab === transaction.type + "s";
     const matchesStatus = statusFilter === "all" || statusFilter === transaction.status;
     return matchesType && matchesStatus;
   });
+
+  const handleAddPurchase = (data: Omit<Transaction, "id">) => {
+    const newTransaction: Transaction = {
+      ...data,
+      id: Math.random().toString(36).substr(2, 9),
+      date: new Date(data.date),
+      dueDate: data.dueDate ? new Date(data.dueDate) : null,
+    };
+    setTransactions([...transactions, newTransaction]);
+    toast.success("Purchase added successfully");
+  };
 
   return (
     <div className="flex h-screen w-full">
@@ -149,7 +159,7 @@ const Purchases = () => {
                   <TabsTrigger value="requests">Requests</TabsTrigger>
                 </TabsList>
               </Tabs>
-              <Button>
+              <Button onClick={() => setIsAddDialogOpen(true)}>
                 <Plus className="mr-2" />
                 Add New
               </Button>
@@ -254,6 +264,11 @@ const Purchases = () => {
           </div>
         </div>
       </div>
+      <AddPurchaseDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        onSubmit={handleAddPurchase}
+      />
     </div>
   );
 };
