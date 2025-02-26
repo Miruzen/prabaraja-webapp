@@ -1,14 +1,13 @@
 
 import { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus } from "lucide-react";
+import { toast } from "sonner";
 import { AddPurchaseDialog } from "@/components/AddPurchaseDialog";
 import { StatsCards } from "@/components/purchases/StatsCards";
 import { PurchaseFilters } from "@/components/purchases/PurchaseFilters";
 import { TransactionsTable } from "@/components/purchases/TransactionsTable";
-import { toast } from "sonner";
+import { PurchaseHeader } from "@/components/purchases/PurchaseHeader";
+import { PurchaseTabControls } from "@/components/purchases/PurchaseTabControls";
 
 interface Transaction {
   id: string;
@@ -89,12 +88,7 @@ const Purchases = () => {
     <div className="flex h-screen w-full">
       <Sidebar />
       <div className="flex-1 overflow-auto">
-        <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
-          <div className="max-w-7xl mx-auto">
-            <h1 className="text-2xl font-semibold text-white">Purchases</h1>
-            <p className="text-white/80">Manage your purchase transactions</p>
-          </div>
-        </div>
+        <PurchaseHeader />
 
         <div className="max-w-7xl mx-auto p-6">
           <StatsCards
@@ -104,21 +98,11 @@ const Purchases = () => {
           />
 
           <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList>
-                  <TabsTrigger value="invoices">Invoices</TabsTrigger>
-                  <TabsTrigger value="shipments">Shipments</TabsTrigger>
-                  <TabsTrigger value="orders">Orders</TabsTrigger>
-                  <TabsTrigger value="offers">Offers</TabsTrigger>
-                  <TabsTrigger value="requests">Requests</TabsTrigger>
-                </TabsList>
-              </Tabs>
-              <Button onClick={() => setIsAddDialogOpen(true)}>
-                <Plus className="mr-2" />
-                Add New
-              </Button>
-            </div>
+            <PurchaseTabControls
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              onAddNew={() => setIsAddDialogOpen(true)}
+            />
 
             <PurchaseFilters
               statusFilter={statusFilter}
