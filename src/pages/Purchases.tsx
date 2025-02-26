@@ -1,27 +1,13 @@
+
+import { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Filter, Circle } from "lucide-react";
-import { format } from "date-fns";
-import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { Plus } from "lucide-react";
 import { AddPurchaseDialog } from "@/components/AddPurchaseDialog";
+import { StatsCards } from "@/components/purchases/StatsCards";
+import { PurchaseFilters } from "@/components/purchases/PurchaseFilters";
+import { TransactionsTable } from "@/components/purchases/TransactionsTable";
 import { toast } from "sonner";
 
 interface Transaction {
@@ -36,20 +22,6 @@ interface Transaction {
   tags: string[];
   type: "invoice" | "shipment" | "order" | "offer" | "request";
 }
-
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(amount);
-};
-
-const statusColors = {
-  pending: "bg-yellow-500",
-  completed: "bg-green-500",
-  cancelled: "bg-red-500",
-};
 
 const Purchases = () => {
   const [activeTab, setActiveTab] = useState("invoices");
@@ -82,7 +54,6 @@ const Purchases = () => {
     },
   ]);
 
-  // Mock data for statistics
   const unpaidAmount = 15000000;
   const overdueCount = 3;
   const last30DaysPayments = 45000000;
@@ -93,7 +64,17 @@ const Purchases = () => {
     return matchesType && matchesStatus;
   });
 
-  const handleAddPurchase = (data: Omit<Transaction, "id">) => {
+  const handleAddPurchase = (data: {
+    date: string;
+    number: string;
+    approver: string;
+    dueDate: string;
+    status: "pending" | "completed" | "cancelled";
+    itemCount: number;
+    priority: "High" | "Medium" | "Low";
+    tags: string[];
+    type: "invoice" | "shipment" | "order" | "offer" | "request";
+  }) => {
     const newTransaction: Transaction = {
       ...data,
       id: Math.random().toString(36).substr(2, 9),
@@ -108,7 +89,6 @@ const Purchases = () => {
     <div className="flex h-screen w-full">
       <Sidebar />
       <div className="flex-1 overflow-auto">
-        {/* Header */}
         <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
           <div className="max-w-7xl mx-auto">
             <h1 className="text-2xl font-semibold text-white">Purchases</h1>
@@ -116,38 +96,13 @@ const Purchases = () => {
           </div>
         </div>
 
-        {/* Stats */}
         <div className="max-w-7xl mx-auto p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            {/* Unpaid Invoices */}
-            <div className="bg-white rounded-lg p-6 border shadow-sm">
-              <h3 className="text-sm font-medium text-muted-foreground">Unpaid Invoices</h3>
-              <p className="text-2xl font-bold mt-2">{formatCurrency(unpaidAmount)}</p>
-              <div className="flex items-center mt-2">
-                <span className="text-orange-500 text-sm">Pending Payment</span>
-              </div>
-            </div>
+          <StatsCards
+            unpaidAmount={unpaidAmount}
+            overdueCount={overdueCount}
+            last30DaysPayments={last30DaysPayments}
+          />
 
-            {/* Overdue Invoices */}
-            <div className="bg-white rounded-lg p-6 border shadow-sm">
-              <h3 className="text-sm font-medium text-muted-foreground">Overdue Invoices</h3>
-              <p className="text-2xl font-bold mt-2">{overdueCount} invoices</p>
-              <div className="flex items-center mt-2">
-                <span className="text-red-500 text-sm">Requires Immediate Action</span>
-              </div>
-            </div>
-
-            {/* Last 30 Days Payments */}
-            <div className="bg-white rounded-lg p-6 border shadow-sm">
-              <h3 className="text-sm font-medium text-muted-foreground">Last 30 Days Payments</h3>
-              <p className="text-2xl font-bold mt-2">{formatCurrency(last30DaysPayments)}</p>
-              <div className="flex items-center mt-2">
-                <span className="text-green-500 text-sm">Total Expenses</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Tabs and Filters */}
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -165,102 +120,12 @@ const Purchases = () => {
               </Button>
             </div>
 
-            {/* Filters */}
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search transactions..." className="pl-9" />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Status filter" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">
-                    <span className="flex items-center gap-2">
-                      All Status
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="pending">
-                    <span className="flex items-center gap-2">
-                      <Circle className={cn("h-3 w-3 fill-current text-yellow-500")} />
-                      Pending
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="completed">
-                    <span className="flex items-center gap-2">
-                      <Circle className={cn("h-3 w-3 fill-current text-green-500")} />
-                      Completed
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="cancelled">
-                    <span className="flex items-center gap-2">
-                      <Circle className={cn("h-3 w-3 fill-current text-red-500")} />
-                      Cancelled
-                    </span>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <Button variant="outline">
-                <Filter className="mr-2 h-4 w-4" />
-                More Filters
-              </Button>
-            </div>
+            <PurchaseFilters
+              statusFilter={statusFilter}
+              onStatusFilterChange={setStatusFilter}
+            />
 
-            {/* Transactions Table */}
-            <div className="border rounded-lg">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>No.</TableHead>
-                    <TableHead>Staff Approval</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Items</TableHead>
-                    <TableHead>Priority</TableHead>
-                    <TableHead>Tags</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredTransactions.map((transaction) => (
-                    <TableRow key={transaction.id}>
-                      <TableCell>{format(transaction.date, 'dd/MM/yyyy')}</TableCell>
-                      <TableCell>{transaction.number}</TableCell>
-                      <TableCell>{transaction.approver}</TableCell>
-                      <TableCell>{transaction.dueDate ? format(transaction.dueDate, 'dd/MM/yyyy') : '-'}</TableCell>
-                      <TableCell>
-                        <span className={cn(
-                          "inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-xs font-medium",
-                          {
-                            "bg-yellow-100 text-yellow-800": transaction.status === "pending",
-                            "bg-green-100 text-green-800": transaction.status === "completed",
-                            "bg-red-100 text-red-800": transaction.status === "cancelled",
-                          }
-                        )}>
-                          <Circle className={cn("h-2 w-2 fill-current", statusColors[transaction.status])} />
-                          {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
-                        </span>
-                      </TableCell>
-                      <TableCell>{transaction.itemCount} items</TableCell>
-                      <TableCell>
-                        <span className={cn(
-                          "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
-                          {
-                            "bg-red-100 text-red-800": transaction.priority === "High",
-                            "bg-yellow-100 text-yellow-800": transaction.priority === "Medium",
-                            "bg-green-100 text-green-800": transaction.priority === "Low",
-                          }
-                        )}>
-                          {transaction.priority}
-                        </span>
-                      </TableCell>
-                      <TableCell>{transaction.tags.join(", ")}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <TransactionsTable transactions={filteredTransactions} />
           </div>
         </div>
       </div>

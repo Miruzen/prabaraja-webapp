@@ -40,16 +40,21 @@ export function AddPurchaseDialog({ open, onOpenChange, onSubmit }: AddPurchaseD
     number: "",
     approver: "",
     dueDate: "",
-    status: "pending" as const,
+    status: "pending",
     itemCount: 0,
-    priority: "Medium" as const,
+    priority: "Medium",
     tags: [""],
-    type: "invoice" as const,
+    type: "invoice",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    onSubmit({
+      ...formData,
+      status: formData.status as "pending" | "completed" | "cancelled",
+      priority: formData.priority as "High" | "Medium" | "Low",
+      type: formData.type as "invoice" | "shipment" | "order" | "offer" | "request"
+    });
     onOpenChange(false);
   };
 
