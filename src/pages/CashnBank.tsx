@@ -16,7 +16,7 @@ interface Account {
   accountNumber?: string;
 }
 
-const Reports = () => {
+const CashnBank = () => {
   const [accounts, setAccounts] = useState<Account[]>([
     { code: "1-10001", name: "Cash", balance: "Rp 4.490.871" },
     { code: "1-10002", name: "Bank Account", balance: "Rp 1.800.002" },
@@ -116,4 +116,4 @@ const Reports = () => {
   );
 };
 
-export default Reports;
+export default CashnBank;
