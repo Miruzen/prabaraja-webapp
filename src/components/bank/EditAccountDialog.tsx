@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -89,7 +88,7 @@ export function EditAccountDialog({ open, onOpenChange, account, onSave }: EditA
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[400px] p-0 bg-black">
+              <PopoverContent className="w-[400px] p-0"> {/* Removed bg-black */}
                 <Command>
                   <CommandInput 
                     placeholder="Search bank..."
