@@ -32,6 +32,7 @@ interface AccountActionDropdownProps {
 export function AccountActionDropdown({ account, onArchive, onEdit, onUnarchive, onDelete }: AccountActionDropdownProps) {
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showUnarchiveDialog, setShowUnarchiveDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
 
   const handleArchiveConfirm = () => {
@@ -48,9 +49,10 @@ export function AccountActionDropdown({ account, onArchive, onEdit, onUnarchive,
     }
   };
 
-  const handleUnarchive = () => {
+  const handleUnarchiveConfirm = () => {
     if (onUnarchive) {
       onUnarchive(account);
+      setShowUnarchiveDialog(false);
       toast.success("Account unarchived successfully");
     }
   };
@@ -62,7 +64,7 @@ export function AccountActionDropdown({ account, onArchive, onEdit, onUnarchive,
 
   const renderArchivedActions = () => (
     <DropdownMenuContent align="end" className="w-[200px] bg-white">
-      <DropdownMenuItem onClick={handleUnarchive} className="cursor-pointer">
+      <DropdownMenuItem onClick={() => setShowUnarchiveDialog(true)} className="cursor-pointer">
         <ArchiveRestore className="mr-2 h-4 w-4 text-[#10B981]" />
         Unarchive
       </DropdownMenuItem>
@@ -118,8 +120,23 @@ export function AccountActionDropdown({ account, onArchive, onEdit, onUnarchive,
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleArchiveConfirm}>Archive</AlertDialogAction>
+            <AlertDialogCancel>No</AlertDialogCancel>
+            <AlertDialogAction onClick={handleArchiveConfirm}>Yes</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showUnarchiveDialog} onOpenChange={setShowUnarchiveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unarchive Account</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to unarchive this account?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>No</AlertDialogCancel>
+            <AlertDialogAction onClick={handleUnarchiveConfirm}>Yes</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -133,8 +150,8 @@ export function AccountActionDropdown({ account, onArchive, onEdit, onUnarchive,
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm}>Delete</AlertDialogAction>
+            <AlertDialogCancel>No</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm}>Yes</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
