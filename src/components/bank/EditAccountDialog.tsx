@@ -3,11 +3,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import { Command, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useState, useEffect } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Account {
   code: string;
@@ -39,7 +44,10 @@ const INDONESIAN_BANKS = [
 
 export function EditAccountDialog({ open, onOpenChange, account, onSave }: EditAccountDialogProps) {
   const [formData, setFormData] = useState<Account | null>(account);
-  const [openCombobox, setOpenCombobox] = useState(false);
+
+  useEffect(() => {
+    setFormData(account);
+  }, [account]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,44 +80,21 @@ export function EditAccountDialog({ open, onOpenChange, account, onSave }: EditA
           
           <div className="space-y-2">
             <Label htmlFor="bankName">Bank Name</Label>
-            <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={openCombobox}
-                  className="w-full justify-between"
-                >
-                  {formData?.bankName || "Select bank..."}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[400px] p-0 bg-white">
-                <Command>
-                  <CommandEmpty>No bank found.</CommandEmpty>
-                  <CommandGroup className="max-h-[200px] overflow-y-auto">
-                    {INDONESIAN_BANKS.map((bank) => (
-                      <CommandItem
-                        key={bank}
-                        value={bank}
-                        onSelect={() => {
-                          setFormData({ ...formData!, bankName: bank });
-                          setOpenCombobox(false);
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            formData?.bankName === bank ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {bank}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </Command>
-              </PopoverContent>
-            </Popover>
+            <Select 
+              value={formData?.bankName || ""} 
+              onValueChange={(value) => setFormData({ ...formData!, bankName: value })}
+            >
+              <SelectTrigger id="bankName" className="w-full">
+                <SelectValue placeholder="Select bank..." />
+              </SelectTrigger>
+              <SelectContent className="max-h-[240px]">
+                {INDONESIAN_BANKS.map((bank) => (
+                  <SelectItem key={bank} value={bank}>
+                    {bank}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
@@ -126,8 +111,8 @@ export function EditAccountDialog({ open, onOpenChange, account, onSave }: EditA
             <Input
               id="startBalance"
               type="number"
-              value={formData?.balance.replace(/[^\d-]/g, '') || ""}
-              onChange={(e) => setFormData({ ...formData!, balance: `Rp ${parseInt(e.target.value).toLocaleString('id-ID')}` })}
+              value={formData?.balance?.replace(/[^\d-]/g, '') || ""}
+              onChange={(e) => setFormData({ ...formData!, balance: `Rp ${parseInt(e.target.value || "0").toLocaleString('id-ID')}` })}
             />
           </div>
 
