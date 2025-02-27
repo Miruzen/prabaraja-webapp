@@ -45,7 +45,6 @@ export function AccountActionDropdown({ account, onArchive, onEdit, onUnarchive,
     if (onDelete) {
       onDelete(account);
       setShowDeleteDialog(false);
-      toast.success("Account deleted permanently");
     }
   };
 
@@ -53,7 +52,6 @@ export function AccountActionDropdown({ account, onArchive, onEdit, onUnarchive,
     if (onUnarchive) {
       onUnarchive(account);
       setShowUnarchiveDialog(false);
-      toast.success("Account unarchived successfully");
     }
   };
 

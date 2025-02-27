@@ -7,6 +7,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { CreateAccountDialog } from "@/components/bank/CreateAccountDialog";
 import { AccountActionDropdown } from "@/components/bank/AccountActionDropdown";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface Account {
   code: string;
@@ -45,6 +46,20 @@ const CashnBank = () => {
         ? { ...account, archived: true }
         : account
     ));
+  };
+
+  const handleUnarchiveAccount = (accountToUnarchive: Account) => {
+    setAccounts(accounts.map(account => 
+      account.code === accountToUnarchive.code 
+        ? { ...account, archived: false }
+        : account
+    ));
+    toast.success("Account unarchived successfully");
+  };
+
+  const handleDeleteAccount = (accountToDelete: Account) => {
+    setAccounts(accounts.filter(account => account.code !== accountToDelete.code));
+    toast.success("Account deleted permanently");
   };
 
   const handleEditAccount = (updatedAccount: Account) => {
@@ -105,6 +120,8 @@ const CashnBank = () => {
                         account={account}
                         onArchive={handleArchiveAccount}
                         onEdit={handleEditAccount}
+                        onUnarchive={handleUnarchiveAccount}
+                        onDelete={handleDeleteAccount}
                       />
                     </TableCell>
                   </TableRow>
