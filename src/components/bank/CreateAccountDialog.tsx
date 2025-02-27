@@ -3,11 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useState } from "react"
-import { Plus } from "lucide-react"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Check, ChevronsUpDown, Plus } from "lucide-react"
+import { cn } from "@/lib/utils"
 
-// List of major banks in Indonesia
 const INDONESIAN_BANKS = [
   "Bank Central Asia (BCA)",
   "Bank Mandiri",
@@ -35,6 +36,8 @@ interface CreateAccountDialogProps {
 
 export function CreateAccountDialog({ onSubmit }: CreateAccountDialogProps) {
   const [open, setOpen] = useState(false)
+  const [openCombobox, setOpenCombobox] = useState(false)
+  const [searchValue, setSearchValue] = useState("")
   const [formData, setFormData] = useState<CreateAccountFormData>({
     accountName: "",
     accountCode: "",
@@ -55,6 +58,10 @@ export function CreateAccountDialog({ onSubmit }: CreateAccountDialogProps) {
       startBalance: 0
     })
   }
+
+  const filteredBanks = INDONESIAN_BANKS.filter(bank =>
+    bank.toLowerCase().includes(searchValue.toLowerCase())
+  ).slice(0, 6)
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -89,22 +96,50 @@ export function CreateAccountDialog({ onSubmit }: CreateAccountDialogProps) {
           </div>
           <div className="grid w-full items-center gap-2">
             <Label htmlFor="bankName">Bank Name</Label>
-            <Select
-              value={formData.bankName}
-              onValueChange={(value) => setFormData({ ...formData, bankName: value })}
-              required
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a bank" />
-              </SelectTrigger>
-              <SelectContent>
-                {INDONESIAN_BANKS.map((bank) => (
-                  <SelectItem key={bank} value={bank}>
-                    {bank}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={openCombobox}
+                  className="w-full justify-between"
+                >
+                  {formData.bankName || "Select bank..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[400px] p-0">
+                <Command>
+                  <CommandInput 
+                    placeholder="Search bank..."
+                    value={searchValue}
+                    onValueChange={setSearchValue}
+                  />
+                  <CommandEmpty>No bank found.</CommandEmpty>
+                  <CommandGroup className="max-h-[300px] overflow-auto">
+                    {filteredBanks.map((bank) => (
+                      <CommandItem
+                        key={bank}
+                        value={bank}
+                        onSelect={() => {
+                          setFormData({ ...formData, bankName: bank });
+                          setOpenCombobox(false);
+                          setSearchValue("");
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            formData.bankName === bank ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {bank}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
           <div className="grid w-full items-center gap-2">
             <Label htmlFor="accountNumber">Bank Account Number</Label>
