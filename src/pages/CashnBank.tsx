@@ -2,10 +2,10 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Switch } from "@/components/ui/switch";
 import { Sidebar } from "@/components/Sidebar";
 import { CreateAccountDialog } from "@/components/bank/CreateAccountDialog";
 import { AccountActionDropdown } from "@/components/bank/AccountActionDropdown";
-import { toast } from "sonner";
 import { useState } from "react";
 
 interface Account {
@@ -14,16 +14,18 @@ interface Account {
   balance: string;
   bankName?: string;
   accountNumber?: string;
+  archived?: boolean;
 }
 
 const CashnBank = () => {
   const [accounts, setAccounts] = useState<Account[]>([
-    { code: "1-10001", name: "Cash", balance: "Rp 4.490.871" },
-    { code: "1-10002", name: "Bank Account", balance: "Rp 1.800.002" },
-    { code: "1-10003", name: "Giro", balance: "Rp 184.651.887" },
-    { code: "1-10004", name: "Test AKUN", balance: "Rp 0" },
-    { code: "1-10012", name: "Test BCA", balance: "(Rp 151.623.322)" },
+    { code: "1-10001", name: "Cash", balance: "Rp 4.490.871", archived: false },
+    { code: "1-10002", name: "Bank Account", balance: "Rp 1.800.002", archived: false },
+    { code: "1-10003", name: "Giro", balance: "Rp 184.651.887", archived: false },
+    { code: "1-10004", name: "Test AKUN", balance: "Rp 0", archived: false },
+    { code: "1-10012", name: "Test BCA", balance: "(Rp 151.623.322)", archived: false },
   ]);
+  const [showArchived, setShowArchived] = useState(false);
 
   const handleCreateAccount = (formData: any) => {
     const newAccount = {
@@ -32,13 +34,34 @@ const CashnBank = () => {
       balance: `Rp ${formData.startBalance.toLocaleString('id-ID')}`,
       bankName: formData.bankName,
       accountNumber: formData.accountNumber,
+      archived: false,
     };
     setAccounts([...accounts, newAccount]);
-    toast.success("Account created successfully!");
   };
 
-  const handleAction = (action: string) => {
-    toast.info(`${action} feature coming soon!`);
+  const handleArchiveAccount = (accountToArchive: Account) => {
+    setAccounts(accounts.map(account => 
+      account.code === accountToArchive.code 
+        ? { ...account, archived: true }
+        : account
+    ));
+  };
+
+  const handleEditAccount = (updatedAccount: Account) => {
+    setAccounts(accounts.map(account =>
+      account.code === updatedAccount.code
+        ? { ...account, ...updatedAccount }
+        : account
+    ));
+  };
+
+  const visibleAccounts = accounts.filter(account => account.archived === showArchived);
+
+  const calculateTotal = (accounts: Account[]) => {
+    return accounts.reduce((total, account) => {
+      const amount = parseInt(account.balance.replace(/[^\d-]/g, '')) || 0;
+      return total + amount;
+    }, 0);
   };
 
   return (
@@ -53,6 +76,13 @@ const CashnBank = () => {
           <div className="mb-6">
             <div className="flex justify-between items-center mb-4">
               <CreateAccountDialog onSubmit={handleCreateAccount} />
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Show archived accounts</span>
+                <Switch
+                  checked={showArchived}
+                  onCheckedChange={setShowArchived}
+                />
+              </div>
             </div>
 
             <Table>
@@ -65,13 +95,17 @@ const CashnBank = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {accounts.map((account) => (
+                {visibleAccounts.map((account) => (
                   <TableRow key={account.code}>
                     <TableCell>{account.code}</TableCell>
                     <TableCell>{account.name}</TableCell>
                     <TableCell>{account.balance}</TableCell>
                     <TableCell>
-                      <AccountActionDropdown onSelect={handleAction} />
+                      <AccountActionDropdown
+                        account={account}
+                        onArchive={handleArchiveAccount}
+                        onEdit={handleEditAccount}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -85,13 +119,15 @@ const CashnBank = () => {
                 <CardTitle className="flex items-center text-lg">
                   Cash & bank balance
                   <span className="ml-2 bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">
-                    {accounts.length}
+                    {visibleAccounts.length}
                   </span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-sm text-gray-500">Total</div>
-                <div className="text-xl font-semibold">Rp 30.337.696</div>
+                <div className="text-xl font-semibold">
+                  Rp {calculateTotal(visibleAccounts).toLocaleString('id-ID')}
+                </div>
               </CardContent>
             </Card>
 
