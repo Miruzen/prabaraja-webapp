@@ -1,18 +1,13 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 
 interface Account {
   code: string;
@@ -44,6 +39,7 @@ const INDONESIAN_BANKS = [
 
 export function EditAccountDialog({ open, onOpenChange, account, onSave }: EditAccountDialogProps) {
   const [formData, setFormData] = useState<Account | null>(account);
+  const [openCombobox, setOpenCombobox] = useState(false);
 
   useEffect(() => {
     setFormData(account);
@@ -67,6 +63,9 @@ export function EditAccountDialog({ open, onOpenChange, account, onSave }: EditA
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Edit Account</DialogTitle>
+          <DialogDescription>
+            Make changes to your account details here.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -80,21 +79,46 @@ export function EditAccountDialog({ open, onOpenChange, account, onSave }: EditA
           
           <div className="space-y-2">
             <Label htmlFor="bankName">Bank Name</Label>
-            <Select 
-              value={formData?.bankName || ""} 
-              onValueChange={(value) => setFormData({ ...formData!, bankName: value })}
-            >
-              <SelectTrigger id="bankName" className="w-full">
-                <SelectValue placeholder="Select bank..." />
-              </SelectTrigger>
-              <SelectContent className="max-h-[240px]">
-                {INDONESIAN_BANKS.map((bank) => (
-                  <SelectItem key={bank} value={bank}>
-                    {bank}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={openCombobox}
+                  className="w-full justify-between"
+                  type="button"
+                >
+                  {formData?.bankName || "Select bank..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[200px] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Search bank..." />
+                  <CommandEmpty>No bank found.</CommandEmpty>
+                  <CommandGroup className="max-h-[200px] overflow-y-auto">
+                    {INDONESIAN_BANKS.map((bank) => (
+                      <CommandItem
+                        key={bank}
+                        value={bank}
+                        onSelect={() => {
+                          setFormData({ ...formData!, bankName: bank });
+                          setOpenCombobox(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            formData?.bankName === bank ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {bank}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className="space-y-2">
