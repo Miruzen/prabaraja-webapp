@@ -1,10 +1,22 @@
+
+import { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { ChevronDown, Search } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Link } from "react-router-dom";
 
 interface SalesData {
+  id: string;
   date: string;
   number: string;
   customer: string;
@@ -16,6 +28,7 @@ interface SalesData {
 
 const salesData: SalesData[] = [
   {
+    id: "10005",
     date: "18/02/2025",
     number: "Sales Invoice #10005",
     customer: "AABVCDD",
@@ -25,6 +38,7 @@ const salesData: SalesData[] = [
     total: "Rp 13.440"
   },
   {
+    id: "10004",
     date: "18/02/2025",
     number: "Sales Invoice #10004",
     customer: "AABVCDD",
@@ -34,6 +48,7 @@ const salesData: SalesData[] = [
     total: "Rp 133.440"
   },
   {
+    id: "10003",
     date: "14/02/2025",
     number: "Sales Invoice #10003",
     customer: "Nanda goaw putra",
@@ -45,6 +60,47 @@ const salesData: SalesData[] = [
 ];
 
 const Sales = () => {
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  const [masterChecked, setMasterChecked] = useState(false);
+
+  // Handle master checkbox change
+  const handleMasterCheckboxChange = (checked: boolean) => {
+    setMasterChecked(checked);
+    if (checked) {
+      // Select all rows
+      setSelectedRows(salesData.map(row => row.id));
+    } else {
+      // Deselect all rows
+      setSelectedRows([]);
+    }
+  };
+
+  // Handle individual row checkbox change
+  const handleRowCheckboxChange = (id: string, checked: boolean) => {
+    if (checked) {
+      setSelectedRows([...selectedRows, id]);
+    } else {
+      setSelectedRows(selectedRows.filter(rowId => rowId !== id));
+    }
+  };
+
+  // Update master checkbox state based on selected rows
+  const updateMasterCheckboxState = (selectedIds: string[]) => {
+    if (selectedIds.length === 0) {
+      setMasterChecked(false);
+    } else if (selectedIds.length === salesData.length) {
+      setMasterChecked(true);
+    } else {
+      setMasterChecked(false);
+    }
+  };
+
+  // Update master checkbox when selectedRows changes
+  useState(() => {
+    updateMasterCheckboxState(selectedRows);
+  });
+
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
@@ -69,9 +125,18 @@ const Sales = () => {
                 <Button variant="outline" className="w-40">
                   Invoice <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
-                <Button variant="outline" className="w-40">
-                  All status <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
+                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="All status" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    <SelectItem value="">All status</SelectItem>
+                    <SelectItem value="unpaid">Unpaid</SelectItem>
+                    <SelectItem value="waiting_payment">Waiting Payment</SelectItem>
+                    <SelectItem value="late_payment">Late Payment</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="flex space-x-2">
                 <div className="relative">
@@ -92,7 +157,12 @@ const Sales = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[30px]"><input type="checkbox" /></TableHead>
+                  <TableHead className="w-[40px]">
+                    <Checkbox 
+                      checked={masterChecked}
+                      onCheckedChange={handleMasterCheckboxChange}
+                    />
+                  </TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Number</TableHead>
                   <TableHead>Customer</TableHead>
@@ -103,11 +173,20 @@ const Sales = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {salesData.map((row, index) => (
-                  <TableRow key={index}>
-                    <TableCell><input type="checkbox" /></TableCell>
+                {salesData.map((row) => (
+                  <TableRow key={row.id}>
+                    <TableCell>
+                      <Checkbox 
+                        checked={selectedRows.includes(row.id)}
+                        onCheckedChange={(checked) => handleRowCheckboxChange(row.id, !!checked)}
+                      />
+                    </TableCell>
                     <TableCell>{row.date}</TableCell>
-                    <TableCell className="text-indigo-600">{row.number}</TableCell>
+                    <TableCell>
+                      <Link to={`/invoice/${row.id}`} className="text-indigo-600 hover:underline">
+                        {row.number}
+                      </Link>
+                    </TableCell>
                     <TableCell className="text-indigo-600">{row.customer}</TableCell>
                     <TableCell>{row.dueDate}</TableCell>
                     <TableCell>
