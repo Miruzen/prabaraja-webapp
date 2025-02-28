@@ -32,12 +32,12 @@ function App() {
             <Route path="/purchases" element={<Purchases />} />
             <Route path="/products" element={<Products />} />
             <Route path="/contacts" element={<Contacts />} />
-            <Route path="/cashbank" element={<CashnBank />} />
             <Route path="/expenses" element={<Expenses />} />
             <Route path="/assets" element={<Assets />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />
+            <Route path="/cash-bank" element={<CashnBank />} />
           </Routes>
           <Toaster />
         </Router>
