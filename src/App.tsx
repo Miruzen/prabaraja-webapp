@@ -16,6 +16,7 @@ import Reports from "@/pages/Reports";
 import Settings from "@/pages/Settings";
 import InvoiceDetail from "@/pages/InvoiceDetail";
 import NotFound from "@/pages/NotFound";
+import Index from "./pages/Index";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -26,7 +27,7 @@ function App() {
       <TooltipProvider>
         <Router>
           <Routes>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/" element={<Index />} />
             <Route path="/sales" element={<Sales />} />
             <Route path="/invoice/:id" element={<InvoiceDetail />} />
             <Route path="/purchases" element={<Purchases />} />
@@ -36,6 +37,7 @@ function App() {
             <Route path="/assets" element={<Assets />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="*" element={<NotFound />} />
             <Route path="/cash-bank" element={<CashnBank />} />
           </Routes>
