@@ -4,9 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -90,7 +90,7 @@ export function EditAccountDialog({ open, onOpenChange, account, onSave }: EditA
               <SelectTrigger id="bankName" className="w-full">
                 <SelectValue placeholder="Select bank..." />
               </SelectTrigger>
-              <SelectContent className="max-h-[240px]">
+              <SelectContent className="max-h-[200px] overflow-y-auto bg-white">
                 {INDONESIAN_BANKS.map((bank) => (
                   <SelectItem key={bank} value={bank}>
                     {bank}
