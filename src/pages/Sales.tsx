@@ -2,9 +2,11 @@
 import { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Search } from "lucide-react";
+import { Search, DollarSign, CheckCircle, Clock, AlertTriangle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Link } from "react-router-dom";
 
 interface SalesData {
   id: string;
@@ -50,12 +52,16 @@ const salesData: SalesData[] = [
   },
 ];
 
+type FilterCategory = "all" | "unpaid" | "paid" | "late" | "awaiting";
+
 const Sales = () => {
+  const [filterCategory, setFilterCategory] = useState<FilterCategory>("all");
+  
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
       <div className="flex-1 overflow-auto">
-        <div className="bg-gradient-to-r from-[#818CF8] to-[#C084FC] p-6">
+        <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
           <h1 className="text-2xl font-semibold text-white">Sales</h1>
         </div>
 
@@ -67,6 +73,45 @@ const Sales = () => {
               <Button variant="link" className="text-gray-500">Delivery</Button>
               <Button variant="link" className="text-gray-500">Order</Button>
               <Button variant="link" className="text-gray-500">Quotation</Button>
+            </div>
+
+            {/* Filter Bar */}
+            <div className="grid grid-cols-4 gap-4 mb-6">
+              <Button 
+                variant="outline"
+                onClick={() => setFilterCategory("unpaid")}
+                className={`flex items-center justify-center gap-2 p-4 h-auto ${filterCategory === "unpaid" ? "bg-orange-50 border-orange-300 text-orange-700" : ""}`}
+              >
+                <DollarSign className="h-5 w-5 text-orange-500" />
+                <span>Unpaid</span>
+              </Button>
+              
+              <Button 
+                variant="outline"
+                onClick={() => setFilterCategory("paid")}
+                className={`flex items-center justify-center gap-2 p-4 h-auto ${filterCategory === "paid" ? "bg-green-50 border-green-300 text-green-700" : ""}`}
+              >
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                <span>Paid</span>
+              </Button>
+              
+              <Button 
+                variant="outline"
+                onClick={() => setFilterCategory("late")}
+                className={`flex items-center justify-center gap-2 p-4 h-auto ${filterCategory === "late" ? "bg-red-50 border-red-300 text-red-700" : ""}`}
+              >
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+                <span>Late Payment</span>
+              </Button>
+              
+              <Button 
+                variant="outline"
+                onClick={() => setFilterCategory("awaiting")}
+                className={`flex items-center justify-center gap-2 p-4 h-auto ${filterCategory === "awaiting" ? "bg-yellow-50 border-yellow-300 text-yellow-700" : ""}`}
+              >
+                <Clock className="h-5 w-5 text-yellow-500" />
+                <span>Awaiting Payment</span>
+              </Button>
             </div>
 
             {/* Actions Bar */}
@@ -108,7 +153,11 @@ const Sales = () => {
                 {salesData.map((row) => (
                   <TableRow key={row.id}>
                     <TableCell>{row.date}</TableCell>
-                    <TableCell>{row.number}</TableCell>
+                    <TableCell>
+                      <Link to={`/invoice/${row.id}`} className="text-indigo-600 hover:underline">
+                        {row.number}
+                      </Link>
+                    </TableCell>
                     <TableCell className="text-indigo-600">{row.customer}</TableCell>
                     <TableCell>{row.dueDate}</TableCell>
                     <TableCell>
