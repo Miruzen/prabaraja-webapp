@@ -1,12 +1,10 @@
-
 import { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Search, DollarSign, CheckCircle, Clock, AlertTriangle, ChevronDown, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { 
   Select,
   SelectContent,
@@ -14,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue 
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 interface SalesData {
   id: string;
@@ -219,6 +218,7 @@ type FilterCategory = "all" | "unpaid" | "paid" | "late" | "awaiting";
 
 const Sales = () => {
   const [filterCategory, setFilterCategory] = useState<FilterCategory>("all");
+  const navigate = useNavigate();
   
   // Filter sales data based on selected category
   const filteredSalesData = filterCategory === "all" 
@@ -250,8 +250,7 @@ const Sales = () => {
           <div className="space-y-6">
             {/* Top Navigation */}
             <div className="flex items-center space-x-6 border-b border-gray-200 pb-4">
-              <Button variant="link" className="text-indigo-600 font-medium">Invoice</Button>
-              <Button variant="link" className="text-gray-500">Delivery</Button>
+              <Button variant="link" className="text-indigo-600 font-medium">Delivery</Button>
               <Button variant="link" className="text-gray-500">Order</Button>
               <Button variant="link" className="text-gray-500">Quotation</Button>
             </div>
@@ -259,11 +258,7 @@ const Sales = () => {
             {/* Actions Bar */}
             <div className="flex justify-between items-center">
               <div className="flex space-x-2 items-center">
-                <Button variant="outline" className="w-40">
-                  Invoice
-                </Button>
-                
-                {/* Filter Dropdown */}
+                {/* Category Filter Dropdown */}
                 <Select value={filterCategory} onValueChange={(value) => setFilterCategory(value as FilterCategory)}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Filter by status" />
@@ -299,13 +294,16 @@ const Sales = () => {
               </div>
               
               <div className="flex flex-col space-y-2 items-end">
-                <Button className="bg-indigo-600 text-white">
+                <Button 
+                  className="bg-indigo-600 text-white"
+                  onClick={() => navigate('/create-new-sales')}
+                >
                   <Plus className="mr-1 h-4 w-4" />
                   Create new sales
                 </Button>
                 <div className="relative">
                   <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                  <input
+                  <Input
                     type="text"
                     placeholder="Search..."
                     className="pl-10 pr-4 py-2 border border-gray-300 rounded-md w-[200px] focus:outline-none focus:ring-2 focus:ring-indigo-500"

@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 
 import Dashboard from "@/pages/Dashboard";
 import Sales from "@/pages/Sales";
+import CreateNewSales from "@/pages/CreateNewSales";
 import Purchases from "@/pages/Purchases";
 import Products from "@/pages/Products";
 import Contacts from "@/pages/Contacts";
@@ -29,6 +30,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/sales" element={<Sales />} />
+            <Route path="/create-new-sales" element={<CreateNewSales />} />
             <Route path="/invoice/:id" element={<InvoiceDetail />} />
             <Route path="/purchases" element={<Purchases />} />
             <Route path="/products" element={<Products />} />
