@@ -4,9 +4,16 @@ import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Search, DollarSign, CheckCircle, Clock, AlertTriangle } from "lucide-react";
+import { Search, DollarSign, CheckCircle, Clock, AlertTriangle, ChevronDown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue 
+} from "@/components/ui/select";
 
 interface SalesData {
   id: string;
@@ -57,6 +64,24 @@ type FilterCategory = "all" | "unpaid" | "paid" | "late" | "awaiting";
 const Sales = () => {
   const [filterCategory, setFilterCategory] = useState<FilterCategory>("all");
   
+  // Filter sales data based on selected category
+  const filteredSalesData = filterCategory === "all" 
+    ? salesData 
+    : salesData.filter(sale => {
+        switch(filterCategory) {
+          case "paid":
+            return sale.status === "Paid";
+          case "unpaid":
+            return sale.status === "Unpaid";
+          case "late":
+            return sale.status === "Late Payment";
+          case "awaiting":
+            return sale.status === "Awaiting Payment";
+          default:
+            return true;
+        }
+      });
+  
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
@@ -75,64 +100,60 @@ const Sales = () => {
               <Button variant="link" className="text-gray-500">Quotation</Button>
             </div>
 
-            {/* Filter Bar */}
-            <div className="grid grid-cols-4 gap-4 mb-6">
-              <Button 
-                variant="outline"
-                onClick={() => setFilterCategory("unpaid")}
-                className={`flex items-center justify-center gap-2 p-4 h-auto ${filterCategory === "unpaid" ? "bg-orange-50 border-orange-300 text-orange-700" : ""}`}
-              >
-                <DollarSign className="h-5 w-5 text-orange-500" />
-                <span>Unpaid</span>
-              </Button>
-              
-              <Button 
-                variant="outline"
-                onClick={() => setFilterCategory("paid")}
-                className={`flex items-center justify-center gap-2 p-4 h-auto ${filterCategory === "paid" ? "bg-green-50 border-green-300 text-green-700" : ""}`}
-              >
-                <CheckCircle className="h-5 w-5 text-green-500" />
-                <span>Paid</span>
-              </Button>
-              
-              <Button 
-                variant="outline"
-                onClick={() => setFilterCategory("late")}
-                className={`flex items-center justify-center gap-2 p-4 h-auto ${filterCategory === "late" ? "bg-red-50 border-red-300 text-red-700" : ""}`}
-              >
-                <AlertTriangle className="h-5 w-5 text-red-500" />
-                <span>Late Payment</span>
-              </Button>
-              
-              <Button 
-                variant="outline"
-                onClick={() => setFilterCategory("awaiting")}
-                className={`flex items-center justify-center gap-2 p-4 h-auto ${filterCategory === "awaiting" ? "bg-yellow-50 border-yellow-300 text-yellow-700" : ""}`}
-              >
-                <Clock className="h-5 w-5 text-yellow-500" />
-                <span>Awaiting Payment</span>
-              </Button>
-            </div>
-
             {/* Actions Bar */}
             <div className="flex justify-between items-center">
-              <div className="flex space-x-2">
+              <div className="flex space-x-2 items-center">
                 <Button variant="outline" className="w-40">
                   Invoice
                 </Button>
+                
+                {/* Filter Dropdown */}
+                <Select value={filterCategory} onValueChange={(value) => setFilterCategory(value as FilterCategory)}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="unpaid">
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-orange-500" />
+                        <span>Unpaid</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="paid">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <span>Paid</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="late">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 text-red-500" />
+                        <span>Late Payment</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="awaiting">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-yellow-500" />
+                        <span>Awaiting Payment</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="flex space-x-2">
+              
+              <div className="flex flex-col space-y-2 items-end">
+                <Button className="bg-indigo-600 text-white">
+                  Create new sales
+                </Button>
                 <div className="relative">
                   <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                   <input
                     type="text"
                     placeholder="Search..."
-                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-md w-[300px] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-md w-[200px] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
-                <Button className="bg-indigo-600 text-white">
-                  Create new sales
-                </Button>
               </div>
             </div>
 
@@ -150,7 +171,7 @@ const Sales = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {salesData.map((row) => (
+                {filteredSalesData.map((row) => (
                   <TableRow key={row.id}>
                     <TableCell>{row.date}</TableCell>
                     <TableCell>
