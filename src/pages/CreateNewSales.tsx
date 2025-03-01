@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue 
 } from "@/components/ui/select";
-import { Calendar, X } from "lucide-react";
+import { Calendar, X, Plus, CheckCircle, Clock, AlertTriangle, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 
 interface SalesItemType {
@@ -22,6 +22,13 @@ interface SalesItemType {
   quantity: number;
   price: number;
 }
+
+// The latest invoice data to determine the next invoice number
+const getLatestInvoiceNumber = () => {
+  // Get the latest invoice from the mock data in Sales.tsx
+  // In a real app, this would come from an API or database
+  return "10015"; // This is the latest in our current mock data
+};
 
 const CreateNewSales = () => {
   const navigate = useNavigate();
@@ -33,6 +40,14 @@ const CreateNewSales = () => {
   const [items, setItems] = useState<SalesItemType[]>([
     { id: '1', name: '', quantity: 1, price: 0 }
   ]);
+
+  // Generate invoice number on initial load
+  useEffect(() => {
+    const lastInvoiceNumber = getLatestInvoiceNumber();
+    const numericPart = parseInt(lastInvoiceNumber);
+    const nextInvoiceNumber = (numericPart + 1).toString();
+    setInvoiceNumber(nextInvoiceNumber);
+  }, []);
 
   const calculateTotal = () => {
     return items.reduce((total, item) => total + (item.quantity * item.price), 0);
@@ -60,6 +75,13 @@ const CreateNewSales = () => {
     }));
   };
 
+  const formatCurrency = (amount: number) => {
+    return amount.toLocaleString('id-ID', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -79,6 +101,22 @@ const CreateNewSales = () => {
     // Here you would typically save the invoice data
     toast.success("Sales invoice created successfully!");
     navigate("/sales");
+  };
+
+  // Helper function to render status icon
+  const renderStatusIcon = (statusValue: string) => {
+    switch(statusValue) {
+      case "paid":
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case "unpaid":
+        return <DollarSign className="h-4 w-4 text-orange-500" />;
+      case "awaiting":
+        return <Clock className="h-4 w-4 text-yellow-500" />;
+      case "late":
+        return <AlertTriangle className="h-4 w-4 text-red-500" />;
+      default:
+        return null;
+    }
   };
 
   return (
@@ -149,12 +187,40 @@ const CreateNewSales = () => {
                       <Label htmlFor="status">Status</Label>
                       <Select value={status} onValueChange={setStatus}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
+                          <SelectValue placeholder="Select status">
+                            {status && (
+                              <div className="flex items-center gap-2">
+                                {renderStatusIcon(status)}
+                                <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
+                              </div>
+                            )}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="unpaid">Unpaid</SelectItem>
-                          <SelectItem value="paid">Paid</SelectItem>
-                          <SelectItem value="awaiting">Awaiting Payment</SelectItem>
+                          <SelectItem value="unpaid">
+                            <div className="flex items-center gap-2">
+                              <DollarSign className="h-4 w-4 text-orange-500" />
+                              <span>Unpaid</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="paid">
+                            <div className="flex items-center gap-2">
+                              <CheckCircle className="h-4 w-4 text-green-500" />
+                              <span>Paid</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="late">
+                            <div className="flex items-center gap-2">
+                              <AlertTriangle className="h-4 w-4 text-red-500" />
+                              <span>Late Payment</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="awaiting">
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-yellow-500" />
+                              <span>Awaiting Payment</span>
+                            </div>
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -169,7 +235,7 @@ const CreateNewSales = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {items.map((item, index) => (
+                    {items.map((item) => (
                       <div key={item.id} className="grid grid-cols-12 gap-4 items-center">
                         <div className="col-span-5">
                           <Input 
@@ -197,7 +263,7 @@ const CreateNewSales = () => {
                           />
                         </div>
                         <div className="col-span-1 text-right">
-                          Rp {(item.price * item.quantity).toLocaleString('id-ID')}
+                          Rp {formatCurrency(item.price * item.quantity)}
                         </div>
                         <div className="col-span-1 flex justify-center">
                           <Button 
@@ -219,6 +285,7 @@ const CreateNewSales = () => {
                       className="w-full mt-4"
                       onClick={addItem}
                     >
+                      <Plus className="h-4 w-4 mr-2" />
                       Add Item
                     </Button>
                     
@@ -226,11 +293,11 @@ const CreateNewSales = () => {
                       <div className="w-1/3 space-y-2">
                         <div className="flex justify-between">
                           <span>Subtotal:</span>
-                          <span>Rp {calculateTotal().toLocaleString('id-ID')}</span>
+                          <span>Rp {formatCurrency(calculateTotal())}</span>
                         </div>
                         <div className="flex justify-between font-semibold text-lg">
                           <span>Total:</span>
-                          <span>Rp {calculateTotal().toLocaleString('id-ID')}</span>
+                          <span>Rp {formatCurrency(calculateTotal())}</span>
                         </div>
                       </div>
                     </div>
