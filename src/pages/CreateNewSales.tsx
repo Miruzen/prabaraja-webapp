@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
@@ -15,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Calendar, X, Plus, CheckCircle, Clock, AlertTriangle, DollarSign } from "lucide-react";
 import { toast } from "sonner";
+import { formatCurrency } from "@/lib/utils";
 
 interface SalesItemType {
   id: string;
@@ -23,11 +23,25 @@ interface SalesItemType {
   price: number;
 }
 
-// The latest invoice data to determine the next invoice number
+const getMockSalesData = () => {
+  return [
+    {
+      id: "10005",
+      date: "18/02/2025",
+      number: "Sales Invoice #10005",
+      customer: "AABVCDD",
+      dueDate: "18/02/2025",
+      status: "Paid",
+      total: "Rp 13.440"
+    },
+    // ... keep existing code (other mock data entries)
+  ];
+};
+
 const getLatestInvoiceNumber = () => {
-  // Get the latest invoice from the mock data in Sales.tsx
-  // In a real app, this would come from an API or database
-  return "10015"; // This is the latest in our current mock data
+  const salesData = getMockSalesData();
+  const sortedData = [...salesData].sort((a, b) => parseInt(b.id) - parseInt(a.id));
+  return sortedData.length > 0 ? sortedData[0].id : "10000";
 };
 
 const CreateNewSales = () => {
@@ -40,14 +54,28 @@ const CreateNewSales = () => {
   const [items, setItems] = useState<SalesItemType[]>([
     { id: '1', name: '', quantity: 1, price: 0 }
   ]);
+  
+  const [isFormValid, setIsFormValid] = useState(false);
 
-  // Generate invoice number on initial load
   useEffect(() => {
     const lastInvoiceNumber = getLatestInvoiceNumber();
     const numericPart = parseInt(lastInvoiceNumber);
     const nextInvoiceNumber = (numericPart + 1).toString();
     setInvoiceNumber(nextInvoiceNumber);
   }, []);
+
+  useEffect(() => {
+    const requiredFieldsFilled = 
+      customerName !== "" && 
+      invoiceNumber !== "" && 
+      invoiceDate !== "" && 
+      dueDate !== "";
+    
+    const itemsValid = items.length > 0 && 
+      items.every(item => item.name !== "" && item.quantity > 0);
+    
+    setIsFormValid(requiredFieldsFilled && itemsValid);
+  }, [customerName, invoiceNumber, invoiceDate, dueDate, items]);
 
   const calculateTotal = () => {
     return items.reduce((total, item) => total + (item.quantity * item.price), 0);
@@ -75,8 +103,8 @@ const CreateNewSales = () => {
     }));
   };
 
-  const formatCurrency = (amount: number) => {
-    return amount.toLocaleString('id-ID', {
+  const formatPrice = (price: number) => {
+    return price.toLocaleString('id-ID', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     });
@@ -85,25 +113,28 @@ const CreateNewSales = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Form validation
-    if (!customerName || !invoiceNumber || !invoiceDate || !dueDate) {
+    if (!isFormValid) {
       toast.error("Please fill in all required fields");
       return;
     }
 
-    // Check if items are filled
-    const emptyItems = items.some(item => !item.name);
-    if (emptyItems) {
-      toast.error("Please fill in all item names");
-      return;
-    }
+    const today = new Date();
+    const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
+    
+    const newInvoice = {
+      id: invoiceNumber,
+      date: formattedDate,
+      number: `Sales Invoice #${invoiceNumber}`,
+      customer: customerName,
+      dueDate: new Date(dueDate).toLocaleDateString('id-ID', {day: '2-digit', month: '2-digit', year: 'numeric'}).replace(/\//g, '/'),
+      status: status.charAt(0).toUpperCase() + status.slice(1),
+      total: `Rp ${formatPrice(calculateTotal())}`
+    };
 
-    // Here you would typically save the invoice data
     toast.success("Sales invoice created successfully!");
     navigate("/sales");
   };
 
-  // Helper function to render status icon
   const renderStatusIcon = (statusValue: string) => {
     switch(statusValue) {
       case "paid":
@@ -130,7 +161,6 @@ const CreateNewSales = () => {
         <div className="p-6">
           <form onSubmit={handleSubmit}>
             <div className="space-y-6">
-              {/* Customer Information */}
               <Card>
                 <CardHeader>
                   <CardTitle>Customer Information</CardTitle>
@@ -228,7 +258,6 @@ const CreateNewSales = () => {
                 </CardContent>
               </Card>
 
-              {/* Items */}
               <Card>
                 <CardHeader>
                   <CardTitle>Items</CardTitle>
@@ -258,12 +287,13 @@ const CreateNewSales = () => {
                             type="number" 
                             min="0"
                             placeholder="Price" 
+                            prefix="Rp"
                             value={item.price}
                             onChange={(e) => updateItem(item.id, 'price', parseFloat(e.target.value) || 0)}
                           />
                         </div>
                         <div className="col-span-1 text-right">
-                          Rp {formatCurrency(item.price * item.quantity)}
+                          Rp {formatPrice(item.price * item.quantity)}
                         </div>
                         <div className="col-span-1 flex justify-center">
                           <Button 
@@ -293,11 +323,11 @@ const CreateNewSales = () => {
                       <div className="w-1/3 space-y-2">
                         <div className="flex justify-between">
                           <span>Subtotal:</span>
-                          <span>Rp {formatCurrency(calculateTotal())}</span>
+                          <span>Rp {formatPrice(calculateTotal())}</span>
                         </div>
                         <div className="flex justify-between font-semibold text-lg">
                           <span>Total:</span>
-                          <span>Rp {formatCurrency(calculateTotal())}</span>
+                          <span>Rp {formatPrice(calculateTotal())}</span>
                         </div>
                       </div>
                     </div>
@@ -305,7 +335,6 @@ const CreateNewSales = () => {
                 </CardContent>
               </Card>
 
-              {/* Actions */}
               <div className="flex justify-end space-x-4">
                 <Button 
                   type="button"
@@ -314,7 +343,11 @@ const CreateNewSales = () => {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" className="bg-indigo-600 text-white">
+                <Button 
+                  type="submit" 
+                  className="bg-indigo-600 text-white"
+                  disabled={!isFormValid}
+                >
                   Create Invoice
                 </Button>
               </div>
