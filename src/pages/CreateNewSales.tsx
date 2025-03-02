@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import CustomerInfoSection from "@/components/sales/CustomerInfoSection";
 import SalesItemsSection from "@/components/sales/SalesItemsSection";
 import { getLatestInvoiceNumber, formatPriceWithSeparator } from "@/utils/salesUtils";
+import { salesData } from "@/data/salesData";
 
 interface SalesItemType {
   id: string;
@@ -76,6 +77,9 @@ const CreateNewSales = () => {
       status: status.charAt(0).toUpperCase() + status.slice(1),
       total: `Rp ${formatPrice(calculateTotal())}`
     };
+
+    // Add the new invoice to the beginning of the salesData array
+    salesData.unshift(newInvoice);
 
     toast.success("Sales invoice created successfully!");
     navigate("/sales");

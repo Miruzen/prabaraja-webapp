@@ -15,7 +15,7 @@ const Sales = () => {
   
   // Filter sales data based on selected category
   const filteredSalesData = filterCategory === "all" 
-    ? salesData 
+    ? [...salesData] 
     : salesData.filter(sale => {
         switch(filterCategory) {
           case "paid":
@@ -39,6 +39,19 @@ const Sales = () => {
       )
     : filteredSalesData;
   
+  // Sort data by date (newest to oldest)
+  const sortedData = [...searchFilteredData].sort((a, b) => {
+    // Convert DD/MM/YYYY format to Date objects for comparison
+    const [aDay, aMonth, aYear] = a.date.split("/").map(Number);
+    const [bDay, bMonth, bYear] = b.date.split("/").map(Number);
+    
+    const dateA = new Date(aYear, aMonth - 1, aDay);
+    const dateB = new Date(bYear, bMonth - 1, bDay);
+    
+    // Sort in descending order (newest first)
+    return dateB.getTime() - dateA.getTime();
+  });
+  
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
@@ -60,8 +73,8 @@ const Sales = () => {
               setSearchValue={setSearchValue}
             />
 
-            {/* Table */}
-            <SalesTable filteredSalesData={searchFilteredData} />
+            {/* Table - pass sorted data instead of just filtered data */}
+            <SalesTable filteredSalesData={sortedData} />
 
             {/* Summary Cards */}
             <SalesSummaryCards salesData={salesData} />
