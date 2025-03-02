@@ -12,6 +12,8 @@ type FilterCategory = "all" | "unpaid" | "paid" | "late" | "awaiting";
 const Sales = () => {
   const [filterCategory, setFilterCategory] = useState<FilterCategory>("all");
   const [searchValue, setSearchValue] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
   
   // Filter sales data based on selected category
   const filteredSalesData = filterCategory === "all" 
@@ -52,6 +54,22 @@ const Sales = () => {
     return dateB.getTime() - dateA.getTime();
   });
   
+  // Calculate pagination
+  const totalPages = Math.ceil(sortedData.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedData = sortedData.slice(startIndex, startIndex + pageSize);
+  
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Handle page size change
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+  
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
@@ -73,8 +91,16 @@ const Sales = () => {
               setSearchValue={setSearchValue}
             />
 
-            {/* Table - pass sorted data instead of just filtered data */}
-            <SalesTable filteredSalesData={sortedData} />
+            {/* Table with pagination - pass paginated data */}
+            <SalesTable 
+              filteredSalesData={paginatedData}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={sortedData.length}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+            />
 
             {/* Summary Cards */}
             <SalesSummaryCards salesData={salesData} />
