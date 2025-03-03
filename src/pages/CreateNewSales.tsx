@@ -30,6 +30,7 @@ const CreateNewSales = () => {
   const [isFormValid, setIsFormValid] = useState(false);
 
   useEffect(() => {
+    // Get the latest invoice number when component mounts
     const lastInvoiceNumber = getLatestInvoiceNumber();
     const numericPart = parseInt(lastInvoiceNumber);
     const nextInvoiceNumber = (numericPart + 1).toString();
@@ -65,21 +66,42 @@ const CreateNewSales = () => {
       return;
     }
 
-    const today = new Date();
-    const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
+    // Format the invoice date properly for consistency
+    let formattedInvoiceDate;
+    if (invoiceDate) {
+      const date = new Date(invoiceDate);
+      formattedInvoiceDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+    } else {
+      // Fallback to today if no date provided
+      const today = new Date();
+      formattedInvoiceDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
+    }
     
+    // Format due date properly
+    let formattedDueDate;
+    if (dueDate) {
+      const date = new Date(dueDate);
+      formattedDueDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+    } else {
+      formattedDueDate = formattedInvoiceDate; // Default to invoice date if not provided
+    }
+    
+    // Create the new invoice with properly formatted data
     const newInvoice = {
       id: invoiceNumber,
-      date: formattedDate,
+      date: formattedInvoiceDate,
       number: `Sales Invoice #${invoiceNumber}`,
       customer: customerName,
-      dueDate: new Date(dueDate).toLocaleDateString('id-ID', {day: '2-digit', month: '2-digit', year: 'numeric'}).replace(/\//g, '/'),
+      dueDate: formattedDueDate,
       status: status.charAt(0).toUpperCase() + status.slice(1),
       total: `Rp ${formatPrice(calculateTotal())}`
     };
 
     // Add the new invoice to the beginning of the salesData array
     salesData.unshift(newInvoice);
+
+    console.log("Added new invoice:", newInvoice);
+    console.log("Updated salesData length:", salesData.length);
 
     toast.success("Sales invoice created successfully!");
     navigate("/sales");
