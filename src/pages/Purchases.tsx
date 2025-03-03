@@ -1,7 +1,5 @@
-
 import { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
-import { toast } from "sonner";
 import { AddPurchaseDialog } from "@/components/AddPurchaseDialog";
 import { StatsCards } from "@/components/purchases/StatsCards";
 import { PurchaseFilters } from "@/components/purchases/PurchaseFilters";
@@ -229,31 +227,7 @@ const Purchases = () => {
     return matchesType && matchesStatus;
   });
 
-  const handleAddPurchase = (data: {
-    date: string;
-    number: string;
-    approver: string;
-    dueDate: string;
-    status: "pending" | "completed" | "cancelled";
-    itemCount: number;
-    priority: "High" | "Medium" | "Low";
-    tags: string[];
-    type: "invoice" | "shipment" | "order" | "offer" | "request";
-  }) => {
-    const newTransaction: Transaction = {
-      ...data,
-      id: Math.random().toString(36).substr(2, 9),
-      date: new Date(data.date),
-      dueDate: data.dueDate ? new Date(data.dueDate) : null,
-    };
-    setTransactions([...transactions, newTransaction]);
-    toast.success(`New ${data.type} added successfully`);
-  };
-
-  const handleAddNew = (type: "invoice" | "shipment" | "order" | "offer" | "request") => {
-    setPurchaseType(type);
-    setIsAddDialogOpen(true);
-  };
+  const showEmptyState = filteredTransactions.length === 0;
 
   return (
     <div className="flex h-screen w-full">
@@ -272,7 +246,6 @@ const Purchases = () => {
             <PurchaseTabControls
               activeTab={activeTab}
               setActiveTab={setActiveTab}
-              onAddNew={handleAddNew}
             />
 
             <PurchaseFilters
@@ -280,16 +253,17 @@ const Purchases = () => {
               onStatusFilterChange={setStatusFilter}
             />
 
-            <TransactionsTable transactions={filteredTransactions} />
+            {showEmptyState ? (
+              <div className="border rounded-lg p-8 text-center">
+                <p className="text-gray-500 mb-4">There haven't been any {activeTab.slice(0, -1)} added to the table yet.</p>
+                <p className="text-sm text-gray-400">Use the Add New button to create one.</p>
+              </div>
+            ) : (
+              <TransactionsTable transactions={filteredTransactions} />
+            )}
           </div>
         </div>
       </div>
-      <AddPurchaseDialog
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        onSubmit={handleAddPurchase}
-        defaultType={purchaseType}
-      />
     </div>
   );
 };

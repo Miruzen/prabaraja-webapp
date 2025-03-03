@@ -8,6 +8,7 @@ import Dashboard from "@/pages/Dashboard";
 import Sales from "@/pages/Sales";
 import CreateNewSales from "@/pages/CreateNewSales";
 import Purchases from "@/pages/Purchases";
+import CreateNewPurchase from "@/pages/CreateNewPurchase";
 import Products from "@/pages/Products";
 import Contacts from "@/pages/Contacts";
 import CashnBank from "@/pages/CashnBank";
@@ -33,6 +34,7 @@ function App() {
             <Route path="/create-new-sales" element={<CreateNewSales />} />
             <Route path="/invoice/:id" element={<InvoiceDetail />} />
             <Route path="/purchases" element={<Purchases />} />
+            <Route path="/create-new-purchase" element={<CreateNewPurchase />} />
             <Route path="/products" element={<Products />} />
             <Route path="/contacts" element={<Contacts />} />
             <Route path="/expenses" element={<Expenses />} />
