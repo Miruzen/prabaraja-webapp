@@ -6,10 +6,13 @@ import { SalesFilters } from "@/components/sales/SalesFilters";
 import { SalesTable } from "@/components/sales/SalesTable";
 import { SalesSummaryCards } from "@/components/sales/SalesSummaryCards";
 import { salesData } from "@/data/salesData";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 
 type FilterCategory = "all" | "unpaid" | "paid" | "late" | "awaiting";
 
 const Sales = () => {
+  // Add active tab state
+  const [activeTab, setActiveTab] = useState("delivery");
   const [filterCategory, setFilterCategory] = useState<FilterCategory>("all");
   const [searchValue, setSearchValue] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -69,6 +72,55 @@ const Sales = () => {
     setPageSize(size);
     setCurrentPage(1); // Reset to first page when changing page size
   };
+
+  // Render empty table for Order and Quotation tabs
+  const renderEmptyTable = (message: string) => (
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Date</TableHead>
+            <TableHead>Number</TableHead>
+            <TableHead>Customer</TableHead>
+            <TableHead>Due date</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Total</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow>
+            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+              {message}
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </div>
+  );
+  
+  // Render content based on active tab
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "delivery":
+        return (
+          <SalesTable 
+            filteredSalesData={paginatedData}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            totalItems={sortedData.length}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+          />
+        );
+      case "order":
+        return renderEmptyTable("There haven't been any Orders added to the table yet.");
+      case "quotation":
+        return renderEmptyTable("There haven't been any Quotations added to the table yet.");
+      default:
+        return null;
+    }
+  };
   
   return (
     <div className="flex h-screen bg-background">
@@ -80,30 +132,29 @@ const Sales = () => {
 
         <div className="p-6">
           <div className="space-y-6">
-            {/* Top Navigation */}
-            <SalesNavTabs />
-
-            {/* Actions Bar */}
-            <SalesFilters 
-              filterCategory={filterCategory}
-              setFilterCategory={setFilterCategory}
-              searchValue={searchValue}
-              setSearchValue={setSearchValue}
+            {/* Top Navigation - Pass the active tab state */}
+            <SalesNavTabs 
+              activeTab={activeTab} 
+              setActiveTab={setActiveTab} 
             />
 
-            {/* Table with pagination - pass paginated data */}
-            <SalesTable 
-              filteredSalesData={paginatedData}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              pageSize={pageSize}
-              totalItems={sortedData.length}
-              onPageChange={handlePageChange}
-              onPageSizeChange={handlePageSizeChange}
-            />
+            {/* Only show filters for delivery tab */}
+            {activeTab === "delivery" && (
+              <SalesFilters 
+                filterCategory={filterCategory}
+                setFilterCategory={setFilterCategory}
+                searchValue={searchValue}
+                setSearchValue={setSearchValue}
+              />
+            )}
 
-            {/* Summary Cards */}
-            <SalesSummaryCards salesData={salesData} />
+            {/* Render content based on active tab */}
+            {renderTabContent()}
+
+            {/* Only show summary cards for delivery tab */}
+            {activeTab === "delivery" && (
+              <SalesSummaryCards salesData={salesData} />
+            )}
           </div>
         </div>
       </div>
