@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { AddPurchaseDialog } from "@/components/AddPurchaseDialog";
 import { StatsCards } from "@/components/purchases/StatsCards";
@@ -9,11 +10,25 @@ import { PurchaseHeader } from "@/components/purchases/PurchaseHeader";
 import { PurchaseTabControls } from "@/components/purchases/PurchaseTabControls";
 import { Purchase, PURCHASES_STORAGE_KEY, PurchaseType } from "@/types/purchase";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { 
+  FileText, 
+  Package, 
+  ShoppingCart, 
+  Tag, 
+  FileQuestion,
+  Plus
+} from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow, isAfter, parseISO, subDays } from "date-fns";
 
 const Purchases = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>("invoices");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState<boolean>(false);
@@ -151,6 +166,11 @@ const Purchases = () => {
     setIsAddDialogOpen(true);
   };
 
+  // Create new navigation function to go to create purchase page
+  const navigateToCreatePurchase = (type: PurchaseType) => {
+    navigate(`/create-purchase?type=${type}`);
+  };
+
   const showEmptyState = filteredTransactions.length === 0;
 
   return (
@@ -179,9 +199,32 @@ const Purchases = () => {
                 statusFilter={statusFilter}
                 onStatusFilterChange={setStatusFilter}
               />
-              <Button onClick={openAddDialog} className="ml-auto">
-                <Plus className="mr-2 h-4 w-4" /> Add New
-              </Button>
+              
+              {/* New Add Button with Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="ml-auto">
+                    <Plus className="mr-2 h-4 w-4" /> Add New
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-white">
+                  <DropdownMenuItem onClick={() => navigateToCreatePurchase("invoice")}>
+                    <FileText className="mr-2 h-4 w-4" /> New Invoice
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigateToCreatePurchase("shipment")}>
+                    <Package className="mr-2 h-4 w-4" /> New Shipment
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigateToCreatePurchase("order")}>
+                    <ShoppingCart className="mr-2 h-4 w-4" /> New Order
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigateToCreatePurchase("offer")}>
+                    <Tag className="mr-2 h-4 w-4" /> New Offer
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigateToCreatePurchase("request")}>
+                    <FileQuestion className="mr-2 h-4 w-4" /> New Request
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             {showEmptyState ? (
