@@ -16,7 +16,9 @@ const INDONESIAN_BANKS = [
   "Bank Permata",
   "Panin Bank",
   "Bank OCBC NISP",
-  "Bank UOB Indonesia"
+  "Bank UOB Indonesia",
+  "Bank ABCD",
+  "Bank EFGH"
 ];
 
 interface CreateAccountFormData {
@@ -66,7 +68,7 @@ export function CreateAccountDialog({ onSubmit }: CreateAccountDialogProps) {
           Create Account
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-50">
         <DialogHeader>
           <DialogTitle>Create New Account</DialogTitle>
         </DialogHeader>
@@ -91,18 +93,16 @@ export function CreateAccountDialog({ onSubmit }: CreateAccountDialogProps) {
           </div>
           <div className="grid w-full items-center gap-2">
             <Label htmlFor="bankName">Bank Name</Label>
-            <Select
-              value={formData.bankName}
-              onValueChange={(value) => setFormData({ ...formData, bankName: value })}
-              required
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select bank..." />
-              </SelectTrigger>
-              <SelectContent>
-                {INDONESIAN_BANKS.map((bank) => (
+            <Select 
+                value={formData?.bankName || ""} 
+                onValueChange={(value) => setFormData({ ...formData!, bankName: value })}>
+                <SelectTrigger id="bankName" className="w-full">
+                  <SelectValue placeholder="Select bank..." />
+                </SelectTrigger>
+                  <SelectContent className="max-h-[200px] overflow-y-scroll bg-white">
+                      {INDONESIAN_BANKS.map((bank) => (
                   <SelectItem key={bank} value={bank}>
-                    {bank}
+                      {bank}
                   </SelectItem>
                 ))}
               </SelectContent>
