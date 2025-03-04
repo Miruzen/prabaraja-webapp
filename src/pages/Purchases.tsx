@@ -9,6 +9,7 @@ import { TransactionsTable } from "@/components/purchases/TransactionsTable";
 import { PurchaseHeader } from "@/components/purchases/PurchaseHeader";
 import { PurchaseTabControls } from "@/components/purchases/PurchaseTabControls";
 import { Purchase, PURCHASES_STORAGE_KEY, PurchaseType } from "@/types/purchase";
+import { CreateNewPurchase} from "@components/purchases/CreateNewPurchase " ;
 import { Button } from "@/components/ui/button";
 import { 
   DropdownMenu, 
@@ -168,7 +169,7 @@ const Purchases = () => {
 
   // Create new navigation function to go to create purchase page
   const navigateToCreatePurchase = (type: PurchaseType) => {
-    navigate(`/create-purchase?type=${type}`);
+    navigate(`/create-new-purchase?type=${type}`);
   };
 
   const showEmptyState = filteredTransactions.length === 0;
