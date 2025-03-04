@@ -23,3 +23,6 @@ export interface Purchase {
   type: PurchaseType;
   items: PurchaseItem[];
 }
+
+// Local storage keys
+export const PURCHASES_STORAGE_KEY = "purchases";

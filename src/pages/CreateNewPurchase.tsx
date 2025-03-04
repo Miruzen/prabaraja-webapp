@@ -5,11 +5,11 @@ import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-// Import the new components
+// Import the components
 import { PurchaseInformationForm } from "@/components/purchases/PurchaseInformationForm";
 import { PurchaseItemsForm } from "@/components/purchases/PurchaseItemsForm";
 import { PurchaseFormHeader } from "@/components/purchases/PurchaseFormHeader";
-import { PurchaseItem, PurchaseType, PurchaseStatus, PurchasePriority } from "@/types/purchase";
+import { Purchase, PurchaseItem, PurchaseType, PurchaseStatus, PurchasePriority, PURCHASES_STORAGE_KEY } from "@/types/purchase";
 
 const CreateNewPurchase = () => {
   const navigate = useNavigate();
@@ -63,7 +63,7 @@ const CreateNewPurchase = () => {
     }
 
     // Create new purchase object
-    const newPurchase = {
+    const newPurchase: Purchase = {
       id: Math.random().toString(36).substr(2, 9),
       date: new Date(date),
       number,
@@ -72,16 +72,34 @@ const CreateNewPurchase = () => {
       status,
       itemCount: items.length,
       priority,
-      tags: tags.split(',').map(tag => tag.trim()),
+      tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag !== ""),
       type: purchaseType,
       items,
     };
 
-    // In a real application, we would push this to a state manager or make an API call
-    // For this example, we'll use localStorage to persist data between page refreshes
-    const existingPurchases = JSON.parse(localStorage.getItem('purchases') || '[]');
+    // Get existing purchases from localStorage
+    const existingPurchasesString = localStorage.getItem(PURCHASES_STORAGE_KEY);
+    let existingPurchases: Purchase[] = [];
+    
+    if (existingPurchasesString) {
+      try {
+        // Parse the JSON string and ensure dates are properly converted back to Date objects
+        const parsedPurchases = JSON.parse(existingPurchasesString);
+        existingPurchases = parsedPurchases.map((purchase: any) => ({
+          ...purchase,
+          date: new Date(purchase.date),
+          dueDate: purchase.dueDate ? new Date(purchase.dueDate) : null
+        }));
+      } catch (error) {
+        console.error("Error parsing purchases from localStorage:", error);
+      }
+    }
+
+    // Add new purchase to the beginning of the array
     const updatedPurchases = [newPurchase, ...existingPurchases];
-    localStorage.setItem('purchases', JSON.stringify(updatedPurchases));
+    
+    // Store in localStorage
+    localStorage.setItem(PURCHASES_STORAGE_KEY, JSON.stringify(updatedPurchases));
 
     toast.success(`${getTypeTitle()} created successfully!`);
     navigate("/purchases");
