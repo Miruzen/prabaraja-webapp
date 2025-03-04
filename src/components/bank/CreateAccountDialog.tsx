@@ -1,13 +1,12 @@
-
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useState } from "react"
-import { Command, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Check, ChevronsUpDown, Plus } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useState } from "react";
+import { Command, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const INDONESIAN_BANKS = [
   "Bank Central Asia (BCA)",
@@ -20,43 +19,48 @@ const INDONESIAN_BANKS = [
   "Panin Bank",
   "Bank OCBC NISP",
   "Bank UOB Indonesia"
-] as const
+];
 
 interface CreateAccountFormData {
-  accountName: string
-  accountCode: string
-  bankName: string
-  accountNumber: string
-  startBalance: number
+  accountName: string;
+  accountCode: string;
+  bankName: string;
+  accountNumber: string;
+  startBalance: number;
 }
 
 interface CreateAccountDialogProps {
-  onSubmit: (data: CreateAccountFormData) => void
+  onSubmit: (data: CreateAccountFormData) => void;
 }
 
 export function CreateAccountDialog({ onSubmit }: CreateAccountDialogProps) {
-  const [open, setOpen] = useState(false)
-  const [openCombobox, setOpenCombobox] = useState(false)
+  const [open, setOpen] = useState(false);
+  const [openCombobox, setOpenCombobox] = useState(false);
   const [formData, setFormData] = useState<CreateAccountFormData>({
     accountName: "",
     accountCode: "",
     bankName: "",
     accountNumber: "",
     startBalance: 0
-  })
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSubmit(formData)
-    setOpen(false)
+    e.preventDefault();
+    if (formData.startBalance < 0) {
+      alert("Start Balance must be a positive number.");
+      return;
+    }
+    onSubmit(formData);
+    setOpen(false);
+    setOpenCombobox(false); // Close the combobox
     setFormData({
       accountName: "",
       accountCode: "",
       bankName: "",
       accountNumber: "",
       startBalance: 0
-    })
-  }
+    });
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -105,7 +109,7 @@ export function CreateAccountDialog({ onSubmit }: CreateAccountDialogProps) {
               </PopoverTrigger>
               <PopoverContent className="w-[400px] p-0 bg-white">
                 <Command>
-                  <CommandEmpty>No bank found.</CommandEmpty>
+                  <CommandEmpty>No matching banks found. Try a different search.</CommandEmpty>
                   <CommandGroup className="max-h-[200px] overflow-y-auto">
                     {INDONESIAN_BANKS.map((bank) => (
                       <CommandItem
@@ -147,6 +151,7 @@ export function CreateAccountDialog({ onSubmit }: CreateAccountDialogProps) {
               value={formData.startBalance}
               onChange={(e) => setFormData({ ...formData, startBalance: Number(e.target.value) })}
               required
+              min={0} // Ensure positive numbers
             />
           </div>
           <div className="flex justify-end space-x-4 pt-4">
@@ -164,5 +169,5 @@ export function CreateAccountDialog({ onSubmit }: CreateAccountDialogProps) {
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

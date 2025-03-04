@@ -105,6 +105,7 @@ const CashnBank = () => {
                 <TableRow>
                   <TableHead>Account code</TableHead>
                   <TableHead>Account name</TableHead>
+                  <TableHead>Account Bank</TableHead>
                   <TableHead>Balance in Prabasena</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
@@ -114,6 +115,7 @@ const CashnBank = () => {
                   <TableRow key={account.code}>
                     <TableCell>{account.code}</TableCell>
                     <TableCell>{account.name}</TableCell>
+                    <TableCell>{account.bankName}</TableCell>
                     <TableCell>{account.balance}</TableCell>
                     <TableCell>
                       <AccountActionDropdown
