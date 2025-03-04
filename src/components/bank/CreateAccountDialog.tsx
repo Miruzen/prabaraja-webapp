@@ -107,10 +107,10 @@ export function CreateAccountDialog({ onSubmit }: CreateAccountDialogProps) {
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[400px] p-0 bg-white">
+              <PopoverContent className="max-w-4 p-0 bg-white">
                 <Command>
                   <CommandEmpty>No matching banks found. Try a different search.</CommandEmpty>
-                  <CommandGroup className="max-h-[200px] overflow-y-auto">
+                  <CommandGroup className="max-h-4 overflow-y-auto">
                     {INDONESIAN_BANKS.map((bank) => (
                       <CommandItem
                         key={bank}
