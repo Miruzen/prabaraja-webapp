@@ -3,10 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { Command, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Check, ChevronsUpDown, Plus } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus } from "lucide-react";
 
 const INDONESIAN_BANKS = [
   "Bank Central Asia (BCA)",
@@ -35,7 +33,6 @@ interface CreateAccountDialogProps {
 
 export function CreateAccountDialog({ onSubmit }: CreateAccountDialogProps) {
   const [open, setOpen] = useState(false);
-  const [openCombobox, setOpenCombobox] = useState(false);
   const [formData, setFormData] = useState<CreateAccountFormData>({
     accountName: "",
     accountCode: "",
@@ -52,7 +49,6 @@ export function CreateAccountDialog({ onSubmit }: CreateAccountDialogProps) {
     }
     onSubmit(formData);
     setOpen(false);
-    setOpenCombobox(false); // Close the combobox
     setFormData({
       accountName: "",
       accountCode: "",
@@ -95,44 +91,22 @@ export function CreateAccountDialog({ onSubmit }: CreateAccountDialogProps) {
           </div>
           <div className="grid w-full items-center gap-2">
             <Label htmlFor="bankName">Bank Name</Label>
-            <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={openCombobox}
-                  className="w-full justify-between"
-                >
-                  {formData.bankName || "Select bank..."}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="max-w-4 p-0 bg-white">
-                <Command>
-                  <CommandEmpty>No matching banks found. Try a different search.</CommandEmpty>
-                  <CommandGroup className="max-h-4 overflow-y-auto">
-                    {INDONESIAN_BANKS.map((bank) => (
-                      <CommandItem
-                        key={bank}
-                        value={bank}
-                        onSelect={() => {
-                          setFormData({ ...formData, bankName: bank });
-                          setOpenCombobox(false);
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            formData.bankName === bank ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {bank}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </Command>
-              </PopoverContent>
-            </Popover>
+            <Select
+              value={formData.bankName}
+              onValueChange={(value) => setFormData({ ...formData, bankName: value })}
+              required
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select bank..." />
+              </SelectTrigger>
+              <SelectContent>
+                {INDONESIAN_BANKS.map((bank) => (
+                  <SelectItem key={bank} value={bank}>
+                    {bank}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid w-full items-center gap-2">
             <Label htmlFor="accountNumber">Bank Account Number</Label>
