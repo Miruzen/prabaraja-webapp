@@ -9,6 +9,7 @@ import { PurchaseFormFields } from "./purchases/dialog/PurchaseFormFields";
 import { PurchaseDialogHeader } from "./purchases/dialog/PurchaseDialogHeader";
 import { PurchaseDialogFooter } from "./purchases/dialog/PurchaseDialogFooter";
 import { generateDefaultPurchaseNumber, getInitialFormData } from "@/utils/purchaseDialogUtils";
+import { PurchasePriority, PurchaseStatus, PurchaseType } from "@/types/purchase";
 
 interface AddPurchaseDialogProps {
   open: boolean;
@@ -18,13 +19,13 @@ interface AddPurchaseDialogProps {
     number: string;
     approver: string;
     dueDate: string;
-    status: "pending" | "completed" | "cancelled";
+    status: PurchaseStatus;
     itemCount: number;
-    priority: "High" | "Medium" | "Low";
+    priority: PurchasePriority;
     tags: string[];
-    type: "invoice" | "shipment" | "order" | "offer" | "request";
+    type: PurchaseType;
   }) => void;
-  defaultType?: "invoice" | "shipment" | "order" | "offer" | "request";
+  defaultType?: PurchaseType;
 }
 
 export function AddPurchaseDialog({ 
@@ -48,9 +49,9 @@ export function AddPurchaseDialog({
     e.preventDefault();
     onSubmit({
       ...formData,
-      status: formData.status as "pending" | "completed" | "cancelled",
-      priority: formData.priority as "High" | "Medium" | "Low",
-      type: formData.type as "invoice" | "shipment" | "order" | "offer" | "request"
+      status: formData.status as PurchaseStatus,
+      priority: formData.priority as PurchasePriority,
+      type: formData.type as PurchaseType
     });
     onOpenChange(false);
     
@@ -61,14 +62,14 @@ export function AddPurchaseDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
-        <PurchaseDialogHeader type={formData.type} />
+        <PurchaseDialogHeader type={formData.type as PurchaseType} />
         <form onSubmit={handleSubmit} className="space-y-4">
           <PurchaseFormFields
             formData={formData}
             setFormData={setFormData}
             generateDefaultNumber={generateDefaultPurchaseNumber}
           />
-          <PurchaseDialogFooter type={formData.type} />
+          <PurchaseDialogFooter type={formData.type as PurchaseType} />
         </form>
       </DialogContent>
     </Dialog>

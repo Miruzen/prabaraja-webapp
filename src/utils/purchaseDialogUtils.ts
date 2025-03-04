@@ -1,4 +1,6 @@
 
+import { PurchasePriority, PurchaseStatus, PurchaseType } from "@/types/purchase";
+
 /**
  * Generates a default purchase number based on the type
  */
@@ -13,7 +15,7 @@ export const generateDefaultPurchaseNumber = (type: string): string => {
 /**
  * Get the display label for a purchase type
  */
-export const getPurchaseTypeLabel = (type: "invoice" | "shipment" | "order" | "offer" | "request"): string => {
+export const getPurchaseTypeLabel = (type: PurchaseType): string => {
   const typeLabels = {
     invoice: "Invoice",
     shipment: "Shipment",
@@ -28,14 +30,14 @@ export const getPurchaseTypeLabel = (type: "invoice" | "shipment" | "order" | "o
 /**
  * Get the initial form data for a purchase dialog
  */
-export const getInitialFormData = (defaultType: "invoice" | "shipment" | "order" | "offer" | "request") => ({
+export const getInitialFormData = (defaultType: PurchaseType) => ({
   date: new Date().toISOString().split('T')[0],
   number: generateDefaultPurchaseNumber(defaultType),
   approver: "",
   dueDate: "",
-  status: "pending",
+  status: "pending" as PurchaseStatus,
   itemCount: 0,
-  priority: "Medium",
+  priority: "Medium" as PurchasePriority,
   tags: [""],
   type: defaultType,
 });

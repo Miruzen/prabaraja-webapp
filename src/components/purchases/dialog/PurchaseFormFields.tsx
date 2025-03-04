@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PurchasePriority, PurchaseStatus, PurchaseType } from "@/types/purchase";
 
 interface PurchaseFormFieldsProps {
   formData: {
@@ -16,11 +17,11 @@ interface PurchaseFormFieldsProps {
     number: string;
     approver: string;
     dueDate: string;
-    status: "pending" | "completed" | "cancelled";
+    status: PurchaseStatus;
     itemCount: number;
-    priority: "High" | "Medium" | "Low";
+    priority: PurchasePriority;
     tags: string[];
-    type: "invoice" | "shipment" | "order" | "offer" | "request";
+    type: PurchaseType;
   };
   setFormData: (data: any) => void;
   generateDefaultNumber: (type: string) => string;
@@ -48,7 +49,7 @@ export function PurchaseFormFields({
         </Label>
         <Select
           value={formData.type}
-          onValueChange={(value: "invoice" | "shipment" | "order" | "offer" | "request") => {
+          onValueChange={(value: PurchaseType) => {
             setFormData({ 
               ...formData, 
               type: value,
@@ -121,7 +122,7 @@ export function PurchaseFormFields({
         </Label>
         <Select
           value={formData.status}
-          onValueChange={(value: "pending" | "completed" | "cancelled") =>
+          onValueChange={(value: PurchaseStatus) =>
             setFormData({ ...formData, status: value })
           }
         >
@@ -154,7 +155,7 @@ export function PurchaseFormFields({
         </Label>
         <Select
           value={formData.priority}
-          onValueChange={(value: "High" | "Medium" | "Low") =>
+          onValueChange={(value: PurchasePriority) =>
             setFormData({ ...formData, priority: value })
           }
         >

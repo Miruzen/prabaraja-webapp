@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { AddPurchaseDialog } from "@/components/AddPurchaseDialog";
@@ -6,13 +7,16 @@ import { PurchaseFilters } from "@/components/purchases/PurchaseFilters";
 import { TransactionsTable } from "@/components/purchases/TransactionsTable";
 import { PurchaseHeader } from "@/components/purchases/PurchaseHeader";
 import { PurchaseTabControls } from "@/components/purchases/PurchaseTabControls";
-import { Purchase, PURCHASES_STORAGE_KEY } from "@/types/purchase";
+import { Purchase, PURCHASES_STORAGE_KEY, PurchaseType } from "@/types/purchase";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { toast } from "sonner";
 
 const Purchases = () => {
-  const [activeTab, setActiveTab] = useState("invoices");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [purchaseType, setPurchaseType] = useState<"invoice" | "shipment" | "order" | "offer" | "request">("invoice");
+  const [activeTab, setActiveTab] = useState<string>("invoices");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState<boolean>(false);
+  const [purchaseType, setPurchaseType] = useState<PurchaseType>("invoice");
   const [transactions, setTransactions] = useState<Purchase[]>([]);
 
   useEffect(() => {
@@ -52,6 +56,50 @@ const Purchases = () => {
     return matchesType && matchesStatus;
   });
 
+  const handleAddPurchase = (formData: any) => {
+    // Create a new purchase object
+    const newPurchase: Purchase = {
+      id: Math.random().toString(36).substr(2, 9),
+      date: new Date(formData.date),
+      number: formData.number,
+      approver: formData.approver,
+      dueDate: formData.dueDate ? new Date(formData.dueDate) : null,
+      status: formData.status,
+      itemCount: formData.itemCount,
+      priority: formData.priority,
+      tags: formData.tags,
+      type: formData.type,
+      items: []
+    };
+
+    // Add the new purchase to the transactions list
+    const updatedTransactions = [...transactions, newPurchase];
+    setTransactions(updatedTransactions);
+
+    // Save to localStorage
+    try {
+      localStorage.setItem(PURCHASES_STORAGE_KEY, JSON.stringify(updatedTransactions));
+      toast.success(`New ${formData.type} added successfully!`);
+    } catch (error) {
+      console.error("Error saving purchase to localStorage:", error);
+      toast.error("Failed to save purchase. Please try again.");
+    }
+  };
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    // Set the purchase type based on the active tab (remove the 's' at the end)
+    const type = tab.endsWith('s') ? tab.slice(0, -1) : tab;
+    setPurchaseType(type as PurchaseType);
+  };
+
+  const openAddDialog = () => {
+    // Set the purchase type based on the active tab (remove the 's' at the end)
+    const type = activeTab.endsWith('s') ? activeTab.slice(0, -1) : activeTab;
+    setPurchaseType(type as PurchaseType);
+    setIsAddDialogOpen(true);
+  };
+
   const showEmptyState = filteredTransactions.length === 0;
 
   return (
@@ -68,10 +116,15 @@ const Purchases = () => {
           />
 
           <div className="space-y-4">
-            <PurchaseTabControls
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-            />
+            <div className="flex justify-between items-center">
+              <PurchaseTabControls
+                activeTab={activeTab}
+                setActiveTab={handleTabChange}
+              />
+              <Button onClick={openAddDialog} className="ml-auto">
+                <Plus className="mr-2 h-4 w-4" /> Add New
+              </Button>
+            </div>
 
             <PurchaseFilters
               statusFilter={statusFilter}
@@ -89,6 +142,13 @@ const Purchases = () => {
           </div>
         </div>
       </div>
+
+      <AddPurchaseDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        onSubmit={handleAddPurchase}
+        defaultType={purchaseType}
+      />
     </div>
   );
 };
