@@ -11,6 +11,7 @@ import { Purchase, PURCHASES_STORAGE_KEY, PurchaseType } from "@/types/purchase"
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
+import { formatDistanceToNow, isAfter, parseISO, subDays } from "date-fns";
 
 const Purchases = () => {
   const [activeTab, setActiveTab] = useState<string>("invoices");
@@ -18,6 +19,11 @@ const Purchases = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState<boolean>(false);
   const [purchaseType, setPurchaseType] = useState<PurchaseType>("invoice");
   const [transactions, setTransactions] = useState<Purchase[]>([]);
+  
+  // Stats calculations
+  const [unpaidAmount, setUnpaidAmount] = useState<number>(0);
+  const [overdueCount, setOverdueCount] = useState<number>(0);
+  const [last30DaysPayments, setLast30DaysPayments] = useState<number>(0);
 
   useEffect(() => {
     const loadPurchasesFromStorage = () => {
@@ -46,9 +52,54 @@ const Purchases = () => {
     };
   }, []);
 
-  const unpaidAmount = 15000000;
-  const overdueCount = 3;
-  const last30DaysPayments = 45000000;
+  useEffect(() => {
+    // Calculate stats based on the current transactions
+    if (transactions.length > 0) {
+      // Calculate unpaid amount
+      const unpaidTotal = transactions
+        .filter(t => t.status === "pending" && t.type === "invoice")
+        .reduce((sum, t) => {
+          // Calculate total from items if available
+          if (t.items && t.items.length > 0) {
+            return sum + t.items.reduce((itemSum, item) => itemSum + (item.price * item.quantity), 0);
+          }
+          return sum;
+        }, 0);
+      setUnpaidAmount(unpaidTotal);
+
+      // Calculate overdue invoices count
+      const today = new Date();
+      const overdueInvoices = transactions.filter(t => {
+        return t.type === "invoice" && 
+              t.status === "pending" && 
+              t.dueDate && 
+              isAfter(today, t.dueDate);
+      });
+      setOverdueCount(overdueInvoices.length);
+
+      // Calculate payments in the last 30 days
+      const thirtyDaysAgo = subDays(new Date(), 30);
+      const recentPayments = transactions
+        .filter(t => {
+          return t.status === "completed" && 
+                t.date && 
+                isAfter(t.date, thirtyDaysAgo);
+        })
+        .reduce((sum, t) => {
+          // Calculate total from items if available
+          if (t.items && t.items.length > 0) {
+            return sum + t.items.reduce((itemSum, item) => itemSum + (item.price * item.quantity), 0);
+          }
+          return sum;
+        }, 0);
+      setLast30DaysPayments(recentPayments);
+    } else {
+      // Reset stats if no transactions
+      setUnpaidAmount(0);
+      setOverdueCount(0);
+      setLast30DaysPayments(0);
+    }
+  }, [transactions]);
 
   const filteredTransactions = transactions.filter(transaction => {
     const matchesType = activeTab === transaction.type + "s";
@@ -121,15 +172,17 @@ const Purchases = () => {
                 activeTab={activeTab}
                 setActiveTab={handleTabChange}
               />
+            </div>
+
+            <div className="flex justify-between items-center">
+              <PurchaseFilters
+                statusFilter={statusFilter}
+                onStatusFilterChange={setStatusFilter}
+              />
               <Button onClick={openAddDialog} className="ml-auto">
                 <Plus className="mr-2 h-4 w-4" /> Add New
               </Button>
             </div>
-
-            <PurchaseFilters
-              statusFilter={statusFilter}
-              onStatusFilterChange={setStatusFilter}
-            />
 
             {showEmptyState ? (
               <div className="border rounded-lg p-8 text-center">
