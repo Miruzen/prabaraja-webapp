@@ -1,11 +1,12 @@
 
-import { Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 
 import Dashboard from "./pages/Dashboard";
 import Sales from "./pages/Sales";
 import CreateNewSales from "./pages/CreateNewSales";
 import Purchases from "./pages/Purchases";
+import CreateNewPurchase from "./pages/CreateNewPurchase";
 import Assets from "./pages/Assets";
 import CashnBank from "./pages/CashnBank";
 import Contacts from "./pages/Contacts";
@@ -20,34 +21,35 @@ import ShipmentDetail from "./pages/ShipmentDetail";
 import OrderDetail from "./pages/OrderDetail";
 import OfferDetail from "./pages/OfferDetail";
 import RequestDetail from "./pages/RequestDetail";
-import CreateNewPurchase from "./pages/CreateNewPurchase";
 
 import "./App.css";
 
 function App() {
   return (
     <>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/sales" element={<Sales />} />
-        <Route path="/create-new-sales" element={<CreateNewSales />} />
-        <Route path="/purchases" element={<Purchases />} />
-        <Route path="/create-new-purchase" element={<CreateNewPurchase />} />
-        <Route path="/invoice/:id" element={<InvoiceDetail />} />
-        <Route path="/shipment/:id" element={<ShipmentDetail />} />
-        <Route path="/order/:id" element={<OrderDetail />} />
-        <Route path="/offer/:id" element={<OfferDetail />} />
-        <Route path="/request/:id" element={<RequestDetail />} />
-        <Route path="/assets" element={<Assets />} />
-        <Route path="/cash-n-bank" element={<CashnBank />} />
-        <Route path="/contacts" element={<Contacts />} />
-        <Route path="/products" element={<Products />} />
-        <Route path="/expenses" element={<Expenses />} />
-        <Route path="/create-expense" element={<CreateExpense />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/sales" element={<Sales />} />
+          <Route path="/create-new-sales" element={<CreateNewSales />} />
+          <Route path="/purchases" element={<Purchases />} />
+          <Route path="/create-new-purchase" element={<CreateNewPurchase />} />
+          <Route path="/invoice/:id" element={<InvoiceDetail />} />
+          <Route path="/shipment/:id" element={<ShipmentDetail />} />
+          <Route path="/order/:id" element={<OrderDetail />} />
+          <Route path="/offer/:id" element={<OfferDetail />} />
+          <Route path="/request/:id" element={<RequestDetail />} />
+          <Route path="/assets" element={<Assets />} />
+          <Route path="/cash-n-bank" element={<CashnBank />} />
+          <Route path="/contacts" element={<Contacts />} />
+          <Route path="/products" element={<Products />} />
+          <Route path="/expenses" element={<Expenses />} />
+          <Route path="/create-expense" element={<CreateExpense />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
       <Toaster />
     </>
   );
