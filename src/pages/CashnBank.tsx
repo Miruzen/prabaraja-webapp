@@ -20,11 +20,11 @@ interface Account {
 
 const CashnBank = () => {
   const [accounts, setAccounts] = useState<Account[]>([
-    { code: "1-10001", name: "Cash", balance: "Rp 4.490.871", archived: false },
-    { code: "1-10002", name: "Bank Account", balance: "Rp 1.800.002", archived: false },
-    { code: "1-10003", name: "Giro", balance: "Rp 184.651.887", archived: false },
-    { code: "1-10004", name: "Test AKUN", balance: "Rp 0", archived: false },
-    { code: "1-10012", name: "Test BCA", balance: "(Rp 151.623.322)", archived: false },
+    { code: "1-10001", name: "Cash",bankName: "Bank Central Asia (BCA)" , balance: "Rp 4.490.871", archived: false },
+    { code: "1-10002", name: "Bank Account",bankName: "Bank Central Asia (BCA)" , balance: "Rp 1.800.002", archived: false },
+    { code: "1-10003", name: "Giro",bankName: "Bank Central Asia (BCA)" , balance: "Rp 184.651.887", archived: false },
+    { code: "1-10004", name: "Test AKUN",bankName: "Bank Central Asia (BCA)" , balance: "Rp 0", archived: false },
+    { code: "1-10012", name: "Test BCA",bankName: "Bank Central Asia (BCA)" , balance: "(Rp 151.623.322)", archived: false },
   ]);
   const [showArchived, setShowArchived] = useState(false);
 
