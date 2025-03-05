@@ -1,5 +1,6 @@
 
 import { format } from "date-fns";
+import { Link } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -54,7 +55,15 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
           {transactions.map((transaction) => (
             <TableRow key={transaction.id}>
               <TableCell>{format(transaction.date, 'dd/MM/yyyy')}</TableCell>
-              <TableCell>{transaction.number}</TableCell>
+              <TableCell>
+                {transaction.type === "invoice" ? (
+                  <Link to={`/invoice/${transaction.id}`} className="text-indigo-600 hover:underline">
+                    {transaction.number}
+                  </Link>
+                ) : (
+                  transaction.number
+                )}
+              </TableCell>
               <TableCell>{transaction.approver}</TableCell>
               <TableCell>{transaction.dueDate ? format(transaction.dueDate, 'dd/MM/yyyy') : '-'}</TableCell>
               <TableCell>
