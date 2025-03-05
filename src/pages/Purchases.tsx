@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
@@ -9,7 +8,6 @@ import { TransactionsTable } from "@/components/purchases/TransactionsTable";
 import { PurchaseHeader } from "@/components/purchases/PurchaseHeader";
 import { PurchaseTabControls } from "@/components/purchases/PurchaseTabControls";
 import { Purchase, PURCHASES_STORAGE_KEY, PurchaseType } from "@/types/purchase";
-import { CreateNewPurchase} from "@components/purchases/CreateNewPurchase " ;
 import { Button } from "@/components/ui/button";
 import { 
   DropdownMenu, 

@@ -56,13 +56,12 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
             <TableRow key={transaction.id}>
               <TableCell>{format(transaction.date, 'dd/MM/yyyy')}</TableCell>
               <TableCell>
-                {transaction.type === "invoice" ? (
-                  <Link to={`/invoice/${transaction.id}`} className="text-indigo-600 hover:underline">
-                    {transaction.number}
-                  </Link>
-                ) : (
-                  transaction.number
-                )}
+                <Link 
+                  to={`/${transaction.type}/${transaction.id}`} 
+                  className="text-indigo-600 hover:underline"
+                >
+                  {transaction.number}
+                </Link>
               </TableCell>
               <TableCell>{transaction.approver}</TableCell>
               <TableCell>{transaction.dueDate ? format(transaction.dueDate, 'dd/MM/yyyy') : '-'}</TableCell>

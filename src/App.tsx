@@ -17,6 +17,10 @@ import Assets from "@/pages/Assets";
 import Reports from "@/pages/Reports";
 import Settings from "@/pages/Settings";
 import InvoiceDetail from "@/pages/InvoiceDetail";
+import ShipmentDetail from "@/pages/ShipmentDetail";
+import OrderDetail from "@/pages/OrderDetail";
+import OfferDetail from "@/pages/OfferDetail";
+import RequestDetail from "@/pages/RequestDetail";
 import NotFound from "@/pages/NotFound";
 import Index from "./pages/Index";
 
@@ -33,6 +37,10 @@ function App() {
             <Route path="/sales" element={<Sales />} />
             <Route path="/create-new-sales" element={<CreateNewSales />} />
             <Route path="/invoice/:id" element={<InvoiceDetail />} />
+            <Route path="/shipment/:id" element={<ShipmentDetail />} />
+            <Route path="/order/:id" element={<OrderDetail />} />
+            <Route path="/offer/:id" element={<OfferDetail />} />
+            <Route path="/request/:id" element={<RequestDetail />} />
             <Route path="/purchases" element={<Purchases />} />
             <Route path="/create-new-purchase" element={<CreateNewPurchase />} />
             <Route path="/products" element={<Products />} />
