@@ -24,6 +24,15 @@ interface AddPurchaseDialogProps {
     priority: PurchasePriority;
     tags: string[];
     type: PurchaseType;
+    // Type-specific fields
+    trackingNumber?: string;
+    carrier?: string;
+    shippingDate?: string;
+    orderDate?: string;
+    discountTerms?: string;
+    expiryDate?: string;
+    requestedBy?: string;
+    urgency?: string;
   }) => void;
   defaultType?: PurchaseType;
 }

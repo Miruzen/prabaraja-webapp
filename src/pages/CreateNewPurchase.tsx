@@ -29,6 +29,18 @@ const CreateNewPurchase = () => {
     { id: '1', name: '', quantity: 1, price: 0 }
   ]);
   
+  // Type-specific fields
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [carrier, setCarrier] = useState("");
+  const [shippingDate, setShippingDate] = useState(new Date().toISOString().split('T')[0]);
+  const [orderDate, setOrderDate] = useState(new Date().toISOString().split('T')[0]);
+  const [discountTerms, setDiscountTerms] = useState("");
+  const [expiryDate, setExpiryDate] = useState(
+    new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0]
+  );
+  const [requestedBy, setRequestedBy] = useState("");
+  const [urgency, setUrgency] = useState("Medium");
+  
   const [isFormValid, setIsFormValid] = useState(false);
 
   // Validate form
@@ -41,8 +53,25 @@ const CreateNewPurchase = () => {
     const itemsValid = items.length > 0 && 
       items.every(item => item.name !== "" && item.quantity > 0);
     
-    setIsFormValid(requiredFieldsFilled && itemsValid);
-  }, [date, number, approver, items]);
+    // Additional validation for type-specific required fields
+    let typeSpecificFieldsValid = true;
+    
+    if (purchaseType === "shipment") {
+      typeSpecificFieldsValid = trackingNumber !== "" && carrier !== "" && shippingDate !== "";
+    } else if (purchaseType === "order") {
+      typeSpecificFieldsValid = orderDate !== "";
+    } else if (purchaseType === "offer") {
+      typeSpecificFieldsValid = discountTerms !== "" && expiryDate !== "";
+    } else if (purchaseType === "request") {
+      typeSpecificFieldsValid = requestedBy !== "";
+    }
+    
+    setIsFormValid(requiredFieldsFilled && itemsValid && typeSpecificFieldsValid);
+  }, [
+    date, number, approver, items, purchaseType, 
+    trackingNumber, carrier, shippingDate, 
+    orderDate, discountTerms, expiryDate, requestedBy
+  ]);
 
   const getTypeTitle = () => {
     switch (purchaseType) {
@@ -62,8 +91,8 @@ const CreateNewPurchase = () => {
       return;
     }
 
-    // Create new purchase object
-    const newPurchase: Purchase = {
+    // Base purchase object with common fields
+    const basePurchase = {
       id: Math.random().toString(36).substr(2, 9),
       date: new Date(date),
       number,
@@ -77,6 +106,35 @@ const CreateNewPurchase = () => {
       items,
     };
 
+    // Add type-specific fields
+    let newPurchase: Purchase = { ...basePurchase };
+    
+    if (purchaseType === "shipment") {
+      newPurchase = {
+        ...basePurchase,
+        trackingNumber,
+        carrier,
+        shippingDate: new Date(shippingDate),
+      };
+    } else if (purchaseType === "order") {
+      newPurchase = {
+        ...basePurchase,
+        orderDate: new Date(orderDate),
+      };
+    } else if (purchaseType === "offer") {
+      newPurchase = {
+        ...basePurchase,
+        discountTerms,
+        expiryDate: new Date(expiryDate),
+      };
+    } else if (purchaseType === "request") {
+      newPurchase = {
+        ...basePurchase,
+        requestedBy,
+        urgency,
+      };
+    }
+
     // Get existing purchases from localStorage
     const existingPurchasesString = localStorage.getItem(PURCHASES_STORAGE_KEY);
     let existingPurchases: Purchase[] = [];
@@ -88,7 +146,10 @@ const CreateNewPurchase = () => {
         existingPurchases = parsedPurchases.map((purchase: any) => ({
           ...purchase,
           date: new Date(purchase.date),
-          dueDate: purchase.dueDate ? new Date(purchase.dueDate) : null
+          dueDate: purchase.dueDate ? new Date(purchase.dueDate) : null,
+          shippingDate: purchase.shippingDate ? new Date(purchase.shippingDate) : null,
+          orderDate: purchase.orderDate ? new Date(purchase.orderDate) : null,
+          expiryDate: purchase.expiryDate ? new Date(purchase.expiryDate) : null
         }));
       } catch (error) {
         console.error("Error parsing purchases from localStorage:", error);
@@ -132,6 +193,23 @@ const CreateNewPurchase = () => {
                 setPriority={setPriority}
                 tags={tags}
                 setTags={setTags}
+                // Type-specific fields
+                trackingNumber={trackingNumber}
+                setTrackingNumber={setTrackingNumber}
+                carrier={carrier}
+                setCarrier={setCarrier}
+                shippingDate={shippingDate}
+                setShippingDate={setShippingDate}
+                orderDate={orderDate}
+                setOrderDate={setOrderDate}
+                discountTerms={discountTerms}
+                setDiscountTerms={setDiscountTerms}
+                expiryDate={expiryDate}
+                setExpiryDate={setExpiryDate}
+                requestedBy={requestedBy}
+                setRequestedBy={setRequestedBy}
+                urgency={urgency}
+                setUrgency={setUrgency}
               />
 
               {/* Items Section */}

@@ -28,6 +28,24 @@ interface PurchaseInformationFormProps {
   setPriority: (priority: PurchasePriority) => void;
   tags: string;
   setTags: (tags: string) => void;
+  
+  // Type-specific fields
+  trackingNumber?: string;
+  setTrackingNumber?: (trackingNumber: string) => void;
+  carrier?: string;
+  setCarrier?: (carrier: string) => void;
+  shippingDate?: string;
+  setShippingDate?: (shippingDate: string) => void;
+  orderDate?: string;
+  setOrderDate?: (orderDate: string) => void;
+  discountTerms?: string;
+  setDiscountTerms?: (discountTerms: string) => void;
+  expiryDate?: string;
+  setExpiryDate?: (expiryDate: string) => void;
+  requestedBy?: string;
+  setRequestedBy?: (requestedBy: string) => void;
+  urgency?: string;
+  setUrgency?: (urgency: string) => void;
 }
 
 export function PurchaseInformationForm({
@@ -47,6 +65,23 @@ export function PurchaseInformationForm({
   setPriority,
   tags,
   setTags,
+  // Type-specific fields
+  trackingNumber,
+  setTrackingNumber,
+  carrier,
+  setCarrier,
+  shippingDate,
+  setShippingDate,
+  orderDate,
+  setOrderDate,
+  discountTerms,
+  setDiscountTerms,
+  expiryDate,
+  setExpiryDate,
+  requestedBy,
+  setRequestedBy,
+  urgency,
+  setUrgency,
 }: PurchaseInformationFormProps) {
   // Set the appropriate number prefix based on type
   useEffect(() => {
@@ -102,6 +137,101 @@ export function PurchaseInformationForm({
           />
         </div>
 
+        {/* Type-specific fields */}
+        {purchaseType === "shipment" && setTrackingNumber && setCarrier && setShippingDate && (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="trackingNumber">Tracking Number</Label>
+              <Input
+                id="trackingNumber"
+                value={trackingNumber}
+                onChange={(e) => setTrackingNumber(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="carrier">Carrier</Label>
+              <Input
+                id="carrier"
+                value={carrier}
+                onChange={(e) => setCarrier(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="shippingDate">Shipping Date</Label>
+              <Input
+                id="shippingDate"
+                type="date"
+                value={shippingDate}
+                onChange={(e) => setShippingDate(e.target.value)}
+              />
+            </div>
+          </>
+        )}
+
+        {purchaseType === "order" && setOrderDate && (
+          <div className="space-y-2">
+            <Label htmlFor="orderDate">Order Date</Label>
+            <Input
+              id="orderDate"
+              type="date"
+              value={orderDate}
+              onChange={(e) => setOrderDate(e.target.value)}
+            />
+          </div>
+        )}
+
+        {purchaseType === "offer" && setDiscountTerms && setExpiryDate && (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="discountTerms">Discount Terms</Label>
+              <Input
+                id="discountTerms"
+                value={discountTerms}
+                onChange={(e) => setDiscountTerms(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="expiryDate">Expiry Date</Label>
+              <Input
+                id="expiryDate"
+                type="date"
+                value={expiryDate}
+                onChange={(e) => setExpiryDate(e.target.value)}
+              />
+            </div>
+          </>
+        )}
+
+        {purchaseType === "request" && setRequestedBy && setUrgency && (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="requestedBy">Requested By</Label>
+              <Input
+                id="requestedBy"
+                value={requestedBy}
+                onChange={(e) => setRequestedBy(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="urgency">Urgency</Label>
+              <Select
+                value={urgency}
+                onValueChange={(value) => setUrgency(value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="High">High</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="Low">Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </>
+        )}
+
+        {/* Common fields for all types */}
         <div className="space-y-2">
           <Label htmlFor="approver">Approver</Label>
           <Input

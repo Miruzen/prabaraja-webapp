@@ -22,6 +22,16 @@ export interface Purchase {
   tags: string[];
   type: PurchaseType;
   items: PurchaseItem[];
+  
+  // Type-specific fields
+  trackingNumber?: string;
+  carrier?: string;
+  shippingDate?: Date | null;
+  orderDate?: Date | null;
+  discountTerms?: string;
+  expiryDate?: Date | null;
+  requestedBy?: string;
+  urgency?: string;
 }
 
 // Local storage keys
