@@ -124,7 +124,7 @@ const Products = () => {
   <div className="flex min-h-screen">
     <Sidebar />
     <div className="flex-1 overflow-auto">
-        <div className="bg-gradient-to-r from-[#818CF8] to-[#C084FC] p-6">
+        <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
           <h1 className="text-2xl font-semibold text-white">Products</h1>
         </div>
 

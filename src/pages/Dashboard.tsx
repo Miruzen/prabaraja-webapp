@@ -36,7 +36,7 @@ const Dashboard = () => {
     <div className="flex min-h-screen">
       <Sidebar />
       <main className="flex-1">
-        <div className="bg-gradient-to-r from-[#818CF8] to-[#C084FC] p-6">
+        <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
           <h1 className="text-2xl font-semibold text-white">Dashboard Overview</h1>
         </div>
         

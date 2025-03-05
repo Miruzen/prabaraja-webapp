@@ -83,7 +83,7 @@ const CashnBank = () => {
     <div className="flex h-screen bg-background">
       <Sidebar />
       <div className="flex-1 overflow-auto">
-        <div className="bg-gradient-to-r from-[#818CF8] to-[#C084FC] p-6">
+        <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
           <h1 className="text-2xl font-semibold text-white">Cash & Bank</h1>
         </div>
 
