@@ -121,8 +121,7 @@ const Contacts = () => {
           <div className="flex flex-col gap-4 mb-6">
             <div className="bg-[#F8F7FF] p-5 rounded-lg inline-block">
               <Button className="bg-[#8B5CF6] text-white hover:bg-[#7C3AED]">
-                <UserPlus className="mr-2" />
-                Create Contact
+                Create Contact<UserPlus className="mr-2" />
               </Button>
             </div>
 

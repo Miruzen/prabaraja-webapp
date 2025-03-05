@@ -1,57 +1,63 @@
-
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "sonner";
 
-import Dashboard from "./pages/Dashboard";
-import Sales from "./pages/Sales";
-import CreateNewSales from "./pages/CreateNewSales";
-import Purchases from "./pages/Purchases";
-import CreateNewPurchase from "./pages/CreateNewPurchase";
-import Assets from "./pages/Assets";
-import CashnBank from "./pages/CashnBank";
-import Contacts from "./pages/Contacts";
-import Products from "./pages/Products";
-import Expenses from "./pages/Expenses";
+import Dashboard from "@/pages/Dashboard";
+import Sales from "@/pages/Sales";
+import CreateNewSales from "@/pages/CreateNewSales";
+import Purchases from "@/pages/Purchases";
+import CreateNewPurchase from "@/pages/CreateNewPurchase";
 import CreateExpense from "./pages/CreateExpense";
-import Reports from "./pages/Reports";
-import Settings from "./pages/Settings";
-import NotFound from "./pages/NotFound";
-import InvoiceDetail from "./pages/InvoiceDetail";
-import ShipmentDetail from "./pages/ShipmentDetail";
-import OrderDetail from "./pages/OrderDetail";
-import OfferDetail from "./pages/OfferDetail";
-import RequestDetail from "./pages/RequestDetail";
+import Products from "@/pages/Products";
+import Contacts from "@/pages/Contacts";
+import CashnBank from "@/pages/CashnBank";
+import Expenses from "@/pages/Expenses";
+import Assets from "@/pages/Assets";
+import Reports from "@/pages/Reports";
+import Settings from "@/pages/Settings";
+import InvoiceDetail from "@/pages/InvoiceDetail";
+import ShipmentDetail from "@/pages/ShipmentDetail";
+import OrderDetail from "@/pages/OrderDetail";
+import OfferDetail from "@/pages/OfferDetail";
+import RequestDetail from "@/pages/RequestDetail";
+import NotFound from "@/pages/NotFound";
+import Index from "./pages/Index";
 
-import "./App.css";
+// Create a client
+const queryClient = new QueryClient();
 
 function App() {
   return (
-    <>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/sales" element={<Sales />} />
-          <Route path="/create-new-sales" element={<CreateNewSales />} />
-          <Route path="/purchases" element={<Purchases />} />
-          <Route path="/create-new-purchase" element={<CreateNewPurchase />} />
-          <Route path="/invoice/:id" element={<InvoiceDetail />} />
-          <Route path="/shipment/:id" element={<ShipmentDetail />} />
-          <Route path="/order/:id" element={<OrderDetail />} />
-          <Route path="/offer/:id" element={<OfferDetail />} />
-          <Route path="/request/:id" element={<RequestDetail />} />
-          <Route path="/assets" element={<Assets />} />
-          <Route path="/cash-n-bank" element={<CashnBank />} />
-          <Route path="/contacts" element={<Contacts />} />
-          <Route path="/products" element={<Products />} />
-          <Route path="/expenses" element={<Expenses />} />
-          <Route path="/create-expense" element={<CreateExpense />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-      <Toaster />
-    </>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/sales" element={<Sales />} />
+            <Route path="/create-new-sales" element={<CreateNewSales />} />
+            <Route path="/invoice/:id" element={<InvoiceDetail />} />
+            <Route path="/shipment/:id" element={<ShipmentDetail />} />
+            <Route path="/order/:id" element={<OrderDetail />} />
+            <Route path="/offer/:id" element={<OfferDetail />} />
+            <Route path="/request/:id" element={<RequestDetail />} />
+            <Route path="/purchases" element={<Purchases />} />
+            <Route path="/create-new-purchase" element={<CreateNewPurchase />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/contacts" element={<Contacts />} />
+            <Route path="/expenses" element={<Expenses />} />
+            <Route path="/assets" element={<Assets />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/create-expense" element={<CreateExpense />} />
+            <Route path="*" element={<NotFound />} />
+            <Route path="/cash-bank" element={<CashnBank />} />
+          </Routes>
+          <Toaster />
+        </Router>
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 }
 

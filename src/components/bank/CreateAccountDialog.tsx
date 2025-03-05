@@ -64,8 +64,8 @@ export function CreateAccountDialog({ onSubmit }: CreateAccountDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="bg-[#6366F1] text-white">
-          <Plus className="mr-2 h-4 w-4" />
           Create Account
+          <Plus className="mr-2 h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-50">

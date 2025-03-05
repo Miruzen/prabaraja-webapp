@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash2, Plus, Calendar } from "lucide-react";
+import { Trash2, Plus, Calendar, FileQuestion } from "lucide-react";
 import { Expense, ExpenseItem, ExpenseStatus, DEFAULT_EXPENSE_CATEGORIES, EXPENSES_STORAGE_KEY } from "@/types/expense";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import { CheckCircle } from "lucide-react";
 
 const CreateExpense = () => {
   const navigate = useNavigate();
@@ -231,15 +232,25 @@ const CreateExpense = () => {
                       />
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2 ">
                       <Label htmlFor="status">Status</Label>
                       <Select value={status} onValueChange={(value) => setStatus(value as ExpenseStatus)}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Paid">Paid</SelectItem>
-                          <SelectItem value="Require Approval">Require Approval</SelectItem>
+                        <SelectItem value="Paid">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          <span>Paid</span>
+                        </div>
+                        </SelectItem>
+                          <SelectItem value="Require Approval">
+                            <div className="flex items-center gap-2">
+                              <FileQuestion className="h-4 w-4 text-red-500" /> 
+                              <span>Require Approval</span>
+                            </div>
+                            </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

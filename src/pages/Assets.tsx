@@ -109,8 +109,7 @@ const Assets = () => {
             <div className="flex flex-col gap-4">
               <div className="flex justify-end">
                 <Button onClick={() => setIsAddDialogOpen(true)}>
-                  <Plus className="mr-2" />
-                  Add Assets
+                  Add Assets<Plus className="mr-2" />
                 </Button>
               </div>
               <div className="flex items-center gap-4">

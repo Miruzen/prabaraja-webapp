@@ -65,26 +65,25 @@ export const SalesFilters = ({
           </SelectContent>
         </Select>
       </div>
-      
-      <div className="flex flex-col space-y-2 items-end">
+      <div className="flex space-x-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-3.5 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-md w-[300px] focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                    value={searchValue}
+                    onChange={(e) => setSearchValue(e.target.value)}
+                  />
+            </div>
+      <div className="flex  space-x-2 items-end">
         <Button 
           className="bg-indigo-600 text-white"
-          onClick={() => navigate('/create-new-sales')}
-        >
-          <Plus className="mr-1 h-4 w-4" />
-          Create new sales
+          onClick={() => navigate('/create-new-sales')}>
+          Create new sales <Plus className="mr-1 h-4 w-4" />
         </Button>
-        <div className="relative">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-          <Input
-            type="text"
-            placeholder="Search..."
-            className="pl-10 pr-4 py-2 border border-gray-300 rounded-md w-[200px] focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-          />
-        </div>
       </div>
+    </div>
     </div>
   );
 };
