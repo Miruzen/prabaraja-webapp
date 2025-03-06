@@ -15,6 +15,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Expense, ExpenseStatus } from "@/types/expense";
+import { Link } from "react-router-dom";
 
 interface ExpenseTableProps {
   expenses: Expense[];
@@ -58,7 +59,11 @@ export const ExpenseTable = ({
           filteredExpenses.map((expense) => (
             <TableRow key={expense.id}>
               <TableCell>{expense.date}</TableCell>
-              <TableCell className="text-blue-600">{expense.number}</TableCell>
+              <TableCell>
+                <Link to={`/expense/${expense.id}`} className="text-blue-600 hover:underline">
+                  {expense.number}
+                </Link>
+              </TableCell>
               <TableCell>{expense.category}</TableCell>
               <TableCell className="text-blue-600">{expense.beneficiary}</TableCell>
               <TableCell>

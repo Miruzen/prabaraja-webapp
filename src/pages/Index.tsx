@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { 
   FileText, 
@@ -8,6 +9,7 @@ import {
   BarChart, 
   CreditCard 
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface ActionButtonProps {
   icon: React.ReactNode;
@@ -45,8 +47,39 @@ const AdBanner = () => (
 );
 
 const Index = () => {
+  const navigate = useNavigate();
+  const [username, setUsername] = useState("User");
+  
+  useEffect(() => {
+    const savedUsername = localStorage.getItem("username");
+    if (savedUsername) {
+      setUsername(savedUsername);
+    }
+  }, []);
+
   const handleAction = (action: string) => {
-    console.log(`Action clicked: ${action}`);
+    switch(action) {
+      case 'sales-invoice':
+        navigate('/create-new-sales');
+        break;
+      case 'sales-order':
+        navigate('/sales');
+        break;
+      case 'purchase-invoice':
+        navigate('/create-new-purchase');
+        break;
+      case 'new-product':
+        navigate('/products');
+        break;
+      case 'profit-loss':
+        navigate('/reports');
+        break;
+      case 'expense':
+        navigate('/create-expense');
+        break;
+      default:
+        console.log(`Action clicked: ${action}`);
+    }
   };
 
   const actions = [
@@ -64,7 +97,7 @@ const Index = () => {
       <main className="flex-1">
         <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] bg-[length:100%_200%] bg-[100%] p-6">
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-2xl font-semibold mb-2 text-white">Hello, User</h1>
+            <h1 className="text-2xl font-semibold mb-2 text-white">Hello, {username}</h1>
             <p className="text-white">What activity do you want to do?</p>
           </div>
         </div>

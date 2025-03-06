@@ -1,5 +1,5 @@
 
-import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ExpenseTabsProps {
   activeTab: "expenses" | "approval";
@@ -8,21 +8,21 @@ interface ExpenseTabsProps {
 
 export const ExpenseTabs = ({ activeTab, onTabChange }: ExpenseTabsProps) => {
   return (
-    <div className="flex items-center space-x-6 border-b border-gray-200 pb-4">
-      <Button 
-        variant="link" 
-        className={activeTab === "expenses" ? "text-blue-500 font-medium" : "text-gray-500"}
-        onClick={() => onTabChange("expenses")}
-      >
-        Expenses
-      </Button>
-      <Button 
-        variant="link" 
-        className={activeTab === "approval" ? "text-blue-500 font-medium" : "text-gray-500"}
-        onClick={() => onTabChange("approval")}
-      >
-        Require Approval
-      </Button>
-    </div>
+    <Tabs defaultValue={activeTab} onValueChange={(value) => onTabChange(value as "expenses" | "approval")}>
+      <TabsList className="w-full max-w-md border border-gray-200 rounded-lg bg-white p-1">
+        <TabsTrigger 
+          value="expenses" 
+          className={`flex-1 rounded-md py-2 ${activeTab === "expenses" ? "bg-blue-50 text-blue-600 font-medium" : ""}`}
+        >
+          Expenses
+        </TabsTrigger>
+        <TabsTrigger 
+          value="approval" 
+          className={`flex-1 rounded-md py-2 ${activeTab === "approval" ? "bg-blue-50 text-blue-600 font-medium" : ""}`}
+        >
+          Require Approval
+        </TabsTrigger>
+      </TabsList>
+    </Tabs>
   );
 };

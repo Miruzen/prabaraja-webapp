@@ -14,6 +14,7 @@ import Products from "@/pages/Products";
 import Contacts from "@/pages/Contacts";
 import CashnBank from "@/pages/CashnBank";
 import Expenses from "@/pages/Expenses";
+import ExpenseDetail from "@/pages/ExpenseDetail";
 import Assets from "@/pages/Assets";
 import Reports from "@/pages/Reports";
 import Settings from "@/pages/Settings";
@@ -49,6 +50,7 @@ function App() {
             <Route path="/products" element={<Products />} />
             <Route path="/contacts" element={<Contacts />} />
             <Route path="/expenses" element={<Expenses />} />
+            <Route path="/expense/:id" element={<ExpenseDetail />} />
             <Route path="/assets" element={<Assets />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/settings" element={<Settings />} />
