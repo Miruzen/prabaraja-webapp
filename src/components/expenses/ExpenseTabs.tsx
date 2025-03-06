@@ -9,16 +9,24 @@ interface ExpenseTabsProps {
 export const ExpenseTabs = ({ activeTab, onTabChange }: ExpenseTabsProps) => {
   return (
     <Tabs defaultValue={activeTab} onValueChange={(value) => onTabChange(value as "expenses" | "approval")}>
-      <TabsList className="w-full max-w-md border border-gray-200 rounded-lg bg-white p-1">
+      <TabsList className="w-full max-w-md rounded-xl overflow-hidden bg-white border border-gray-200 p-1">
         <TabsTrigger 
           value="expenses" 
-          className={`flex-1 rounded-md py-2 ${activeTab === "expenses" ? "bg-blue-50 text-blue-600 font-medium" : ""}`}
+          className={`flex-1 rounded-lg py-3 text-base font-medium ${
+            activeTab === "expenses" 
+              ? "bg-indigo-600 text-white" 
+              : "text-gray-600 hover:text-gray-800"
+          }`}
         >
           Expenses
         </TabsTrigger>
         <TabsTrigger 
           value="approval" 
-          className={`flex-1 rounded-md py-2 ${activeTab === "approval" ? "bg-blue-50 text-blue-600 font-medium" : ""}`}
+          className={`flex-1 rounded-lg py-3 text-base font-medium ${
+            activeTab === "approval" 
+              ? "bg-indigo-600 text-white" 
+              : "text-gray-600 hover:text-gray-800"
+          }`}
         >
           Require Approval
         </TabsTrigger>
