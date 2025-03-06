@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,6 +18,7 @@ import Assets from "@/pages/Assets";
 import Reports from "@/pages/Reports";
 import Settings from "@/pages/Settings";
 import InvoiceDetail from "@/pages/InvoiceDetail";
+import SalesInvoiceDetail from "@/pages/SalesInvoiceDetail";
 import ShipmentDetail from "@/pages/ShipmentDetail";
 import OrderDetail from "@/pages/OrderDetail";
 import OfferDetail from "@/pages/OfferDetail";
@@ -36,6 +38,7 @@ function App() {
             <Route path="/" element={<Index />} />
             <Route path="/sales" element={<Sales />} />
             <Route path="/create-new-sales" element={<CreateNewSales />} />
+            <Route path="/sales-invoice/:id" element={<SalesInvoiceDetail />} />
             <Route path="/invoice/:id" element={<InvoiceDetail />} />
             <Route path="/shipment/:id" element={<ShipmentDetail />} />
             <Route path="/order/:id" element={<OrderDetail />} />

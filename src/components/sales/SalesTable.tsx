@@ -121,7 +121,7 @@ export const SalesTable = ({
               <TableRow key={row.id}>
                 <TableCell>{row.date}</TableCell>
                 <TableCell>
-                  <Link to={`/invoice/${row.id}`} className="text-indigo-600 hover:underline">
+                  <Link to={`/sales-invoice/${row.id}`} className="text-indigo-600 hover:underline">
                     {row.number}
                   </Link>
                 </TableCell>
