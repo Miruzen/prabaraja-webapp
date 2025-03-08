@@ -12,7 +12,7 @@ export const ExpenseTabs = ({ activeTab, onTabChange }: ExpenseTabsProps) => {
       <TabsList className="w-full max-w-md rounded-xl overflow-hidden bg-white border border-gray-200 p-1">
         <TabsTrigger 
           value="expenses" 
-          className={`flex-1 rounded-lg py-3 text-base font-medium ${
+          className={`flex-1 rounded-lg py-3 text-sm font-medium ${
             activeTab === "expenses" 
               ? "bg-indigo-600 text-white" 
               : "text-gray-600 hover:text-gray-800"
@@ -22,7 +22,7 @@ export const ExpenseTabs = ({ activeTab, onTabChange }: ExpenseTabsProps) => {
         </TabsTrigger>
         <TabsTrigger 
           value="approval" 
-          className={`flex-1 rounded-lg py-3 text-base font-medium ${
+          className={`flex-1 rounded-lg py-3 text-sm font-meidum ${
             activeTab === "approval" 
               ? "bg-indigo-600 text-white" 
               : "text-gray-600 hover:text-gray-800"
