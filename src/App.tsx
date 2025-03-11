@@ -26,6 +26,9 @@ import OfferDetail from "@/pages/OfferDetail";
 import RequestDetail from "@/pages/RequestDetail";
 import NotFound from "@/pages/NotFound";
 import Index from "./pages/Index";
+import LoginPage from "./pages/Login";
+import RegisterPage from "./pages/Register";
+import ForgotPasswordPage from "./pages/ForgotPass";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -58,6 +61,9 @@ function App() {
             <Route path="/create-expense" element={<CreateExpense />} />
             <Route path="*" element={<NotFound />} />
             <Route path="/cash-bank" element={<CashnBank />} />
+            <Route path="/login" element={<LoginPage/> }/> 
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage/> }/>
           </Routes>
           <Toaster />
         </Router>

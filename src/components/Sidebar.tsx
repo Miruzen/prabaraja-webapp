@@ -1,4 +1,3 @@
-
 import { 
   Home, 
   LayoutDashboard, 
@@ -10,9 +9,10 @@ import {
   Users,
   Package,
   Database,
-  Settings
+  Settings,
+  LogOut // Import the LogOut icon
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -35,6 +35,16 @@ const NavItem = ({ icon, label, href, isActive }: NavItemProps) => (
 
 export const Sidebar = () => {
   const currentPath = window.location.pathname;
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Clear user session or token (e.g., from localStorage or state management)
+    localStorage.removeItem('authToken'); // Example: Remove auth token
+    localStorage.removeItem('user'); // Example: Remove user data
+
+    // Redirect to the Login Page
+    navigate('/login');
+  };
 
   const navItems = [
     { icon: <Home size={20} />, label: 'Home', href: '/' },
@@ -63,6 +73,15 @@ export const Sidebar = () => {
           />
         ))}
       </div>
+
+      {/* Logout Button */}
+      <button
+        onClick={handleLogout}
+        className="flex items-center gap-3 px-4 py-3 text-sidebar-text hover:bg-sidebar-hover transition-colors duration-200 mx-2 rounded-[20px] mb-4"
+      >
+        <LogOut size={20} className="text-red-500" /> {/* Red logout icon */}
+        <span className="text-sm font-medium">Logout</span>
+      </button>
     </div>
   );
 };
