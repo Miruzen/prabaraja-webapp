@@ -1,8 +1,8 @@
-
+import { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Card } from "@/components/ui/card";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { ArrowUpRight, ArrowDownRight, AreaChartIcon, LineChartIcon } from "lucide-react";
 
 const StatCard = ({ title, amount, trend, isPositive }: { 
   title: string;
@@ -32,6 +32,58 @@ const data = [
 ];
 
 const Dashboard = () => {
+  const [chartType, setChartType] = useState<'area' | 'line'>('area');
+
+  const renderChart = () => {
+    if (chartType === 'area') {
+      return (
+        <AreaChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="month" />
+          <YAxis />
+          <Tooltip formatter={(value) => `Rp ${value.toLocaleString()}`} />
+          <Area 
+            type="monotone" 
+            dataKey="profit" 
+            stackId="1" 
+            stroke="#0EA5E9" 
+            fill="#0EA5E9" 
+            fillOpacity={0.6}
+          />
+          <Area 
+            type="monotone" 
+            dataKey="loss" 
+            stackId="1" 
+            stroke="#EF4444" 
+            fill="#EF4444" 
+            fillOpacity={0.6}
+          />
+        </AreaChart>
+      );
+    } else {
+      return (
+        <LineChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="month" />
+          <YAxis />
+          <Tooltip formatter={(value) => `Rp ${value.toLocaleString()}`} />
+          <Line 
+            type="monotone" 
+            dataKey="profit" 
+            stroke="#0EA5E9" 
+            strokeWidth={2}
+          />
+          <Line 
+            type="monotone" 
+            dataKey="loss" 
+            stroke="#EF4444" 
+            strokeWidth={2}
+          />
+        </LineChart>
+      );
+    }
+  };
+
   return (
     <div className="flex min-h-screen">
       <Sidebar />
@@ -70,31 +122,26 @@ const Dashboard = () => {
             </div>
 
             <Card className="p-6">
-              <h2 className="text-lg font-semibold mb-6">Monthly Profit & Loss</h2>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-lg font-semibold">Monthly Profit & Loss</h2>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setChartType('area')}
+                    className={`p-2 rounded ${chartType === 'area' ? 'bg-blue-100' : 'bg-gray-100'}`}
+                  >
+                    <AreaChartIcon className={`w-5 h-5 ${chartType === 'area' ? 'text-blue-600' : 'text-gray-500'}`} />
+                  </button>
+                  <button
+                    onClick={() => setChartType('line')}
+                    className={`p-2 rounded ${chartType === 'line' ? 'bg-green-100' : 'bg-gray-100'}`}
+                  >
+                    <LineChartIcon className={`w-5 h-5 ${chartType === 'line' ? 'text-green-600' : 'text-gray-500'}`} />
+                  </button>
+                </div>
+              </div>
               <div className="h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={data}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip formatter={(value) => `Rp ${value.toLocaleString()}`} />
-                    <Area 
-                      type="monotone" 
-                      dataKey="profit" 
-                      stackId="1" 
-                      stroke="#0EA5E9" 
-                      fill="#0EA5E9" 
-                      fillOpacity={0.6}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="loss" 
-                      stackId="1" 
-                      stroke="#EF4444" 
-                      fill="#EF4444" 
-                      fillOpacity={0.6}
-                    />
-                  </AreaChart>
+                  {renderChart()}
                 </ResponsiveContainer>
               </div>
             </Card>
@@ -105,4 +152,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default Dashboard; 
