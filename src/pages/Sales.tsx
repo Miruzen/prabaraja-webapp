@@ -128,6 +128,7 @@ const Sales = () => {
       <div className="flex-1 overflow-auto">
         <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
           <h1 className="text-2xl font-semibold text-white">Sales</h1>
+          <p className="text-white/80"> Manage your company sales transaction</p>
         </div>
 
         <div className="p-6">

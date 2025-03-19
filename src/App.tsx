@@ -29,6 +29,7 @@ import Index from "./pages/Index";
 import LoginPage from "./pages/Login";
 import RegisterPage from "./pages/Register";
 import ForgotPasswordPage from "./pages/ForgotPass";
+import Neraca from "./components/reports/neraca";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -64,6 +65,7 @@ function App() {
             <Route path="/login" element={<LoginPage/> }/> 
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage/> }/>
+            <Route path="/neraca" element={<Neraca/> } />
           </Routes>
           <Toaster />
         </Router>

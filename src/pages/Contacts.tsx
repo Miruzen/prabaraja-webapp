@@ -115,6 +115,7 @@ const Contacts = () => {
       <main className="flex-1">
         <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
           <h1 className="text-2xl font-semibold text-white mb-4">Contacts</h1>
+          <p className="text-white/80"> View your company Contacts</p>
         </div>
         
         <div className="p-6">
