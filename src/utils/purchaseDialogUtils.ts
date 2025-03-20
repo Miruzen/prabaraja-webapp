@@ -6,9 +6,9 @@ import { PurchasePriority, PurchaseStatus, PurchaseType } from "@/types/purchase
  */
 export const generateDefaultPurchaseNumber = (type: string): string => {
   const prefix = type === "invoice" ? "INV-" :
-               type === "shipment" ? "SH-" :
-               type === "order" ? "ORD-" :
-               type === "offer" ? "OFR-" : "REQ-";
+                type === "shipment" ? "SH-" :
+                type === "order" ? "ORD-" :
+                type === "offer" ? "OFR-" : "REQ-";
   return `${prefix}${new Date().getFullYear()}${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
 };
 
