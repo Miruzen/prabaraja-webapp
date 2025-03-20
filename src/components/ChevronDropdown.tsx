@@ -23,7 +23,8 @@ const ChevronDropdown = ({ options }) => {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute left-3 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
+        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
+
           <div className="py-1">
             {options.map((option, index) => (
               <button
