@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Circle, MoreVertical, Edit, CreditCard } from "lucide-react"; // Added icons
+import { Circle, MoreVertical, Edit, CreditCard, Trash } from "lucide-react"; // Added icons
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -81,6 +81,11 @@ export function TransactionsTable({ transactions, searchQuery = "" }: Transactio
   const handleReceivePayment = (id: string) => {
     console.log("Receive payment for transaction:", id);
     // Add your receive payment logic here
+  };
+
+  const handleDelete = (id: string) => {
+    console.log("Delete invoice", id);
+    
   };
 
   return (
@@ -166,6 +171,13 @@ export function TransactionsTable({ transactions, searchQuery = "" }: Transactio
                       className="flex items-center gap-2 text-sm cursor-pointer"
                     >
                       <CreditCard className="h-4 w-4 text-green-500" />
+                      <span>Receive Payment</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleDelete(transaction.id)}
+                      className="flex items-center gap-2 text-sm cursor-pointer"
+                    >
+                      <Trash className="h-4 w-4 text-red-500" />
                       <span>Receive Payment</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
