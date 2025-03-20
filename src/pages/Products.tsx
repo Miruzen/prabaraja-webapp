@@ -127,6 +127,24 @@ const Products = () => {
     }).format(amount);
   };
 
+  const dropdownOptions = [
+    {
+      label: "Add New Product",
+      action: () => navigate("/add-product"),
+      icon: <PackagePlus size={16} color="#F97316" />,
+    },
+    {
+      label: "Add New Warehouse",
+      action: () => navigate("/add-warehouse"),
+      icon: <Warehouse size={16} color="#8B5CF6" />,
+    },
+    {
+      label: "Adjust Stock",
+      action: () => navigate("/adjust-stock"),
+      icon: <CirclePlus size={16} color="#0EA5E9" />,
+    },
+  ]
+
   return (
     <div className="flex min-h-screen">
       <Sidebar />
@@ -184,7 +202,7 @@ const Products = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    <ChevronDropdown options={selectedProductCategory} />
+                    <ChevronDropdown options={dropdownOptions} />
                   </div>
 
                   <Table>
@@ -261,7 +279,7 @@ const Products = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    <ChevronDropdown options={selectedWarehouseLocation} />
+                    <ChevronDropdown options={dropdownOptions} />
                   </div>
 
                   <Table>
