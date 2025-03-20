@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
-import { useNavigate } from "react-router-dom";
 import  ChevronDropdown  from "@/components/ChevronDropdown";
 import { Card, CardContent } from "@/components/ui/card";
 import { TabNavigation } from "@/components/products/TabNavigation";
@@ -9,8 +8,8 @@ import { ProductTable } from "@/components/products/ProductTable";
 import { WarehouseTable } from "@/components/products/WarehouseTable";
 import { WarehouseFilters } from "@/components/products/WarehouseFilters";
 import { ProductPagination } from "@/components/products/ProductPagination";
-import { dropdownOptions } from "@/components/products/DropdownOptions";
 import { products, warehouses, productCategories, warehouseLocations } from "@/data/productData";
+import { useDropdownOptions } from "@/components/products/DropdownOptions"; // Import the hook
 
 const Products = () => {
   const [activeTab, setActiveTab] = useState("Products");
@@ -18,8 +17,10 @@ const Products = () => {
   const [selectedWarehouseLocation, setSelectedWarehouseLocation] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const navigate = useNavigate();
   const itemsPerPage = 10;
+
+  // Use the hook to get dropdown options
+  const dropdownOptions = useDropdownOptions();
 
   // Filter products and warehouses
   const filteredProducts = products.filter(
