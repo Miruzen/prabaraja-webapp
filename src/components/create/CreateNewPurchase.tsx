@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { PurchaseFormHeader } from "@/components/purchases/PurchaseFormHeader";
-import { CreatePurchaseForm } from "@/components/purchases/CreatePurchaseForm";
+import { CreatePurchaseForm } from "@/components/create/CreatePurchaseForm";
 import { PurchaseType } from "@/types/purchase";
 
 const CreateNewPurchase = () => {
