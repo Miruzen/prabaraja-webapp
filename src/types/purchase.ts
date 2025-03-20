@@ -18,7 +18,7 @@ export interface Purchase {
   dueDate: Date | null;
   status: PurchaseStatus;
   itemCount: number;
-  priority: PurchasePriority;
+  amount: number;
   tags: string[];
   type: PurchaseType;
   items: PurchaseItem[];

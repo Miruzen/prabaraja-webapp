@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -9,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PurchaseType, PurchaseStatus, PurchasePriority } from "@/types/purchase";
+import { PurchaseType, PurchaseStatus } from "@/types/purchase";
 
 interface PurchaseInformationFormProps {
   purchaseType: PurchaseType;
@@ -24,8 +23,6 @@ interface PurchaseInformationFormProps {
   setDueDate: (dueDate: string) => void;
   status: PurchaseStatus;
   setStatus: (status: PurchaseStatus) => void;
-  priority: PurchasePriority;
-  setPriority: (priority: PurchasePriority) => void;
   tags: string;
   setTags: (tags: string) => void;
   
@@ -61,8 +58,6 @@ export function PurchaseInformationForm({
   setDueDate,
   status,
   setStatus,
-  priority,
-  setPriority,
   tags,
   setTags,
   // Type-specific fields
@@ -266,25 +261,6 @@ export function PurchaseInformationForm({
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="completed">Completed</SelectItem>
               <SelectItem value="cancelled">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="priority">Priority</Label>
-          <Select
-            value={priority}
-            onValueChange={(value: PurchasePriority) =>
-              setPriority(value)
-            }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="High">High</SelectItem>
-              <SelectItem value="Medium">Medium</SelectItem>
-              <SelectItem value="Low">Low</SelectItem>
             </SelectContent>
           </Select>
         </div>

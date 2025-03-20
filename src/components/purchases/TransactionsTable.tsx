@@ -8,8 +8,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Circle } from "lucide-react";
+import { Circle, MoreVertical, Edit, CreditCard } from "lucide-react"; // Added icons
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"; // Import dropdown components
+
+interface InvoiceItem {
+  name: string;
+  quantity: number;
+  price: number;
+}
 
 interface Transaction {
   id: string;
@@ -18,8 +30,9 @@ interface Transaction {
   approver: string;
   dueDate: Date | null;
   status: "pending" | "completed" | "cancelled";
-  itemCount: number;
-  priority: "High" | "Medium" | "Low"; // This will no longer be used
+  itemCount: number; // Kept for potential use elsewhere
+  amount: number; // Added amount field
+  items: InvoiceItem[]; // Add items field for dynamic calculation
   tags: string[]; // Tags will be hidden but searchable
   type: "invoice" | "shipment" | "order" | "offer" | "request";
 }
@@ -46,6 +59,30 @@ export function TransactionsTable({ transactions, searchQuery = "" }: Transactio
     );
   });
 
+  // Calculate the total amount for each transaction
+  const transactionsWithAmount = filteredTransactions.map((transaction) => {
+    // If the amount field is missing or 0, calculate it dynamically
+    const amount = transaction.amount || (transaction.items && transaction.items.length ) > 0
+      ? transaction.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+      : 0;
+
+    return {
+      ...transaction,
+      amount, // Ensure the amount field is populated
+    };
+  });
+
+  // Handle actions
+  const handleEdit = (id: string) => {
+    console.log("Edit transaction:", id);
+    // Add your edit logic here
+  };
+
+  const handleReceivePayment = (id: string) => {
+    console.log("Receive payment for transaction:", id);
+    // Add your receive payment logic here
+  };
+
   return (
     <div className="border rounded-lg">
       <Table>
@@ -56,12 +93,12 @@ export function TransactionsTable({ transactions, searchQuery = "" }: Transactio
             <TableHead>Staff Approval</TableHead>
             <TableHead>Due Date</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Items</TableHead>
-            {/* Tags column is hidden but still searchable */}
+            <TableHead>Amount</TableHead> {/* Added Amount column */}
+            <TableHead>Actions</TableHead> {/* Added Actions column */}
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredTransactions.map((transaction) => (
+          {transactionsWithAmount.map((transaction) => (
             <TableRow key={transaction.id}>
               <TableCell>{format(transaction.date, "dd/MM/yyyy")}</TableCell>
               <TableCell>
@@ -100,8 +137,40 @@ export function TransactionsTable({ transactions, searchQuery = "" }: Transactio
                     transaction.status.slice(1)}
                 </span>
               </TableCell>
-              <TableCell>{transaction.itemCount} items</TableCell>
-              {/* Tags are hidden but still searchable */}
+              <TableCell>
+                {/* Display amount in IDR format */}
+                {new Intl.NumberFormat("id-ID", {
+                  style: "currency",
+                  currency: "IDR",
+                  minimumFractionDigits: 0, // Remove decimal places for IDR
+                }).format(transaction.amount)}
+              </TableCell>
+              {/* Actions Dropdown */}
+              <TableCell>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="p-2 hover:bg-gray-100 rounded-lg">
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-48">
+                    <DropdownMenuItem
+                      onClick={() => handleEdit(transaction.id)}
+                      className="flex items-center gap-2 text-sm cursor-pointer"
+                    >
+                      <Edit className="h-4 w-4 text-blue-500" />
+                      <span>Edit</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleReceivePayment(transaction.id)}
+                      className="flex items-center gap-2 text-sm cursor-pointer"
+                    >
+                      <CreditCard className="h-4 w-4 text-green-500" />
+                      <span>Receive Payment</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

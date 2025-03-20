@@ -1,15 +1,16 @@
-
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { PurchaseItem } from "@/types/purchase";
+import { useEffect } from "react"; // Add useEffect
 
 interface PurchaseItemsFormProps {
   items: PurchaseItem[];
   setItems: (items: PurchaseItem[]) => void;
+  onTotalChange?: (total: number) => void; // Add this prop
 }
 
-export function PurchaseItemsForm({ items, setItems }: PurchaseItemsFormProps) {
+export function PurchaseItemsForm({ items, setItems, onTotalChange }: PurchaseItemsFormProps) {
   const handleAddItem = () => {
     setItems([...items, { id: Math.random().toString(36).substr(2, 9), name: '', quantity: 1, price: 0 }]);
   };
@@ -33,6 +34,13 @@ export function PurchaseItemsForm({ items, setItems }: PurchaseItemsFormProps) {
   const formatPrice = (price: number) => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
+
+  // Notify parent when total changes
+  useEffect(() => {
+    if (onTotalChange) {
+      onTotalChange(calculateTotal());
+    }
+  }, [items, onTotalChange]);
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm">

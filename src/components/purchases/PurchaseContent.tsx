@@ -32,7 +32,8 @@ export function PurchaseContent() {
             dueDate: purchase.dueDate ? new Date(purchase.dueDate) : null,
             shippingDate: purchase.shippingDate ? new Date(purchase.shippingDate) : null,
             orderDate: purchase.orderDate ? new Date(purchase.orderDate) : null,
-            expiryDate: purchase.expiryDate ? new Date(purchase.expiryDate) : null
+            expiryDate: purchase.expiryDate ? new Date(purchase.expiryDate) : null,
+            amount: purchase.amount || 0, // Ensure amount is set, default to 0 if missing
           }));
           setTransactions(purchasesWithDates);
         } catch (error) {
@@ -57,11 +58,8 @@ export function PurchaseContent() {
       const unpaidTotal = transactions
         .filter(t => t.status === "pending" && t.type === "invoice")
         .reduce((sum, t) => {
-          // Calculate total from items if available
-          if (t.items && t.items.length > 0) {
-            return sum + t.items.reduce((itemSum, item) => itemSum + (item.price * item.quantity), 0);
-          }
-          return sum;
+          // Use the amount field if available, otherwise calculate from items
+          return sum + (t.amount || 0);
         }, 0);
       setUnpaidAmount(unpaidTotal);
 
@@ -84,11 +82,8 @@ export function PurchaseContent() {
                 isAfter(t.date, thirtyDaysAgo);
         })
         .reduce((sum, t) => {
-          // Calculate total from items if available
-          if (t.items && t.items.length > 0) {
-            return sum + t.items.reduce((itemSum, item) => itemSum + (item.price * item.quantity), 0);
-          }
-          return sum;
+          // Use the amount field if available, otherwise calculate from items
+          return sum + (t.amount || 0);
         }, 0);
       setLast30DaysPayments(recentPayments);
     } else {

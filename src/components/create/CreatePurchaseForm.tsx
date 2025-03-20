@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { toast } from "sonner";
 // Import the components
 import { PurchaseInformationForm } from "@/components/purchases/PurchaseInformationForm";
 import { PurchaseItemsForm } from "@/components/purchases/PurchaseItemsForm";
-import { Purchase, PurchaseItem, PurchaseType, PurchaseStatus, PurchasePriority, PURCHASES_STORAGE_KEY } from "@/types/purchase";
+import { Purchase, PurchaseItem, PurchaseType, PurchaseStatus, PURCHASES_STORAGE_KEY } from "@/types/purchase";
 
 interface CreatePurchaseFormProps {
   purchaseType: PurchaseType;
@@ -22,12 +21,12 @@ export function CreatePurchaseForm({ purchaseType, setPurchaseType }: CreatePurc
   const [approver, setApprover] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [status, setStatus] = useState<PurchaseStatus>("pending");
-  const [priority, setPriority] = useState<PurchasePriority>("Medium");
   const [tags, setTags] = useState("");
   const [items, setItems] = useState<PurchaseItem[]>([
     { id: '1', name: '', quantity: 1, price: 0 }
   ]);
-  
+  const [amount, setAmount] = useState(0); // Add amount state
+
   // Type-specific fields
   const [trackingNumber, setTrackingNumber] = useState("");
   const [carrier, setCarrier] = useState("");
@@ -72,6 +71,12 @@ export function CreatePurchaseForm({ purchaseType, setPurchaseType }: CreatePurc
     orderDate, discountTerms, expiryDate, requestedBy
   ]);
 
+  // Calculate total amount whenever items change
+  useEffect(() => {
+    const total = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+    setAmount(total);
+  }, [items]);
+
   const getTypeTitle = () => {
     switch (purchaseType) {
       case "invoice": return "Invoice";
@@ -99,7 +104,7 @@ export function CreatePurchaseForm({ purchaseType, setPurchaseType }: CreatePurc
       dueDate: dueDate ? new Date(dueDate) : null,
       status,
       itemCount: items.length,
-      priority,
+      amount, // Add amount field
       tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag !== ""),
       type: purchaseType,
       items,
@@ -182,8 +187,6 @@ export function CreatePurchaseForm({ purchaseType, setPurchaseType }: CreatePurc
           setDueDate={setDueDate}
           status={status}
           setStatus={setStatus}
-          priority={priority}
-          setPriority={setPriority}
           tags={tags}
           setTags={setTags}
           // Type-specific fields
