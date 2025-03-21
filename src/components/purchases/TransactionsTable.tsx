@@ -178,7 +178,7 @@ export function TransactionsTable({ transactions, searchQuery = "" }: Transactio
                       className="flex items-center gap-2 text-sm cursor-pointer"
                     >
                       <Trash className="h-4 w-4 text-red-500" />
-                      <span>Receive Payment</span>
+                      <span>Delete</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
