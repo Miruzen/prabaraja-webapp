@@ -186,6 +186,7 @@ export function TransactionsTable({ transactions, searchQuery = "", onDeleteTran
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-48">
+                    {/* Edit Option */}
                     <DropdownMenuItem
                       onClick={() => handleEdit(transaction.id)}
                       className="flex items-center gap-2 text-sm cursor-pointer"
@@ -193,13 +194,19 @@ export function TransactionsTable({ transactions, searchQuery = "", onDeleteTran
                       <Edit className="h-4 w-4 text-blue-500" />
                       <span>Edit</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleReceivePayment(transaction.id)}
-                      className="flex items-center gap-2 text-sm cursor-pointer"
-                    >
-                      <CreditCard className="h-4 w-4 text-green-500" />
-                      <span>Receive Payment</span>
-                    </DropdownMenuItem>
+
+                    {/* Receive Payment Option (Conditional Rendering) */}
+                    {transaction.status !== "completed" && (
+                      <DropdownMenuItem
+                        onClick={() => handleReceivePayment(transaction.id)}
+                        className="flex items-center gap-2 text-sm cursor-pointer"
+                      >
+                        <CreditCard className="h-4 w-4 text-green-500" />
+                        <span>Receive Payment</span>
+                      </DropdownMenuItem>
+                    )}
+
+                    {/* Delete Option */}
                     <DropdownMenuItem
                       onClick={() => handleDelete(transaction.id)}
                       className="flex items-center gap-2 text-sm cursor-pointer"
