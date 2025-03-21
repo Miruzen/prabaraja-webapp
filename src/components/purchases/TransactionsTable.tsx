@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom"; // Add this import
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import {
@@ -8,14 +10,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Circle, MoreVertical, Edit, CreditCard, Trash } from "lucide-react"; // Added icons
+import { Circle, MoreVertical, Edit, CreditCard, Trash } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"; // Import dropdown components
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface InvoiceItem {
   name: string;
@@ -30,10 +41,10 @@ interface Transaction {
   approver: string;
   dueDate: Date | null;
   status: "pending" | "completed" | "cancelled";
-  itemCount: number; // Kept for potential use elsewhere
-  amount: number; // Added amount field
-  items: InvoiceItem[]; // Add items field for dynamic calculation
-  tags: string[]; // Tags will be hidden but searchable
+  itemCount: number;
+  amount: number;
+  items: InvoiceItem[];
+  tags: string[];
   type: "invoice" | "shipment" | "order" | "offer" | "request";
 }
 
@@ -45,10 +56,15 @@ const statusColors = {
 
 interface TransactionsTableProps {
   transactions: Transaction[];
-  searchQuery?: string; // Optional search query for filtering
+  searchQuery?: string;
+  onDeleteTransaction: (id: string) => void;
 }
 
-export function TransactionsTable({ transactions, searchQuery = "" }: TransactionsTableProps) {
+export function TransactionsTable({ transactions, searchQuery = "", onDeleteTransaction }: TransactionsTableProps) {
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
+  const navigate = useNavigate(); // Initialize the navigate function
+
   // Filter transactions based on search query (including tags)
   const filteredTransactions = transactions.filter((transaction) => {
     const searchLower = searchQuery.toLowerCase();
@@ -61,31 +77,44 @@ export function TransactionsTable({ transactions, searchQuery = "" }: Transactio
 
   // Calculate the total amount for each transaction
   const transactionsWithAmount = filteredTransactions.map((transaction) => {
-    // If the amount field is missing or 0, calculate it dynamically
-    const amount = transaction.amount || (transaction.items && transaction.items.length ) > 0
+    const amount = transaction.amount || (transaction.items && transaction.items.length )  > 0
       ? transaction.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
       : 0;
 
     return {
       ...transaction,
-      amount, // Ensure the amount field is populated
+      amount,
     };
   });
 
   // Handle actions
   const handleEdit = (id: string) => {
     console.log("Edit transaction:", id);
-    // Add your edit logic here
   };
 
   const handleReceivePayment = (id: string) => {
-    console.log("Receive payment for transaction:", id);
-    // Add your receive payment logic here
+    const transaction = transactions.find((t) => t.id === id);
+    if (transaction) {
+      navigate("/receive-payment", { state: { transaction } }); // Use navigate here
+    }
   };
 
   const handleDelete = (id: string) => {
-    console.log("Delete invoice", id);
-    
+    setTransactionToDelete(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (transactionToDelete) {
+      onDeleteTransaction(transactionToDelete);
+      setIsDeleteDialogOpen(false);
+      setTransactionToDelete(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setIsDeleteDialogOpen(false);
+    setTransactionToDelete(null);
   };
 
   return (
@@ -98,8 +127,8 @@ export function TransactionsTable({ transactions, searchQuery = "" }: Transactio
             <TableHead>Staff Approval</TableHead>
             <TableHead>Due Date</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Amount</TableHead> {/* Added Amount column */}
-            <TableHead>Actions</TableHead> {/* Added Actions column */}
+            <TableHead>Amount</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -143,14 +172,12 @@ export function TransactionsTable({ transactions, searchQuery = "" }: Transactio
                 </span>
               </TableCell>
               <TableCell>
-                {/* Display amount in IDR format */}
                 {new Intl.NumberFormat("id-ID", {
                   style: "currency",
                   currency: "IDR",
-                  minimumFractionDigits: 0, // Remove decimal places for IDR
+                  minimumFractionDigits: 0,
                 }).format(transaction.amount)}
               </TableCell>
-              {/* Actions Dropdown */}
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -187,6 +214,23 @@ export function TransactionsTable({ transactions, searchQuery = "" }: Transactio
           ))}
         </TableBody>
       </Table>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Are you sure you want to delete this transaction?</DialogTitle>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={cancelDelete}>
+              No
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              Yes, Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

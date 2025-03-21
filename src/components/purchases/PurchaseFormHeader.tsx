@@ -1,6 +1,6 @@
-
-import { FileText, Truck, ShoppingCart, Tag, HelpCircle } from "lucide-react";
+import { FileText, Truck, ShoppingCart, Tag, HelpCircle, ArrowLeft } from "lucide-react"; // Added ArrowLeft
 import { PurchaseType } from "@/types/purchase";
+import { Link } from "react-router-dom"; // Import Link for navigation
 
 interface PurchaseFormHeaderProps {
   purchaseType: PurchaseType;
@@ -30,9 +30,20 @@ export function PurchaseFormHeader({ purchaseType }: PurchaseFormHeaderProps) {
   return (
     <div className="bg-gradient-to-b from-purple-400 to-indigo-500 p-6">
       <div className="flex items-center">
-        {getTypeIcon()}
-        <h1 className="text-2xl font-semibold text-white ml-2">Create New {getTypeTitle()}</h1>
+        {/* Back Arrow Button */}
+        <Link
+          to="/purchases"
+          className="bg-white/20 p-2 rounded-lg hover:bg-white/30 transition-colors"
+        >
+          <ArrowLeft className="h-6 w-6 text-white" />
+        </Link>
+
+        {/* Type Icon and Title */}
+        <div className="flex items-center ml-4">
+          {getTypeIcon()}
+          <h1 className="text-2xl font-semibold text-white ml-2">Create New {getTypeTitle()}</h1>
+        </div>
       </div>
-    </div>
+    </div>  
   );
 }

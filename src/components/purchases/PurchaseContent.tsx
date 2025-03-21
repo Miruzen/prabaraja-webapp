@@ -20,6 +20,7 @@ export function PurchaseContent() {
   const [overdueCount, setOverdueCount] = useState<number>(0);
   const [last30DaysPayments, setLast30DaysPayments] = useState<number>(0);
 
+  // Load purchases from localStorage
   useEffect(() => {
     const loadPurchasesFromStorage = () => {
       const storedPurchases = localStorage.getItem(PURCHASES_STORAGE_KEY);
@@ -51,8 +52,8 @@ export function PurchaseContent() {
     };
   }, []);
 
+  // Calculate stats based on the current transactions
   useEffect(() => {
-    // Calculate stats based on the current transactions
     if (transactions.length > 0) {
       // Calculate unpaid amount
       const unpaidTotal = transactions
@@ -94,12 +95,14 @@ export function PurchaseContent() {
     }
   }, [transactions]);
 
+  // Filter transactions based on active tab and status filter
   const filteredTransactions = transactions.filter(transaction => {
     const matchesType = activeTab === transaction.type + "s";
     const matchesStatus = statusFilter === "all" || statusFilter === transaction.status;
     return matchesType && matchesStatus;
   });
 
+  // Handle tab change
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     // Set the purchase type based on the active tab (remove the 's' at the end)
@@ -107,9 +110,19 @@ export function PurchaseContent() {
     setPurchaseType(type as PurchaseType);
   };
 
-  // Create new navigation function to go to create purchase page
+  // Navigate to create purchase page
   const navigateToCreatePurchase = (type: PurchaseType) => {
     navigate(`/create-new-purchase?type=${type}`);
+  };
+
+  // Handle transaction deletion
+  const handleDeleteTransaction = (id: string) => {
+    // Remove the transaction from the list
+    const updatedTransactions = transactions.filter((t) => t.id !== id);
+    setTransactions(updatedTransactions);
+
+    // Update localStorage
+    localStorage.setItem(PURCHASES_STORAGE_KEY, JSON.stringify(updatedTransactions));
   };
 
   const showEmptyState = filteredTransactions.length === 0;
@@ -145,7 +158,10 @@ export function PurchaseContent() {
             <p className="text-sm text-gray-400">Use the Add New button to create one.</p>
           </div>
         ) : (
-          <TransactionsTable transactions={filteredTransactions} />
+          <TransactionsTable
+            transactions={filteredTransactions}
+            onDeleteTransaction={handleDeleteTransaction}
+          />
         )}
       </div>
     </div>
