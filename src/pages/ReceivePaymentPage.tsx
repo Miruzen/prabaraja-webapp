@@ -18,9 +18,9 @@
     TableRow,
     } from "@/components/ui/table";
     import { Sidebar } from "@/components/Sidebar";
-    import { Wallet, FileText, Banknote, ArrowLeft, Trash } from "lucide-react";
+    import { Wallet, FileText, Banknote, ArrowLeft, Trash, Link as LinkIcon, UploadCloud } from "lucide-react";
     import { Link } from "react-router-dom";
-    import { formatCurrency, formatInputCurrency, parseInputCurrency } from "@/lib/utils"; // Import the new utility functions
+    import { formatCurrency, formatInputCurrency, parseInputCurrency } from "@/lib/utils";
 
     interface InvoiceItem {
     name: string;
@@ -35,6 +35,13 @@
     };
     }
 
+    interface Attachment {
+    type: "file" | "link";
+    name: string;
+    url?: string;
+    file?: File;
+    }
+
     export function ReceivePaymentPage() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -42,7 +49,8 @@
     const [paymentMethod, setPaymentMethod] = useState<string>("");
     const [paymentAmount, setPaymentAmount] = useState<string>("");
     const [proformaItems, setProformaItems] = useState<InvoiceItem[]>([]);
-    const [attachment, setAttachment] = useState<File | null>(null);
+    const [attachments, setAttachments] = useState<Attachment[]>([]);
+    const [linkUrl, setLinkUrl] = useState<string>("");
 
     if (!state?.transaction) {
         return (
@@ -54,9 +62,15 @@
 
     const { items } = state.transaction;
 
+    // Calculate total invoice amount
+    const totalInvoiceAmount = items.reduce(
+        (total, item) => total + item.price * item.quantity,
+        0
+    );
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const numericAmount = parseInputCurrency(paymentAmount); // Convert formatted string to number
+        const numericAmount = parseInputCurrency(paymentAmount);
         console.log("Payment Amount (Number):", numericAmount);
         console.log("Payment received!");
         navigate("/purchases");
@@ -65,9 +79,22 @@
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file && file.size <= 10 * 1024 * 1024) {
-        setAttachment(file);
+        setAttachments((prev) => [
+            ...prev,
+            { type: "file", name: file.name, file },
+        ]);
         } else {
         alert("File size must be less than 10MB.");
+        }
+    };
+
+    const handleAddLink = () => {
+        if (linkUrl) {
+        setAttachments((prev) => [
+            ...prev,
+            { type: "link", name: "External Link", url: linkUrl },
+        ]);
+        setLinkUrl("");
         }
     };
 
@@ -79,8 +106,25 @@
 
     const handlePaymentAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const rawValue = e.target.value;
-        const formattedValue = formatInputCurrency(rawValue); // Format the input value
+        const numericValue = parseInputCurrency(rawValue); // Convert formatted string to number
+
+        // If the input exceeds the total invoice amount, correct it to the total invoice amount
+        const correctedValue = Math.min(numericValue, totalInvoiceAmount);
+
+        // Format the corrected value back to a string with thousand separators
+        const formattedValue = formatInputCurrency(correctedValue.toString());
         setPaymentAmount(formattedValue);
+    };
+
+    const isFormValid = () => {
+        if (paymentMethod === "cash" || paymentMethod === "bank") {
+        return paymentAmount.trim() !== "";
+        } else if (paymentMethod === "proforma") {
+        return proformaItems.every(
+            (item) => item.name.trim() !== "" && item.quantity > 0 && item.price > 0
+        );
+        }
+        return false;
     };
 
     return (
@@ -120,7 +164,7 @@
                         <TableCell>{item.name}</TableCell>
                         <TableCell>{item.quantity}</TableCell>
                         <TableCell>
-                            {formatCurrency(item.price * item.quantity)} {/* Use formatCurrency here */}
+                            {formatCurrency(item.price * item.quantity)}
                         </TableCell>
                         </TableRow>
                     ))}
@@ -163,21 +207,75 @@
                     <div>
                         <label className="block text-lg font-medium mb-2">Payment Amount (IDR)</label>
                         <Input
-                        type="text" // Changed to text to allow formatting
-                        placeholder="Enter payment amount"
+                        type="text"
+                        placeholder={`Max amount: ${formatCurrency(totalInvoiceAmount)}`} // Show max amount in placeholder
                         value={paymentAmount}
-                        onChange={handlePaymentAmountChange} // Use the new handler
+                        onChange={handlePaymentAmountChange}
                         className="rounded-xl focus:ring-2 focus:ring-indigo-500"
                         />
                     </div>
                     <div>
                         <label className="block text-lg font-medium mb-2">Attachment (Optional, max 10MB)</label>
-                        <Input
-                        type="file"
-                        onChange={handleFileChange}
-                        className="rounded-xl focus:ring-2 focus:ring-indigo-500"
-                        accept=".pdf,.doc,.docx,.jpg,.png"
-                        />
+                        <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                            <UploadCloud className="h-12 w-12 text-gray-400" />
+                            <p className="text-gray-500">Drop files to upload or click here</p>
+                            <input
+                            type="file"
+                            onChange={handleFileChange}
+                            className="hidden"
+                            id="file-upload"
+                            />
+                            <label
+                            htmlFor="file-upload"
+                            className="cursor-pointer text-indigo-600 hover:text-indigo-700"
+                            >
+                            Browse files
+                            </label>
+                        </div>
+                        <div className="mt-4">
+                            <Input
+                            type="text"
+                            placeholder="Or paste a link (YouTube, Vimeo)"
+                            value={linkUrl}
+                            onChange={(e) => setLinkUrl(e.target.value)}
+                            className="rounded-xl focus:ring-2 focus:ring-indigo-500"
+                            />
+                            <Button
+                            type="button"
+                            onClick={handleAddLink}
+                            className="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white"
+                            >
+                            Add Link
+                            </Button>
+                        </div>
+                        <div className="mt-4 space-y-2">
+                            {attachments.map((attachment, index) => (
+                            <div key={index} className="flex items-center justify-between p-2 bg-gray-100 rounded-lg">
+                                <div className="flex items-center gap-2">
+                                {attachment.type === "file" ? (
+                                    <FileText className="h-4 w-4 text-blue-500" />
+                                ) : (
+                                    <LinkIcon className="h-4 w-4 text-green-500" />
+                                )}
+                                <span>{attachment.name}</span>
+                                </div>
+                                <Button
+                                type="button"
+                                onClick={() => {
+                                    const newAttachments = [...attachments];
+                                    newAttachments.splice(index, 1);
+                                    setAttachments(newAttachments);
+                                }}
+                                variant="ghost"
+                                className="text-red-500 hover:text-red-600"
+                                >
+                                <Trash className="h-4 w-4" />
+                                </Button>
+                            </div>
+                            ))}
+                        </div>
+                        </div>
                     </div>
                     </div>
                 ) : paymentMethod === "proforma" ? (
@@ -257,12 +355,66 @@
                     </div>
                     <div>
                         <label className="block text-lg font-medium mb-2">Attachment (Optional, max 10MB)</label>
-                        <Input
-                        type="file"
-                        onChange={handleFileChange}
-                        className="rounded-xl focus:ring-2 focus:ring-indigo-500"
-                        accept=".pdf,.doc,.docx,.jpg,.png"
-                        />
+                        <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                            <UploadCloud className="h-12 w-12 text-gray-400" />
+                            <p className="text-gray-500">Drop files to upload or click here</p>
+                            <input
+                            type="file"
+                            onChange={handleFileChange}
+                            className="hidden"
+                            id="file-upload"
+                            />
+                            <label
+                            htmlFor="file-upload"
+                            className="cursor-pointer text-indigo-600 hover:text-indigo-700"
+                            >
+                            Browse files
+                            </label>
+                        </div>
+                        <div className="mt-4">
+                            <Input
+                            type="text"
+                            placeholder="Or paste a link (YouTube, Vimeo)"
+                            value={linkUrl}
+                            onChange={(e) => setLinkUrl(e.target.value)}
+                            className="rounded-xl focus:ring-2 focus:ring-indigo-500"
+                            />
+                            <Button
+                            type="button"
+                            onClick={handleAddLink}
+                            className="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white"
+                            >
+                            Add Link
+                            </Button>
+                        </div>
+                        <div className="mt-4 space-y-2">
+                            {attachments.map((attachment, index) => (
+                            <div key={index} className="flex items-center justify-between p-2 bg-gray-100 rounded-lg">
+                                <div className="flex items-center gap-2">
+                                {attachment.type === "file" ? (
+                                    <FileText className="h-4 w-4 text-blue-500" />
+                                ) : (
+                                    <LinkIcon className="h-4 w-4 text-green-500" />
+                                )}
+                                <span>{attachment.name}</span>
+                                </div>
+                                <Button
+                                type="button"
+                                onClick={() => {
+                                    const newAttachments = [...attachments];
+                                    newAttachments.splice(index, 1);
+                                    setAttachments(newAttachments);
+                                }}
+                                variant="ghost"
+                                className="text-red-500 hover:text-red-600"
+                                >
+                                <Trash className="h-4 w-4" />
+                                </Button>
+                            </div>
+                            ))}
+                        </div>
+                        </div>
                     </div>
                     </div>
                 ) : null}
@@ -272,6 +424,7 @@
                 <Button
                     type="submit"
                     className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 h-auto rounded-xl"
+                    disabled={!isFormValid()}
                 >
                     Submit Payment
                 </Button>
