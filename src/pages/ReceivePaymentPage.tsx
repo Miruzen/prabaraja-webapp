@@ -21,6 +21,8 @@
     import { Wallet, FileText, Banknote, ArrowLeft, Trash, Link as LinkIcon, UploadCloud } from "lucide-react";
     import { Link } from "react-router-dom";
     import { formatCurrency, formatInputCurrency, parseInputCurrency } from "@/lib/utils";
+    import { Purchase, PURCHASES_STORAGE_KEY } from "@/types/purchase";
+    import { toast, Toaster } from "sonner"; // Import toast and Toaster from sonner
 
     interface InvoiceItem {
     name: string;
@@ -29,10 +31,7 @@
     }
 
     interface LocationState {
-    transaction: {
-        id: string;
-        items: InvoiceItem[];
-    };
+    transaction: Purchase; // Use the Purchase type
     }
 
     interface Attachment {
@@ -60,10 +59,10 @@
         );
     }
 
-    const { items } = state.transaction;
+    const { id, items, amount, paidAmount = 0 } = state.transaction;
 
     // Calculate total invoice amount
-    const totalInvoiceAmount = items.reduce(
+    const totalInvoiceAmount = amount || items.reduce(
         (total, item) => total + item.price * item.quantity,
         0
     );
@@ -71,8 +70,42 @@
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const numericAmount = parseInputCurrency(paymentAmount);
-        console.log("Payment Amount (Number):", numericAmount);
-        console.log("Payment received!");
+
+        // Calculate new paid amount and remaining amount
+        const newPaidAmount = paidAmount + numericAmount;
+        const remainingAmount = totalInvoiceAmount - newPaidAmount;
+
+        // Determine the new status
+        let newStatus: "pending" | "completed" | "Half-paid";
+        if (newPaidAmount < totalInvoiceAmount) {
+        newStatus = "Half-paid";
+        } else {
+        newStatus = "completed";
+        }
+
+        // Update the transaction in localStorage
+        const storedPurchases = localStorage.getItem(PURCHASES_STORAGE_KEY);
+        if (storedPurchases) {
+        const parsedPurchases: Purchase[] = JSON.parse(storedPurchases);
+        const updatedPurchases = parsedPurchases.map((purchase) => {
+            if (purchase.id === id) {
+            return {
+                ...purchase,
+                paidAmount: newPaidAmount,
+                status: newStatus,
+            };
+            }
+            return purchase;
+        });
+        localStorage.setItem(PURCHASES_STORAGE_KEY, JSON.stringify(updatedPurchases));
+        }
+
+        // Show success notification
+        toast.success("Payment received successfully!", {
+        description: `Status: ${newStatus}, Remaining Amount: ${formatCurrency(remainingAmount)}`,
+        });
+
+        // Redirect to purchases page after submission
         navigate("/purchases");
     };
 
@@ -106,10 +139,10 @@
 
     const handlePaymentAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const rawValue = e.target.value;
-        const numericValue = parseInputCurrency(rawValue); // Convert formatted string to number
+        const numericValue = parseInputCurrency(rawValue);
 
-        // If the input exceeds the total invoice amount, correct it to the total invoice amount
-        const correctedValue = Math.min(numericValue, totalInvoiceAmount);
+        // If the input exceeds the remaining amount, correct it
+        const correctedValue = Math.min(numericValue, totalInvoiceAmount - paidAmount);
 
         // Format the corrected value back to a string with thousand separators
         const formattedValue = formatInputCurrency(correctedValue.toString());
@@ -129,6 +162,9 @@
 
     return (
         <div className="flex h-screen bg-background">
+        {/* Add Toaster for notifications */}
+        <Toaster position="top-right" />
+
         <Sidebar />
         <div className="flex-1 overflow-auto">
             <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
@@ -208,7 +244,7 @@
                         <label className="block text-lg font-medium mb-2">Payment Amount (IDR)</label>
                         <Input
                         type="text"
-                        placeholder={`Max amount: ${formatCurrency(totalInvoiceAmount)}`} // Show max amount in placeholder
+                        placeholder={`Max amount: ${formatCurrency(totalInvoiceAmount - paidAmount)}`}
                         value={paymentAmount}
                         onChange={handlePaymentAmountChange}
                         className="rounded-xl focus:ring-2 focus:ring-indigo-500"

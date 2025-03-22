@@ -5,7 +5,7 @@ import { PurchaseFilters } from "@/components/purchases/PurchaseFilters";
 import { TransactionsTable } from "@/components/purchases/TransactionsTable";
 import { PurchaseTabControls } from "@/components/purchases/PurchaseTabControls";
 import { PurchaseAddButton } from "@/components/purchases/PurchaseAddButton";
-import { Purchase, PURCHASES_STORAGE_KEY, PurchaseType } from "@/types/purchase";
+import { Purchase, PURCHASES_STORAGE_KEY, PurchaseType, PurchaseStatus } from "@/types/purchase";
 import { isAfter, parseISO, subDays } from "date-fns";
 
 export function PurchaseContent() {
@@ -34,7 +34,8 @@ export function PurchaseContent() {
             shippingDate: purchase.shippingDate ? new Date(purchase.shippingDate) : null,
             orderDate: purchase.orderDate ? new Date(purchase.orderDate) : null,
             expiryDate: purchase.expiryDate ? new Date(purchase.expiryDate) : null,
-            amount: purchase.amount || 0, // Ensure amount is set, default to 0 if missing
+            amount: purchase.amount || 0,
+            paidAmount: purchase.paidAmount || 0, // Ensure paidAmount is set
           }));
           setTransactions(purchasesWithDates);
         } catch (error) {
@@ -57,10 +58,12 @@ export function PurchaseContent() {
     if (transactions.length > 0) {
       // Calculate unpaid amount
       const unpaidTotal = transactions
-        .filter(t => t.status === "pending" && t.type === "invoice")
+        .filter(t => (t.status === "pending" || t.status === "Half-paid") && t.type === "invoice")
         .reduce((sum, t) => {
-          // Use the amount field if available, otherwise calculate from items
-          return sum + (t.amount || 0);
+          if (t.status === "Half-paid") {
+            return sum + (t.amount - (t.paidAmount || 0)); // Subtract paid amount for "Half-paid"
+          }
+          return sum + (t.amount || 0); // Full amount for "pending"
         }, 0);
       setUnpaidAmount(unpaidTotal);
 
@@ -68,7 +71,7 @@ export function PurchaseContent() {
       const today = new Date();
       const overdueInvoices = transactions.filter(t => {
         return t.type === "invoice" && 
-              t.status === "pending" && 
+              (t.status === "pending" || t.status === "Half-paid") && 
               t.dueDate && 
               isAfter(today, t.dueDate);
       });
@@ -83,7 +86,6 @@ export function PurchaseContent() {
                 isAfter(t.date, thirtyDaysAgo);
         })
         .reduce((sum, t) => {
-          // Use the amount field if available, otherwise calculate from items
           return sum + (t.amount || 0);
         }, 0);
       setLast30DaysPayments(recentPayments);

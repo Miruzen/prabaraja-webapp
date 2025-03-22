@@ -1,4 +1,3 @@
-
 export interface PurchaseItem {
   id: string;
   name: string;
@@ -7,7 +6,7 @@ export interface PurchaseItem {
 }
 
 export type PurchaseType = "invoice" | "shipment" | "order" | "offer" | "request";
-export type PurchaseStatus = "pending" | "completed" | "cancelled";
+export type PurchaseStatus = "pending" | "completed" | "cancelled" | "Half-paid"; // Added "Half-paid"
 export type PurchasePriority = "High" | "Medium" | "Low";
 
 export interface Purchase {
@@ -19,6 +18,7 @@ export interface Purchase {
   status: PurchaseStatus;
   itemCount: number;
   amount: number;
+  paidAmount?: number; // Added paidAmount to track partial payments
   tags: string[];
   type: PurchaseType;
   items: PurchaseItem[];
