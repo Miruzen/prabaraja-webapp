@@ -4,9 +4,15 @@ interface StatsCardsProps {
   unpaidAmount: number;
   overdueCount: number;
   last30DaysPayments: number;
+  pendingApprovalCount?: number;
 }
 
-export function StatsCards({ unpaidAmount, overdueCount, last30DaysPayments }: StatsCardsProps) {
+export function StatsCards({ 
+  unpaidAmount, 
+  overdueCount, 
+  last30DaysPayments,
+  pendingApprovalCount // Add this to destructured props
+}: StatsCardsProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
       {/* Unpaid Invoices Card */}

@@ -13,19 +13,32 @@ import { cn } from "@/lib/utils";
 interface PurchaseFiltersProps {
   statusFilter: string;
   onStatusFilterChange: (value: string) => void;
+  disabled?: boolean;
 }
 
-export function PurchaseFilters({ statusFilter, onStatusFilterChange }: PurchaseFiltersProps) {
+export function PurchaseFilters({ 
+  statusFilter, 
+  onStatusFilterChange,
+  disabled = false
+}: PurchaseFiltersProps) {
   return (
     <div className="flex items-center gap-4">
       {/* Search Input */}
       <div className="relative flex-1">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search transactions..." className="pl-9" />
+        <Input 
+          placeholder="Search transactions..." 
+          className="pl-9" 
+          disabled={disabled}
+        />
       </div>
 
       {/* Status Filter Dropdown */}
-      <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+      <Select 
+        value={statusFilter} 
+        onValueChange={onStatusFilterChange}
+        disabled={disabled}
+      >
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder="Status filter" />
         </SelectTrigger>

@@ -5,7 +5,7 @@ export interface PurchaseItem {
   price: number;
 }
 
-export type PurchaseType = "invoice" | "shipment" | "order" | "offer" | "request";
+export type PurchaseType = "invoice" | "shipment" | "order" | "offer" | "request" ;
 export type PurchaseStatus = "pending" | "completed" | "cancelled" | "Half-paid"; // Added "Half-paid"
 export type PurchasePriority = "High" | "Medium" | "Low";
 
