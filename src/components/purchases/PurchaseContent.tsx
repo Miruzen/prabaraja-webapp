@@ -22,6 +22,9 @@ export function PurchaseContent() {
   const [overdueCount, setOverdueCount] = useState<number>(0);
   const [last30DaysPayments, setLast30DaysPayments] = useState<number>(0);
 
+  // Determine if status filter should be visible
+  const showStatusFilter = activeTab !== "approval";
+
   // Load purchases from localStorage
   useEffect(() => {
     const loadPurchasesFromStorage = () => {
@@ -38,6 +41,8 @@ export function PurchaseContent() {
             expiryDate: purchase.expiryDate ? new Date(purchase.expiryDate) : null,
             amount: purchase.amount || 0,
             paidAmount: purchase.paidAmount || 0,
+            status: purchase.status as PurchaseStatus,
+            type: purchase.type as PurchaseType,
           }));
           setTransactions(purchasesWithDates);
         } catch (error) {
@@ -50,10 +55,10 @@ export function PurchaseContent() {
     return () => window.removeEventListener('storage', loadPurchasesFromStorage);
   }, []);
 
-  // Calculate stats
+  // Calculate stats and pending requests count
   useEffect(() => {
     if (transactions.length > 0) {
-      // Unpaid amount (pending + half-paid invoices)
+      // Calculate unpaid amount
       const unpaidTotal = transactions
         .filter(t => (t.status === "pending" || t.status === "Half-paid") && t.type === "invoice")
         .reduce((sum, t) => t.status === "Half-paid" 
@@ -61,7 +66,7 @@ export function PurchaseContent() {
           : sum + (t.amount || 0), 0);
       setUnpaidAmount(unpaidTotal);
 
-      // Overdue invoices
+      // Calculate overdue invoices count
       const today = new Date();
       const overdueInvoices = transactions.filter(t => 
         t.type === "invoice" && 
@@ -71,14 +76,14 @@ export function PurchaseContent() {
       );
       setOverdueCount(overdueInvoices.length);
 
-      // Recent payments
+      // Calculate payments in last 30 days
       const thirtyDaysAgo = subDays(new Date(), 30);
       const recentPayments = transactions
         .filter(t => t.status === "completed" && t.date && isAfter(t.date, thirtyDaysAgo))
         .reduce((sum, t) => sum + (t.amount || 0), 0);
       setLast30DaysPayments(recentPayments);
 
-      // Pending requests count
+      // Calculate pending requests count
       const pendingCount = transactions.filter(t => 
         t.type === "request" && t.status === "pending"
       ).length;
@@ -91,7 +96,6 @@ export function PurchaseContent() {
       setPendingRequestCount(0);
     }
   }, [transactions]);
-  
 
   // Handle approve action
   const handleApproveTransaction = (id: string) => {
@@ -100,19 +104,18 @@ export function PurchaseContent() {
         return {
           ...t,
           status: "completed" as PurchaseStatus,
-          type: "offer" as PurchaseType,
-          // No need to redeclare properties already included in ...t
+          type: "offer" as PurchaseType
         };
       }
       return t;
-    }) as Purchase[];
+    });
     
     setTransactions(updatedTransactions);
     localStorage.setItem(PURCHASES_STORAGE_KEY, JSON.stringify(updatedTransactions));
     
     toast({
       title: "✓ Approved",
-      description: "Request moved to Offers",
+      description: "Request has been approved and moved to Offers",
       variant: "default",
       className: "border-green-300 bg-green-50 text-green-700",
     });
@@ -128,7 +131,7 @@ export function PurchaseContent() {
         };
       }
       return t;
-    }) as Purchase[];
+    });
     
     setTransactions(updatedTransactions);
     localStorage.setItem(PURCHASES_STORAGE_KEY, JSON.stringify(updatedTransactions));
@@ -148,21 +151,33 @@ export function PurchaseContent() {
     
     toast({
       title: "Deleted",
-      description: "Transaction removed",
+      description: "Transaction removed successfully",
       variant: "default",
     });
   };
 
-  // Filter transactions
+  // Filter transactions based on active tab
   const filteredTransactions = transactions.filter(transaction => {
+    // Approval tab shows only pending requests
     if (activeTab === "approval") {
       return transaction.type === "request" && transaction.status === "pending";
     }
     
+    // Other tabs filter normally
     const matchesType = activeTab === transaction.type + "s";
     const matchesStatus = statusFilter === "all" || statusFilter === transaction.status;
     return matchesType && matchesStatus;
   });
+
+  // Handle tab change
+  const handleTabChange = (tab: string) => {
+    // Reset status filter when switching FROM approval tab
+    if (activeTab === "approval" && tab !== "approval") {
+      setStatusFilter("all");
+    }
+    
+    setActiveTab(tab);
+  };
 
   return (
     <div className="max-w-7xl mx-auto p-6">
@@ -172,16 +187,14 @@ export function PurchaseContent() {
         unpaidAmount={unpaidAmount}
         overdueCount={overdueCount}
         last30DaysPayments={last30DaysPayments}
+        pendingApprovalCount={pendingRequestCount}
       />
 
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <PurchaseTabControls
             activeTab={activeTab}
-            setActiveTab={(tab) => {
-              setActiveTab(tab);
-              if (tab === "approval") setStatusFilter("pending");
-            }}
+            setActiveTab={handleTabChange}
             pendingRequestCount={pendingRequestCount}
           />
         </div>
@@ -190,19 +203,30 @@ export function PurchaseContent() {
           <PurchaseFilters
             statusFilter={statusFilter}
             onStatusFilterChange={setStatusFilter}
-            disabled={activeTab === "approval"}
+            showStatusFilter={showStatusFilter}
           />
           
           <PurchaseAddButton onAddPurchase={(type) => navigate(`/create-new-purchase?type=${type}`)} />
         </div>
 
-        <TransactionsTable
-          transactions={filteredTransactions}
-          activeTab={activeTab}
-          onDeleteTransaction={handleDeleteTransaction}
-          onApproveTransaction={activeTab === "approval" ? handleApproveTransaction : undefined}
-          onRejectTransaction={activeTab === "approval" ? handleRejectTransaction : undefined}
-        />
+        {filteredTransactions.length === 0 ? (
+          <div className="border rounded-lg p-8 text-center">
+            <p className="text-gray-500 mb-4">
+              {activeTab === "approval" 
+                ? "No transactions requiring approval"
+                : `There haven't been any ${activeTab.slice(0, -1)} added yet`}
+            </p>
+            <p className="text-sm text-gray-400">Use the Add New button to create one.</p>
+          </div>
+        ) : (
+          <TransactionsTable
+            transactions={filteredTransactions}
+            activeTab={activeTab}
+            onDeleteTransaction={handleDeleteTransaction}
+            onApproveTransaction={activeTab === "approval" ? handleApproveTransaction : undefined}
+            onRejectTransaction={activeTab === "approval" ? handleRejectTransaction : undefined}
+          />
+        )}
       </div>
     </div>
   );
