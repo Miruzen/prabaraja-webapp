@@ -1,76 +1,35 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
-import { Link } from "react-router-dom";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Circle, MoreVertical, Edit, CreditCard, Trash, Check, X } from "lucide-react";
-import { cn } from "@/lib/utils";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { 
+  Purchase, 
+  isInvoice, 
+  isShipment, 
+  isOrder, 
+  isOffer, 
+  isRequest 
+} from "@/types/purchase";
+import { InvoicesTable } from "./tables/InvoicesTable";
+import { ShipmentsTable } from "./tables/ShipmentsTable";
+import { OrdersTable } from "./tables/OrdersTable";
+import { OffersTable } from "./tables/OffersTable";
+import { RequestsTable } from "./tables/RequestsTable";
+import { Dialog } from "@radix-ui/react-dialog";
+import { DialogHeader, DialogFooter, DialogContent, DialogTitle } from "../ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-
-interface InvoiceItem {
-  name: string;
-  quantity: number;
-  price: number;
-}
-
-interface Transaction {
-  id: string;
-  date: Date;
-  number: string;
-  approver: string;
-  dueDate: Date | null;
-  status: "pending" | "completed" | "cancelled" | "Half-paid";
-  itemCount: number;
-  amount: number;
-  paidAmount?: number;
-  items: InvoiceItem[];
-  tags: string[];
-  type: "invoice" | "shipment" | "order" | "offer" | "request";
-}
-
-const statusColors = {
-  pending: "bg-yellow-500",
-  completed: "bg-green-500",
-  cancelled: "bg-red-500",
-  "Half-paid": "bg-blue-500",
-};
+import { toast } from "@/components/ui/use-toast";
 
 interface TransactionsTableProps {
-  transactions: Transaction[];
-  searchQuery?: string;
+  transactions: Purchase[];
+  activeTab: string;
   onDeleteTransaction: (id: string) => void;
-  activeTab?: string;
   onApproveTransaction?: (id: string) => void;
   onRejectTransaction?: (id: string) => void;
 }
 
 export function TransactionsTable({
   transactions,
-  searchQuery = "",
-  onDeleteTransaction,
   activeTab = "all",
+  onDeleteTransaction,
   onApproveTransaction = () => {},
   onRejectTransaction = () => {},
 }: TransactionsTableProps) {
@@ -78,58 +37,19 @@ export function TransactionsTable({
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  // Filter transactions based on search query and active tab
-  const filteredTransactions = transactions.filter((transaction) => {
-    const searchLower = searchQuery.toLowerCase();
-    const matchesSearch = (
-      transaction.number.toLowerCase().includes(searchLower) ||
-      transaction.approver.toLowerCase().includes(searchLower) ||
-      transaction.tags.some((tag) => tag.toLowerCase().includes(searchLower))
-    );
-    
+  // Filter transactions based on active tab
+  const filteredTransactions = transactions.filter(transaction => {
     if (activeTab === "approval") {
-      return matchesSearch && transaction.status === "pending";
+      return isRequest(transaction) && transaction.status === "pending";
     }
-    return matchesSearch;
-  }
-);
-
-  // Calculate amounts
-  const transactionsWithAmount = filteredTransactions.map((transaction) => {
-    const amount = transaction.amount || 
-      (transaction.items?.length > 0
-        ? transaction.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
-        : 0);
-
-    return {
-      ...transaction,
-      amount,
-    };
+    return activeTab === transaction.type + "s";
   });
 
-  // Handle actions
-  const handleEdit = (id: string) => {
-    console.log("Edit transaction:", id);
-  };
-
-  const handleReceivePayment = (id: string) => {
-    const transaction = transactions.find((t) => t.id === id);
-    if (transaction) {
-      navigate("/receive-payment", { state: { transaction } });
-    }
-  };
-
+  // Common action handlers
+  const handleEdit = (id: string) => navigate(`/edit-purchase/${id}`);
   const handleDelete = (id: string) => {
     setTransactionToDelete(id);
     setIsDeleteDialogOpen(true);
-  };
-
-  const handleApprove = (id: string) => {
-    onApproveTransaction(id);
-  };
-
-  const handleReject = (id: string) => {
-    onRejectTransaction(id);
   };
 
   const confirmDelete = () => {
@@ -137,173 +57,76 @@ export function TransactionsTable({
       onDeleteTransaction(transactionToDelete);
       setIsDeleteDialogOpen(false);
       setTransactionToDelete(null);
+      toast({
+        title: "Deleted",
+        description: "Transaction removed successfully",
+        variant: "default",
+      });
     }
   };
 
-  const cancelDelete = () => {
-    setIsDeleteDialogOpen(false);
-    setTransactionToDelete(null);
+  const cancelDelete = () => setIsDeleteDialogOpen(false);
+
+  // Render appropriate table based on activeTab
+  const renderTable = () => {
+    switch(activeTab) {
+      case "invoices":
+        return (
+          <InvoicesTable
+            invoices={filteredTransactions.filter(isInvoice)}
+            onDelete={handleDelete}
+            onEdit={handleEdit}
+          />
+        );
+      case "shipments":
+        return (
+          <ShipmentsTable
+            shipments={filteredTransactions.filter(isShipment)}
+            onDelete={handleDelete}
+            onEdit={handleEdit}
+          />
+        );
+      case "orders":
+        return (
+          <OrdersTable
+            orders={filteredTransactions.filter(isOrder)}
+            onDelete={handleDelete}
+            onEdit={handleEdit}
+          />
+        );
+      case "offers":
+        return (
+          <OffersTable
+            offers={filteredTransactions.filter(isOffer)}
+            onDelete={handleDelete}
+            onEdit={handleEdit}
+          />
+        );
+      case "requests":
+      case "approval":
+        return (
+          <RequestsTable
+            requests={filteredTransactions.filter(isRequest)}
+            onDelete={handleDelete}
+            onEdit={handleEdit}
+            onApprove={activeTab === "approval" ? onApproveTransaction : undefined}
+            onReject={activeTab === "approval" ? onRejectTransaction : undefined}
+          />
+        );
+      default:
+        return (
+          <div className="border rounded-lg p-8 text-center">
+            <p className="text-gray-500 mb-4">No table view available for this tab</p>
+          </div>
+        );
+    }
   };
 
-  // Empty state message based on active tab
-  const emptyStateMessage = activeTab === "approval" 
-    ? "No transactions requiring approval" 
-    : "No transactions found";
-
   return (
-    <div className="border rounded-lg">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Date</TableHead>
-            <TableHead>No.</TableHead>
-            <TableHead>Staff Approval</TableHead>
-            <TableHead>Due Date</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Amount</TableHead>
-            <TableHead>Paid Amount</TableHead>
-            <TableHead>Remaining Amount</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {transactionsWithAmount.length > 0 ? (
-            transactionsWithAmount.map((transaction) => {
-              const paidAmount = transaction.paidAmount || 0;
-              const remainingAmount = transaction.amount - paidAmount;
-
-              return (
-                <TableRow key={transaction.id}>
-                  <TableCell>{format(transaction.date, "dd/MM/yyyy")}</TableCell>
-                  <TableCell>
-                    <Link
-                      to={`/${transaction.type}/${transaction.id}`}
-                      className="text-indigo-600 hover:underline"
-                    >
-                      {transaction.number}
-                    </Link>
-                  </TableCell>
-                  <TableCell>{transaction.approver}</TableCell>
-                  <TableCell>
-                    {transaction.dueDate ? format(transaction.dueDate, "dd/MM/yyyy") : "-"}
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-xs font-medium",
-                        {
-                          "bg-yellow-100 text-yellow-800": transaction.status === "pending",
-                          "bg-green-100 text-green-800": transaction.status === "completed",
-                          "bg-red-100 text-red-800": transaction.status === "cancelled",
-                          "bg-blue-100 text-blue-800": transaction.status === "Half-paid",
-                        }
-                      )}
-                    >
-                      <Circle
-                        className={cn(
-                          "h-2 w-2 fill-current",
-                          statusColors[transaction.status]
-                        )}
-                      />
-                      {transaction.status.charAt(0).toUpperCase() +
-                        transaction.status.slice(1)}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    {new Intl.NumberFormat("id-ID", {
-                      style: "currency",
-                      currency: "IDR",
-                      minimumFractionDigits: 0,
-                    }).format(transaction.amount)}
-                  </TableCell>
-                  <TableCell>
-                    {new Intl.NumberFormat("id-ID", {
-                      style: "currency",
-                      currency: "IDR",
-                      minimumFractionDigits: 0,
-                    }).format(paidAmount)}
-                  </TableCell>
-                  <TableCell>
-                    {new Intl.NumberFormat("id-ID", {
-                      style: "currency",
-                      currency: "IDR",
-                      minimumFractionDigits: 0,
-                    }).format(remainingAmount)}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button className="p-2 hover:bg-gray-100 rounded-lg">
-                          <MoreVertical className="h-4 w-4" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="w-48">
-                        {/* Always show Edit and Delete */}
-                        <DropdownMenuItem
-                          onClick={() => handleEdit(transaction.id)}
-                          className="flex items-center gap-2 text-sm cursor-pointer"
-                        >
-                          <Edit className="h-4 w-4 text-blue-500" />
-                          <span>Edit</span>
-                        </DropdownMenuItem>
-
-                        {/* Approval-specific actions */}
-                        {activeTab === "approval" && (
-                          <>
-                            <DropdownMenuItem
-                              onClick={() => handleApprove(transaction.id)}
-                              className="flex items-center gap-2 text-sm cursor-pointer"
-                            >
-                              <Check className="h-4 w-4 text-green-500" />
-                              <span>Approve</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleReject(transaction.id)}
-                              className="flex items-center gap-2 text-sm cursor-pointer"
-                            >
-                              <X className="h-4 w-4 text-red-500" />
-                              <span>Reject</span>
-                            </DropdownMenuItem>
-                          </>
-                        )}
-
-                        {/* Only show Receive Payment outside approval tab for pending/Half-paid */}
-                        {activeTab !== "approval" && 
-                          (transaction.status === "pending" || transaction.status === "Half-paid") && (
-                            <DropdownMenuItem
-                              onClick={() => handleReceivePayment(transaction.id)}
-                              className="flex items-center gap-2 text-sm cursor-pointer"
-                            >
-                              <CreditCard className="h-4 w-4 text-green-500" />
-                              <span>Receive Payment</span>
-                            </DropdownMenuItem>
-                          )}
-
-                        {/* Always show Delete */}
-                        <DropdownMenuItem
-                          onClick={() => handleDelete(transaction.id)}
-                          className="flex items-center gap-2 text-sm cursor-pointer"
-                        >
-                          <Trash className="h-4 w-4 text-red-500" />
-                          <span>Delete</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              );
-            })
-          ) : (
-            <TableRow>
-              <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                {emptyStateMessage}
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-
-      {/* Confirmation Dialog */}
+    <>
+      {renderTable()}
+      
+      {/* Shared Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -319,6 +142,6 @@ export function TransactionsTable({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }

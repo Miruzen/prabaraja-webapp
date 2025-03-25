@@ -1,3 +1,4 @@
+// src/components/purchases/PurchaseContent.tsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { StatsCards } from "@/components/purchases/StatsCards";
@@ -5,10 +6,28 @@ import { PurchaseFilters } from "@/components/purchases/PurchaseFilters";
 import { TransactionsTable } from "@/components/purchases/TransactionsTable";
 import { PurchaseTabControls } from "@/components/purchases/PurchaseTabControls";
 import { PurchaseAddButton } from "@/components/purchases/PurchaseAddButton";
-import { Purchase, PURCHASES_STORAGE_KEY, PurchaseType, PurchaseStatus } from "@/types/purchase";
+import { 
+  Purchase, 
+  PURCHASES_STORAGE_KEY, 
+  PurchaseType, 
+  PurchaseStatus,
+  isInvoice,
+  isShipment,
+  isOrder,
+  isOffer,
+  isRequest,
+  InvoicePurchase,
+  RequestPurchase,
+  OfferPurchase
+} from "@/types/purchase";
 import { isAfter, subDays } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
+import { ShipmentsTable } from "./tables/ShipmentsTable";
+import { InvoicesTable } from "./tables/InvoicesTable";
+import { OrdersTable } from "./tables/OrdersTable";
+import { OffersTable } from "./tables/OffersTable";
+import { RequestsTable } from "./tables/RequestsTable";
 
 export function PurchaseContent() {
   const navigate = useNavigate();
@@ -21,9 +40,6 @@ export function PurchaseContent() {
   const [unpaidAmount, setUnpaidAmount] = useState<number>(0);
   const [overdueCount, setOverdueCount] = useState<number>(0);
   const [last30DaysPayments, setLast30DaysPayments] = useState<number>(0);
-
-  // Determine if status filter should be visible
-  const showStatusFilter = activeTab !== "approval";
 
   // Load purchases from localStorage
   useEffect(() => {
@@ -40,9 +56,10 @@ export function PurchaseContent() {
             orderDate: purchase.orderDate ? new Date(purchase.orderDate) : null,
             expiryDate: purchase.expiryDate ? new Date(purchase.expiryDate) : null,
             amount: purchase.amount || 0,
-            paidAmount: purchase.paidAmount || 0,
+            paidAmount: isInvoice(purchase) ? purchase.paidAmount || 0 : undefined,
             status: purchase.status as PurchaseStatus,
             type: purchase.type as PurchaseType,
+            itemCount: purchase.items?.length || 0
           }));
           setTransactions(purchasesWithDates);
         } catch (error) {
@@ -58,38 +75,36 @@ export function PurchaseContent() {
   // Calculate stats and pending requests count
   useEffect(() => {
     if (transactions.length > 0) {
-      // Calculate unpaid amount
+      // Calculate unpaid amount (only for invoices)
       const unpaidTotal = transactions
-        .filter(t => (t.status === "pending" || t.status === "Half-paid") && t.type === "invoice")
-        .reduce((sum, t) => t.status === "Half-paid" 
-          ? sum + (t.amount - (t.paidAmount || 0))
-          : sum + (t.amount || 0), 0);
+        .filter(isInvoice) // First filter only invoices
+        .filter(t => t.status === "pending" || t.status === "Half-paid")
+        .reduce((sum, t) => {
+          // Now we know t is InvoicePurchase, so paidAmount is safe
+          return t.status === "Half-paid" 
+            ? sum + (t.amount - (t.paidAmount || 0))
+            : sum + t.amount;
+        }, 0);
       setUnpaidAmount(unpaidTotal);
 
       // Calculate overdue invoices count
       const today = new Date();
-      const overdueInvoices = transactions.filter(t => 
-        t.type === "invoice" && 
-        (t.status === "pending" || t.status === "Half-paid") && 
-        t.dueDate && 
-        isAfter(today, t.dueDate)
-      );
+      const overdueInvoices = transactions
+        .filter(isInvoice)
+        .filter(t => (t.status === "pending" || t.status === "Half-paid") && t.dueDate && isAfter(today, t.dueDate));
       setOverdueCount(overdueInvoices.length);
 
       // Calculate payments in last 30 days
       const thirtyDaysAgo = subDays(new Date(), 30);
       const recentPayments = transactions
         .filter(t => t.status === "completed" && t.date && isAfter(t.date, thirtyDaysAgo))
-        .reduce((sum, t) => sum + (t.amount || 0), 0);
+        .reduce((sum, t) => sum + t.amount, 0);
       setLast30DaysPayments(recentPayments);
 
       // Calculate pending requests count
-      const pendingCount = transactions.filter(t => 
-        t.type === "request" && t.status === "pending"
-      ).length;
+      const pendingCount = transactions.filter(isRequest).filter(t => t.status === "pending").length;
       setPendingRequestCount(pendingCount);
     } else {
-      // Reset all stats
       setUnpaidAmount(0);
       setOverdueCount(0);
       setLast30DaysPayments(0);
@@ -98,19 +113,32 @@ export function PurchaseContent() {
   }, [transactions]);
 
   // Handle approve action
-  const handleApproveTransaction = (id: string) => {
-    const updatedTransactions = transactions.map(t => {
-      if (t.id === id) {
-        return {
-          ...t,
-          status: "completed" as PurchaseStatus,
-          type: "offer" as PurchaseType
-        };
-      }
-      return t;
-    });
+    const handleApproveTransaction = (id: string) => {
+      const updatedTransactions = transactions.map(t => {
+        if (t.id === id && isRequest(t)) {
+          // Explicitly create a new OfferPurchase with all required fields
+          const approvedOffer: OfferPurchase = {
+            ...t,
+            id: t.id,
+            type: "offer",
+            status: "completed",
+            expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+            discountTerms: "Standard terms apply",
+            // Include all base purchase fields
+            date: t.date,
+            number: t.number,
+            approver: t.approver,
+            tags: t.tags,
+            items: t.items,
+            amount: t.amount,
+            itemCount: t.itemCount
+          };
+          return approvedOffer;
+        }
+        return t;
+      });
     
-    setTransactions(updatedTransactions);
+    setTransactions(updatedTransactions as Purchase[]);
     localStorage.setItem(PURCHASES_STORAGE_KEY, JSON.stringify(updatedTransactions));
     
     toast({
@@ -124,10 +152,11 @@ export function PurchaseContent() {
   // Handle reject action
   const handleRejectTransaction = (id: string) => {
     const updatedTransactions = transactions.map(t => {
-      if (t.id === id) {
+      if (t.id === id && isRequest(t)) {
+        // Explicitly return as RequestPurchase with updated status
         return {
           ...t,
-          status: "cancelled" as PurchaseStatus
+          status: "cancelled" as const
         };
       }
       return t;
@@ -158,12 +187,10 @@ export function PurchaseContent() {
 
   // Filter transactions based on active tab
   const filteredTransactions = transactions.filter(transaction => {
-    // Approval tab shows only pending requests
     if (activeTab === "approval") {
-      return transaction.type === "request" && transaction.status === "pending";
+      return isRequest(transaction) && transaction.status === "pending";
     }
     
-    // Other tabs filter normally
     const matchesType = activeTab === transaction.type + "s";
     const matchesStatus = statusFilter === "all" || statusFilter === transaction.status;
     return matchesType && matchesStatus;
@@ -171,12 +198,87 @@ export function PurchaseContent() {
 
   // Handle tab change
   const handleTabChange = (tab: string) => {
-    // Reset status filter when switching FROM approval tab
     if (activeTab === "approval" && tab !== "approval") {
       setStatusFilter("all");
     }
-    
     setActiveTab(tab);
+  };
+
+  const handleReceivePayment = (id: string) => {
+    const transaction = transactions.find(t => t.id === id);
+    if (transaction && isInvoice(transaction)) {
+      // Now TypeScript knows transaction is InvoicePurchase
+      navigate("/receive-payment", { 
+        state: { 
+          invoiceId: transaction.id,
+          amountDue: transaction.amount - (transaction.paidAmount || 0)
+        } 
+      });
+    }
+  };
+
+  const renderTable = () => {
+    switch(activeTab) {
+      case "invoices":
+        return (
+          <InvoicesTable
+            invoices={filteredTransactions.filter(isInvoice)}
+            onDelete={handleDeleteTransaction}
+            onEdit={(id) => navigate(`/edit-purchase/${id}`)}
+            onReceivePayment={handleReceivePayment}
+          />
+        );
+      case "shipments":
+        return (
+          <ShipmentsTable
+            shipments={filteredTransactions.filter(isShipment)}
+            onDelete={handleDeleteTransaction}
+            onEdit={(id) => navigate(`/edit-purchase/${id}`)}
+          />
+        );
+      case "orders":
+        return (
+          <OrdersTable
+            orders={filteredTransactions.filter(isOrder)}
+            onDelete={handleDeleteTransaction}
+            onEdit={(id) => navigate(`/edit-purchase/${id}`)}
+          />
+        );
+      case "offers":
+        return (
+          <OffersTable
+            offers={filteredTransactions.filter(isOffer)}
+            onDelete={handleDeleteTransaction}
+            onEdit={(id) => navigate(`/edit-purchase/${id}`)}
+          />
+        );
+      case "requests":
+        return (
+          <RequestsTable
+            requests={filteredTransactions.filter(isRequest)}
+            onDelete={handleDeleteTransaction}
+            onEdit={(id) => navigate(`/edit-purchase/${id}`)}
+          />
+        );
+      case "approval":
+        return (
+          <TransactionsTable
+            transactions={filteredTransactions}
+            activeTab={activeTab}
+            onDeleteTransaction={handleDeleteTransaction}
+            onApproveTransaction={handleApproveTransaction}
+            onRejectTransaction={handleRejectTransaction}
+          />
+        );
+      default:
+        return (
+          <TransactionsTable
+            transactions={filteredTransactions}
+            activeTab={activeTab}
+            onDeleteTransaction={handleDeleteTransaction}
+          />
+        );
+    }
   };
 
   return (
@@ -203,7 +305,7 @@ export function PurchaseContent() {
           <PurchaseFilters
             statusFilter={statusFilter}
             onStatusFilterChange={setStatusFilter}
-            showStatusFilter={showStatusFilter}
+            showStatusFilter={activeTab !== "approval"}
           />
           
           <PurchaseAddButton onAddPurchase={(type) => navigate(`/create-new-purchase?type=${type}`)} />
@@ -219,15 +321,9 @@ export function PurchaseContent() {
             <p className="text-sm text-gray-400">Use the Add New button to create one.</p>
           </div>
         ) : (
-          <TransactionsTable
-            transactions={filteredTransactions}
-            activeTab={activeTab}
-            onDeleteTransaction={handleDeleteTransaction}
-            onApproveTransaction={activeTab === "approval" ? handleApproveTransaction : undefined}
-            onRejectTransaction={activeTab === "approval" ? handleRejectTransaction : undefined}
-          />
+          renderTable()
         )}
       </div>
     </div>
   );
-}
+};
