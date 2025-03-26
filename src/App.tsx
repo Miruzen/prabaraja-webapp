@@ -61,13 +61,13 @@ function App() {
             <Route path="/settings" element={<Settings />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/create-expense" element={<CreateExpense />} />
-            <Route path="*" element={<NotFound />} />
             <Route path="/cash-bank" element={<CashnBank />} />
             <Route path="/login" element={<LoginPage/> }/> 
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage/> }/>
             <Route path="/neraca" element={<Neraca/> } />
-            <Route path="/receive-payment" element={<ReceivePaymentPage/> } />
+            <Route path="/receive-payment/:invoiceId" element={<ReceivePaymentPage />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
           <Toaster />
         </Router>

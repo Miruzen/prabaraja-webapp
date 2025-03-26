@@ -1,5 +1,5 @@
-    import { useState } from "react";
-    import { useNavigate, useLocation } from "react-router-dom";
+    import { useState, useEffect } from "react";
+    import { useNavigate, useParams } from "react-router-dom";
     import { Button } from "@/components/ui/button";
     import { Input } from "@/components/ui/input";
     import {
@@ -19,19 +19,14 @@
     } from "@/components/ui/table";
     import { Sidebar } from "@/components/Sidebar";
     import { Wallet, FileText, Banknote, ArrowLeft, Trash, Link as LinkIcon, UploadCloud } from "lucide-react";
-    import { Link } from "react-router-dom";
     import { formatCurrency, formatInputCurrency, parseInputCurrency } from "@/lib/utils";
-    import { Purchase, PURCHASES_STORAGE_KEY } from "@/types/purchase";
-    import { toast, Toaster } from "sonner"; // Import toast and Toaster from sonner
+    import { Purchase, PURCHASES_STORAGE_KEY, isInvoice, InvoicePurchase } from "@/types/purchase";
+    import { toast, Toaster } from "sonner";
 
     interface InvoiceItem {
     name: string;
     quantity: number;
     price: number;
-    }
-
-    interface LocationState {
-    transaction: Purchase; // Use the Purchase type
     }
 
     interface Attachment {
@@ -42,88 +37,93 @@
     }
 
     export function ReceivePaymentPage() {
+    const { invoiceId } = useParams<{ invoiceId: string }>();
     const navigate = useNavigate();
-    const location = useLocation();
-    const state = location.state as LocationState;
+    const [invoice, setInvoice] = useState< InvoicePurchase | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [paymentMethod, setPaymentMethod] = useState<string>("");
     const [paymentAmount, setPaymentAmount] = useState<string>("");
     const [proformaItems, setProformaItems] = useState<InvoiceItem[]>([]);
     const [attachments, setAttachments] = useState<Attachment[]>([]);
     const [linkUrl, setLinkUrl] = useState<string>("");
 
-    if (!state?.transaction) {
-        return (
-        <div className="flex items-center justify-center h-screen text-center">
-            No transaction data found.
-        </div>
-        );
-    }
-
-    const { id, items, amount, paidAmount = 0 } = state.transaction;
-
-    // Calculate total invoice amount
-    const totalInvoiceAmount = amount || items.reduce(
-        (total, item) => total + item.price * item.quantity,
-        0
-    );
+    // Load invoice data from localStorage
+    useEffect(() => {
+        const loadInvoiceData = () => {
+        try {
+            const storedPurchases = localStorage.getItem(PURCHASES_STORAGE_KEY);
+            if (storedPurchases) {
+            const purchases: Purchase[] = JSON.parse(storedPurchases);
+            const foundInvoice = purchases.find(p => 
+                p.id === invoiceId && isInvoice(p)  // Ensure we only get invoices
+              ) as InvoicePurchase | undefined;  // Explicit type cast
+            
+            if (foundInvoice) {
+                setInvoice({
+                ...foundInvoice,
+                  paidAmount: foundInvoice.paidAmount || 0  // Default to 0 if undefined
+                });
+            } else {
+                setError("Invoice not found");
+            }
+            }
+        } catch (err) {
+            setError("Failed to load invoice data");
+        } finally {
+            setLoading(false);
+        }
+        };
+        loadInvoiceData();
+    }, [invoiceId]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        
+        if (!invoice) return;
+
         const numericAmount = parseInputCurrency(paymentAmount);
+        const newPaidAmount = (invoice?.paidAmount || 0) + numericAmount;
+        const remainingAmount = invoice.amount - newPaidAmount;
 
-        // Calculate new paid amount and remaining amount
-        const newPaidAmount = paidAmount + numericAmount;
-        const remainingAmount = totalInvoiceAmount - newPaidAmount;
+        // Update status
+        const newStatus = newPaidAmount >= invoice.amount ? "completed" : "Half-paid";
 
-        // Determine the new status
-        let newStatus: "pending" | "completed" | "Half-paid";
-        if (newPaidAmount < totalInvoiceAmount) {
-        newStatus = "Half-paid";
-        } else {
-        newStatus = "completed";
-        }
-
-        // Update the transaction in localStorage
+        // Update in localStorage
         const storedPurchases = localStorage.getItem(PURCHASES_STORAGE_KEY);
         if (storedPurchases) {
-        const parsedPurchases: Purchase[] = JSON.parse(storedPurchases);
-        const updatedPurchases = parsedPurchases.map((purchase) => {
-            if (purchase.id === id) {
-            return {
-                ...purchase,
-                paidAmount: newPaidAmount,
-                status: newStatus,
-            };
-            }
-            return purchase;
-        });
+        const purchases: Purchase[] = JSON.parse(storedPurchases);
+        const updatedPurchases = purchases.map(p => 
+            p.id === invoice.id ? { 
+            ...p, 
+            paidAmount: newPaidAmount,
+            status: newStatus
+            } : p
+        );
         localStorage.setItem(PURCHASES_STORAGE_KEY, JSON.stringify(updatedPurchases));
         }
 
-        // Show success notification
         toast.success("Payment received successfully!", {
-        description: `Status: ${newStatus}, Remaining Amount: ${formatCurrency(remainingAmount)}`,
+        description: `Status: ${newStatus}, Remaining: ${formatCurrency(remainingAmount)}`
         });
-
-        // Redirect to purchases page after submission
         navigate("/purchases");
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file && file.size <= 10 * 1024 * 1024) {
-        setAttachments((prev) => [
+        setAttachments(prev => [
             ...prev,
             { type: "file", name: file.name, file },
         ]);
         } else {
-        alert("File size must be less than 10MB.");
+        toast.error("File size must be less than 10MB");
         }
     };
 
     const handleAddLink = () => {
         if (linkUrl) {
-        setAttachments((prev) => [
+        setAttachments(prev => [
             ...prev,
             { type: "link", name: "External Link", url: linkUrl },
         ]);
@@ -132,52 +132,86 @@
     };
 
     const handleDeleteProformaItem = (index: number) => {
-        const newItems = [...proformaItems];
-        newItems.splice(index, 1);
-        setProformaItems(newItems);
+        setProformaItems(prev => prev.filter((_, i) => i !== index));
     };
 
     const handlePaymentAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!invoice) return;
+        
         const rawValue = e.target.value;
         const numericValue = parseInputCurrency(rawValue);
+        const maxAmount = invoice.amount - (invoice.paidAmount || 0);
+        const correctedValue = Math.min(numericValue, maxAmount);
 
-        // If the input exceeds the remaining amount, correct it
-        const correctedValue = Math.min(numericValue, totalInvoiceAmount - paidAmount);
-
-        // Format the corrected value back to a string with thousand separators
-        const formattedValue = formatInputCurrency(correctedValue.toString());
-        setPaymentAmount(formattedValue);
+        setPaymentAmount(formatInputCurrency(correctedValue.toString()));
     };
 
     const isFormValid = () => {
+        if (!invoice) return false;
+        
         if (paymentMethod === "cash" || paymentMethod === "bank") {
-        return paymentAmount.trim() !== "";
-        } else if (paymentMethod === "proforma") {
-        return proformaItems.every(
-            (item) => item.name.trim() !== "" && item.quantity > 0 && item.price > 0
+        return paymentAmount.trim() !== "" && parseInputCurrency(paymentAmount) > 0;
+        } 
+        if (paymentMethod === "proforma") {
+        return proformaItems.every(item => 
+            item.name.trim() !== "" && item.quantity > 0 && item.price > 0
         );
         }
         return false;
     };
 
+    if (loading) {
+        return (
+        <div className="flex h-screen bg-background">
+            <Sidebar />
+            <div className="flex-1 flex items-center justify-center">
+            <p>Loading invoice data...</p>
+            </div>
+        </div>
+        );
+    }
+
+    if (error || !invoice) {
+        return (
+        <div className="flex h-screen bg-background">
+            <Sidebar />
+            <div className="flex-1 flex flex-col items-center justify-center gap-4">
+            <p className="text-red-500">{error || "Invoice not found"}</p>
+            <Button onClick={() => navigate("/purchases")}>
+                Back to Invoices
+            </Button>
+            </div>
+        </div>
+        );
+    }
+
+    const totalInvoiceAmount = invoice.amount || invoice.items.reduce(
+        (total, item) => total + item.price * item.quantity, 
+        0
+    );
+    const getPaidAmount = () => invoice?.paidAmount || 0;
+
     return (
         <div className="flex h-screen bg-background">
-        {/* Add Toaster for notifications */}
         <Toaster position="top-right" />
-
         <Sidebar />
         <div className="flex-1 overflow-auto">
             <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
             <div className="flex items-center">
-                <Link
-                to="/purchases"
-                className="bg-white/20 p-2 rounded-lg hover:bg-white/30 transition-colors"
+                <Button
+                variant="ghost"
+                onClick={() => navigate("/purchases")}
+                className="p-2 hover:bg-white/20"
                 >
                 <ArrowLeft className="h-6 w-6 text-white" />
-                </Link>
+                </Button>
                 <div className="ml-4">
-                <h1 className="text-2xl font-semibold text-white">Receive Payment</h1>
-                <p className="text-white/80">Record payment for the selected invoice</p>
+                <h1 className="text-2xl font-semibold text-white">
+                    Receive Payment for #{invoice.number}
+                </h1>
+                <p className="text-white/80">
+                    Remaining: {formatCurrency(totalInvoiceAmount - getPaidAmount())}
+                </p>
                 </div>
             </div>
             </div>
@@ -185,7 +219,7 @@
             <div className="p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                <h2 className="text-lg font-semibold mb-4">Item List</h2>
+                <h2 className="text-lg font-semibold mb-4">Invoice Items</h2>
                 <Table>
                     <TableHeader>
                     <TableRow>
@@ -195,7 +229,7 @@
                     </TableRow>
                     </TableHeader>
                     <TableBody>
-                    {items.map((item, index) => (
+                    {invoice.items.map((item, index) => (
                         <TableRow key={index}>
                         <TableCell>{item.name}</TableCell>
                         <TableCell>{item.quantity}</TableCell>
@@ -211,8 +245,8 @@
                 <div className="space-y-4">
                 <div>
                     <label className="block text-lg font-medium mb-2">Payment Method</label>
-                    <Select onValueChange={(value) => setPaymentMethod(value)}>
-                    <SelectTrigger className="w-full rounded-xl focus:ring-2 focus:ring-indigo-500">
+                    <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                    <SelectTrigger className="w-full rounded-xl">
                         <SelectValue placeholder="Select payment method" />
                     </SelectTrigger>
                     <SelectContent>
@@ -222,248 +256,179 @@
                             <span>Cash</span>
                         </div>
                         </SelectItem>
+                        <SelectItem value="bank">
+                        <div className="flex items-center gap-2">
+                            <Banknote className="h-4 w-4 text-purple-500" />
+                            <span>Bank Transfer</span>
+                        </div>
+                        </SelectItem>
                         <SelectItem value="proforma">
                         <div className="flex items-center gap-2">
                             <FileText className="h-4 w-4 text-blue-500" />
                             <span>Proforma</span>
                         </div>
                         </SelectItem>
-                        <SelectItem value="bank">
-                        <div className="flex items-center gap-2">
-                            <Banknote className="h-4 w-4 text-purple-500" />
-                            <span>Bank</span>
-                        </div>
-                        </SelectItem>
                     </SelectContent>
                     </Select>
                 </div>
 
-                {paymentMethod === "cash" || paymentMethod === "bank" ? (
+                {(paymentMethod === "cash" || paymentMethod === "bank") && (
                     <div className="space-y-4">
                     <div>
-                        <label className="block text-lg font-medium mb-2">Payment Amount (IDR)</label>
+                        <label className="block text-lg font-medium mb-2">
+                        Payment Amount (IDR)
+                        </label>
                         <Input
                         type="text"
-                        placeholder={`Max amount: ${formatCurrency(totalInvoiceAmount - paidAmount)}`}
                         value={paymentAmount}
                         onChange={handlePaymentAmountChange}
-                        className="rounded-xl focus:ring-2 focus:ring-indigo-500"
+                        placeholder={`Max: ${formatCurrency(totalInvoiceAmount - getPaidAmount())}`}
+                        className="rounded-xl"
                         />
                     </div>
-                    <div>
-                        <label className="block text-lg font-medium mb-2">Attachment (Optional, max 10MB)</label>
-                        <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center">
-                        <div className="flex flex-col items-center justify-center gap-2">
-                            <UploadCloud className="h-12 w-12 text-gray-400" />
-                            <p className="text-gray-500">Drop files to upload or click here</p>
-                            <input
-                            type="file"
-                            onChange={handleFileChange}
-                            className="hidden"
-                            id="file-upload"
-                            />
-                            <label
-                            htmlFor="file-upload"
-                            className="cursor-pointer text-indigo-600 hover:text-indigo-700"
-                            >
-                            Browse files
-                            </label>
-                        </div>
-                        <div className="mt-4">
-                            <Input
-                            type="text"
-                            placeholder="Or paste a link (YouTube, Vimeo)"
-                            value={linkUrl}
-                            onChange={(e) => setLinkUrl(e.target.value)}
-                            className="rounded-xl focus:ring-2 focus:ring-indigo-500"
-                            />
-                            <Button
-                            type="button"
-                            onClick={handleAddLink}
-                            className="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white"
-                            >
-                            Add Link
-                            </Button>
-                        </div>
-                        <div className="mt-4 space-y-2">
-                            {attachments.map((attachment, index) => (
-                            <div key={index} className="flex items-center justify-between p-2 bg-gray-100 rounded-lg">
-                                <div className="flex items-center gap-2">
-                                {attachment.type === "file" ? (
-                                    <FileText className="h-4 w-4 text-blue-500" />
-                                ) : (
-                                    <LinkIcon className="h-4 w-4 text-green-500" />
-                                )}
-                                <span>{attachment.name}</span>
-                                </div>
-                                <Button
-                                type="button"
-                                onClick={() => {
-                                    const newAttachments = [...attachments];
-                                    newAttachments.splice(index, 1);
-                                    setAttachments(newAttachments);
-                                }}
-                                variant="ghost"
-                                className="text-red-500 hover:text-red-600"
-                                >
-                                <Trash className="h-4 w-4" />
-                                </Button>
-                            </div>
-                            ))}
-                        </div>
-                        </div>
                     </div>
-                    </div>
-                ) : paymentMethod === "proforma" ? (
+                )}
+
+                {paymentMethod === "proforma" && (
                     <div className="space-y-4">
-                    <div>
-                        <h2 className="text-lg font-semibold mb-4">Proforma Items</h2>
-                        <Table>
+                    <h2 className="text-lg font-semibold">Proforma Items</h2>
+                    <Table>
                         <TableHeader>
-                            <TableRow>
+                        <TableRow>
                             <TableHead>Item Name</TableHead>
                             <TableHead>Quantity</TableHead>
-                            <TableHead>Total Price</TableHead>
+                            <TableHead>Price</TableHead>
                             <TableHead>Actions</TableHead>
-                            </TableRow>
+                        </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {proformaItems.map((item, index) => (
+                        {proformaItems.map((item, index) => (
                             <TableRow key={index}>
-                                <TableCell>
+                            <TableCell>
                                 <Input
-                                    placeholder="Item name"
-                                    value={item.name}
-                                    onChange={(e) => {
+                                value={item.name}
+                                onChange={(e) => {
                                     const newItems = [...proformaItems];
                                     newItems[index].name = e.target.value;
                                     setProformaItems(newItems);
-                                    }}
-                                />
-                                </TableCell>
-                                <TableCell>
-                                <Input
-                                    type="number"
-                                    placeholder="Quantity"
-                                    value={item.quantity}
-                                    onChange={(e) => {
-                                    const newItems = [...proformaItems];
-                                    newItems[index].quantity = parseInt(e.target.value);
-                                    setProformaItems(newItems);
-                                    }}
-                                />
-                                </TableCell>
-                                <TableCell>
-                                <Input
-                                    type="number"
-                                    placeholder="Price"
-                                    value={item.price}
-                                    onChange={(e) => {
-                                    const newItems = [...proformaItems];
-                                    newItems[index].price = parseFloat(e.target.value);
-                                    setProformaItems(newItems);
-                                    }}
-                                />
-                                </TableCell>
-                                <TableCell>
-                                <Button
-                                    type="button"
-                                    onClick={() => handleDeleteProformaItem(index)}
-                                    variant="ghost"
-                                    className="text-red-500 hover:text-red-600"
-                                >
-                                    <Trash className="h-4 w-4" />
-                                </Button>
-                                </TableCell>
-                            </TableRow>
-                            ))}
-                        </TableBody>
-                        </Table>
-                        <Button
-                        type="button"
-                        onClick={() =>
-                            setProformaItems([...proformaItems, { name: "", quantity: 1, price: 0 }])
-                        }
-                        className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white"
-                        >
-                        Add Item
-                        </Button>
-                    </div>
-                    <div>
-                        <label className="block text-lg font-medium mb-2">Attachment (Optional, max 10MB)</label>
-                        <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center">
-                        <div className="flex flex-col items-center justify-center gap-2">
-                            <UploadCloud className="h-12 w-12 text-gray-400" />
-                            <p className="text-gray-500">Drop files to upload or click here</p>
-                            <input
-                            type="file"
-                            onChange={handleFileChange}
-                            className="hidden"
-                            id="file-upload"
-                            />
-                            <label
-                            htmlFor="file-upload"
-                            className="cursor-pointer text-indigo-600 hover:text-indigo-700"
-                            >
-                            Browse files
-                            </label>
-                        </div>
-                        <div className="mt-4">
-                            <Input
-                            type="text"
-                            placeholder="Or paste a link (YouTube, Vimeo)"
-                            value={linkUrl}
-                            onChange={(e) => setLinkUrl(e.target.value)}
-                            className="rounded-xl focus:ring-2 focus:ring-indigo-500"
-                            />
-                            <Button
-                            type="button"
-                            onClick={handleAddLink}
-                            className="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white"
-                            >
-                            Add Link
-                            </Button>
-                        </div>
-                        <div className="mt-4 space-y-2">
-                            {attachments.map((attachment, index) => (
-                            <div key={index} className="flex items-center justify-between p-2 bg-gray-100 rounded-lg">
-                                <div className="flex items-center gap-2">
-                                {attachment.type === "file" ? (
-                                    <FileText className="h-4 w-4 text-blue-500" />
-                                ) : (
-                                    <LinkIcon className="h-4 w-4 text-green-500" />
-                                )}
-                                <span>{attachment.name}</span>
-                                </div>
-                                <Button
-                                type="button"
-                                onClick={() => {
-                                    const newAttachments = [...attachments];
-                                    newAttachments.splice(index, 1);
-                                    setAttachments(newAttachments);
                                 }}
+                                />
+                            </TableCell>
+                            <TableCell>
+                                <Input
+                                type="number"
+                                value={item.quantity}
+                                onChange={(e) => {
+                                    const newItems = [...proformaItems];
+                                    newItems[index].quantity = Number(e.target.value);
+                                    setProformaItems(newItems);
+                                }}
+                                />
+                            </TableCell>
+                            <TableCell>
+                                <Input
+                                type="number"
+                                value={item.price}
+                                onChange={(e) => {
+                                    const newItems = [...proformaItems];
+                                    newItems[index].price = Number(e.target.value);
+                                    setProformaItems(newItems);
+                                }}
+                                />
+                            </TableCell>
+                            <TableCell>
+                                <Button
                                 variant="ghost"
-                                className="text-red-500 hover:text-red-600"
+                                onClick={() => handleDeleteProformaItem(index)}
+                                className="text-red-500"
                                 >
                                 <Trash className="h-4 w-4" />
                                 </Button>
+                            </TableCell>
+                            </TableRow>
+                        ))}
+                        </TableBody>
+                    </Table>
+                    <Button
+                        type="button"
+                        onClick={() => setProformaItems([...proformaItems, { name: "", quantity: 1, price: 0 }])}
+                        className="mt-2"
+                    >
+                        Add Item
+                    </Button>
+                    </div>
+                )}
+
+                <div>
+                    <label className="block text-lg font-medium mb-2">
+                    Attachments (Optional)
+                    </label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                        <UploadCloud className="h-12 w-12 text-gray-400" />
+                        <p className="text-gray-500">Drop files to upload or click here</p>
+                        <input
+                        type="file"
+                        onChange={handleFileChange}
+                        className="hidden"
+                        id="file-upload"
+                        />
+                        <label
+                        htmlFor="file-upload"
+                        className="cursor-pointer text-indigo-600 hover:text-indigo-700"
+                        >
+                        Browse files
+                        </label>
+                    </div>
+                    <div className="mt-4">
+                        <Input
+                        type="text"
+                        placeholder="Or paste a link (YouTube, Vimeo, etc.)"
+                        value={linkUrl}
+                        onChange={(e) => setLinkUrl(e.target.value)}
+                        className="rounded-xl"
+                        />
+                        <Button
+                        type="button"
+                        onClick={handleAddLink}
+                        className="mt-2"
+                        >
+                        Add Link
+                        </Button>
+                    </div>
+                    <div className="mt-4 space-y-2">
+                        {attachments.map((attachment, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-gray-100 rounded-lg">
+                            <div className="flex items-center gap-2">
+                            {attachment.type === "file" ? (
+                                <FileText className="h-4 w-4 text-blue-500" />
+                            ) : (
+                                <LinkIcon className="h-4 w-4 text-green-500" />
+                            )}
+                            <span>{attachment.name}</span>
                             </div>
-                            ))}
+                            <Button
+                            variant="ghost"
+                            onClick={() => setAttachments(attachments.filter((_, i) => i !== index))}
+                            className="text-red-500"
+                            >
+                            <Trash className="h-4 w-4" />
+                            </Button>
                         </div>
-                        </div>
+                        ))}
                     </div>
                     </div>
-                ) : null}
                 </div>
 
                 <div className="flex justify-end">
-                <Button
+                    <Button
                     type="submit"
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 h-auto rounded-xl"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white"
                     disabled={!isFormValid()}
-                >
+                    >
                     Submit Payment
-                </Button>
+                    </Button>
+                </div>
                 </div>
             </form>
             </div>

@@ -208,7 +208,7 @@ export function PurchaseContent() {
     const transaction = transactions.find(t => t.id === id);
     if (transaction && isInvoice(transaction)) {
       // Now TypeScript knows transaction is InvoicePurchase
-      navigate("/receive-payment", { 
+      navigate(`/receive-payment/${id}`, { 
         state: { 
           invoiceId: transaction.id,
           amountDue: transaction.amount - (transaction.paidAmount || 0)
