@@ -9,6 +9,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PurchaseType, PurchaseStatus } from "@/types/purchase";
+import {
+  FileText,
+  Truck,
+  Package,
+  Tag,
+  AlertCircle
+} from "lucide-react";
 
 interface PurchaseInformationFormProps {
   purchaseType: PurchaseType;
@@ -78,6 +85,40 @@ export function PurchaseInformationForm({
   urgency,
   setUrgency,
 }: PurchaseInformationFormProps) {
+  // Icon and color configuration for purchase types
+  const typeConfig = {
+    invoice: { 
+      icon: <FileText className="h-4 w-4 text-purple-500" />, 
+      color: "text-black-500",
+      bgColor: "bg-purple-50",
+      label: "Invoice" 
+    },
+    shipment: { 
+      icon: <Truck className="h-4 w-4 text-orange-500" />, 
+      color: "text-black-500",
+      bgColor: "bg-orange-50",
+      label: "Shipment" 
+    },
+    order: { 
+      icon: <Package className="h-4 w-4 text-blue-500" />, 
+      color: "text-black-500",
+      bgColor: "bg-blue-50",
+      label: "Order" 
+    },
+    offer: { 
+      icon: <Tag className="h-4 w-4 text-green-500" />, 
+      color: "text-black-500",
+      bgColor: "bg-green-50",
+      label: "Offer" 
+    },
+    request: { 
+      icon: <AlertCircle className="h-4 w-4 text-pink-500" />, 
+      color: "text-black-500",
+      bgColor: "bg-pink-50",
+      label: "Request" 
+    }
+  };
+
   // Set the appropriate number prefix based on type
   useEffect(() => {
     const prefix = 
@@ -101,14 +142,22 @@ export function PurchaseInformationForm({
             }}
           >
             <SelectTrigger>
-              <SelectValue />
+              <div className="flex items-center gap-2">
+                {typeConfig[purchaseType].icon}
+                <span className={typeConfig[purchaseType].color}>
+                  {typeConfig[purchaseType].label}
+                </span>
+              </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="invoice">Invoice</SelectItem>
-              <SelectItem value="shipment">Shipment</SelectItem>
-              <SelectItem value="order">Order</SelectItem>
-              <SelectItem value="offer">Offer</SelectItem>
-              <SelectItem value="request">Request</SelectItem>
+              {Object.entries(typeConfig).map(([type, config]) => (
+                <SelectItem key={type} value={type}>
+                  <div className={`flex items-center gap-2 ${config.color}`}>
+                    {config.icon}
+                    <span>{config.label}</span>
+                  </div>
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
