@@ -128,7 +128,7 @@ export function CreatePurchaseForm({ purchaseType, setPurchaseType }: CreatePurc
     } else if (purchaseType === "offer") {
       newPurchase = {
         ...basePurchase,
-        discountTerms,
+        discountTerms,  
         expiryDate: new Date(expiryDate),
       };
     } else if (purchaseType === "request") {

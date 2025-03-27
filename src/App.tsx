@@ -45,11 +45,11 @@ function App() {
             <Route path="/sales" element={<Sales />} />
             <Route path="/create-new-sales" element={<CreateNewSales />} />
             <Route path="/sales-invoice/:id" element={<SalesInvoiceDetail />} />
-            <Route path="/invoice/:id" element={<InvoiceDetail />} />
-            <Route path="/shipment/:id" element={<ShipmentDetail />} />
-            <Route path="/order/:id" element={<OrderDetail />} />
-            <Route path="/offer/:id" element={<OfferDetail />} />
-            <Route path="/request/:id" element={<RequestDetail />} />
+            <Route path="/invoices/:id" element={<InvoiceDetail />} />
+            <Route path="/shipments/:id" element={<ShipmentDetail />} />
+            <Route path="/orders/:id" element={<OrderDetail />} />
+            <Route path="/offers/:id" element={<OfferDetail />} />
+            <Route path="/requests/:id" element={<RequestDetail />} />
             <Route path="/purchases" element={<Purchases />} />
             <Route path="/create-new-purchase" element={<CreateNewPurchase />} />
             <Route path="/products" element={<Products />} />

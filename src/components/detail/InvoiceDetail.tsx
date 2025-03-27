@@ -16,7 +16,7 @@ const InvoiceDetail = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchInvoiceData = () => {
+    const fetchInvoiceData = () => {  
       try {
         const storedPurchases = localStorage.getItem(PURCHASES_STORAGE_KEY);
         if (storedPurchases) {
