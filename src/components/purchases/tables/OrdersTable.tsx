@@ -1,4 +1,4 @@
-    // src/components/purchases/tables/OrdersTable.tsx
+    import { useState } from "react";
     import { format } from "date-fns";
     import { Circle, MoreVertical, Edit, Trash } from "lucide-react";
     import { Link } from "react-router-dom";
@@ -14,6 +14,16 @@
     import { Button } from "@/components/ui/button";
     import { cn } from "@/lib/utils";
     import { OrderPurchase } from "@/types/purchase";
+    import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    } from "@/components/ui/alert-dialog";
 
     interface OrdersTableProps {
     orders: OrderPurchase[];
@@ -22,11 +32,32 @@
     }
 
     export function OrdersTable({ orders, onDelete, onEdit }: OrdersTableProps) {
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
+
+    const handleDeleteClick = (id: string) => {
+        setOrderToDelete(id);
+        setDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (orderToDelete) {
+        onDelete(orderToDelete);
+        }
+        setDeleteDialogOpen(false);
+    };
+
+    const cancelDelete = () => {
+        setOrderToDelete(null);
+        setDeleteDialogOpen(false);
+    };
+
     return (
+        <>
         <div className="border rounded-lg">
-        <Table>
+            <Table>
             <TableHeader>
-            <TableRow>
+                <TableRow>
                 <TableHead>Order Date</TableHead>
                 <TableHead>Order #</TableHead>
                 <TableHead>Items</TableHead>
@@ -34,81 +65,102 @@
                 <TableHead>Status</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Actions</TableHead>
-            </TableRow>
+                </TableRow>
             </TableHeader>
             <TableBody>
-            {orders.map((order) => (
+                {orders.map((order) => (
                 <TableRow key={order.id}>
-                <TableCell>
+                    <TableCell>
                     {order.orderDate ? format(order.orderDate, "dd/MM/yyyy") : "-"}
-                </TableCell>
-                <TableCell>
+                    </TableCell>
+                    <TableCell>
                     <Link
-                    to={`/orders/${order.id}`}
-                    className="text-indigo-600 hover:underline"
+                        to={`/orders/${order.id}`}
+                        className="text-indigo-600 hover:underline"
                     >
-                    {order.number}
+                        {order.number}
                     </Link>
-                </TableCell>
-                <TableCell>{order.items.length}</TableCell>
-                <TableCell>
+                    </TableCell>
+                    <TableCell>{order.items.length}</TableCell>
+                    <TableCell>
                     {order.discountTerms || (
-                    <span className="text-gray-400">None</span>
+                        <span className="text-gray-400">None</span>
                     )}
-                </TableCell>
-                <TableCell>
+                    </TableCell>
+                    <TableCell>
                     <span className={cn(
-                    "inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-xs font-medium",
-                    {
+                        "inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-xs font-medium",
+                        {
                         "bg-yellow-100 text-yellow-800": order.status === "pending",
                         "bg-green-100 text-green-800": order.status === "completed",
                         "bg-red-100 text-red-800": order.status === "cancelled",
-                    }
+                        }
                     )}>
-                    <Circle className={cn(
+                        <Circle className={cn(
                         "h-2 w-2",
                         {
-                        "fill-yellow-500": order.status === "pending",
-                        "fill-green-500": order.status === "completed",
-                        "fill-red-500": order.status === "cancelled",
+                            "fill-yellow-500": order.status === "pending",
+                            "fill-green-500": order.status === "completed",
+                            "fill-red-500": order.status === "cancelled",
                         }
-                    )} />
-                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                        )} />
+                        {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                     </span>
-                </TableCell>
-                <TableCell>
+                    </TableCell>
+                    <TableCell>
                     {new Intl.NumberFormat("id-ID", {
-                    style: "currency",
-                    currency: "IDR",
-                    minimumFractionDigits: 0,
+                        style: "currency",
+                        currency: "IDR",
+                        minimumFractionDigits: 0,
                     }).format(order.amount)}
-                </TableCell>
-                <TableCell>
+                    </TableCell>
+                    <TableCell>
                     <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
+                        <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm">
-                        <MoreVertical className="h-4 w-4" />
+                            <MoreVertical className="h-4 w-4" />
                         </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
                         <DropdownMenuItem onClick={() => onEdit(order.id)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem 
-                        onClick={() => onDelete(order.id)}
-                        className="text-red-600"
+                            onClick={() => handleDeleteClick(order.id)}
+                            className="text-red-600"
                         >
-                        <Trash className="mr-2 h-4 w-4" />
-                        Delete
+                            <Trash className="mr-2 h-4 w-4" />
+                            Delete
                         </DropdownMenuItem>
-                    </DropdownMenuContent>
+                        </DropdownMenuContent>
                     </DropdownMenu>
-                </TableCell>
+                    </TableCell>
                 </TableRow>
-            ))}
+                ))}
             </TableBody>
-        </Table>
+            </Table>
         </div>
+
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure you want to delete this order?</AlertDialogTitle>
+                <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the order.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel onClick={cancelDelete}>No</AlertDialogCancel>
+                <AlertDialogAction 
+                onClick={confirmDelete}
+                className="bg-red-600 hover:bg-red-700"
+                >
+                Yes, Delete
+                </AlertDialogAction>
+            </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+        </>
     );
     }
