@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-
-// Import the components
 import { PurchaseInformationForm } from "@/components/purchases/PurchaseInformationForm";
 import { PurchaseItemsForm } from "@/components/purchases/PurchaseItemsForm";
 import { Purchase, PurchaseItem, PurchaseType, PurchaseStatus, PURCHASES_STORAGE_KEY } from "@/types/purchase";
@@ -25,7 +23,7 @@ export function CreatePurchaseForm({ purchaseType, setPurchaseType }: CreatePurc
   const [items, setItems] = useState<PurchaseItem[]>([
     { id: '1', name: '', quantity: 1, price: 0 }
   ]);
-  const [amount, setAmount] = useState(0); // Add amount state
+  const [amount, setAmount] = useState(0);
 
   // Type-specific fields
   const [trackingNumber, setTrackingNumber] = useState("");
@@ -51,7 +49,6 @@ export function CreatePurchaseForm({ purchaseType, setPurchaseType }: CreatePurc
     const itemsValid = items.length > 0 && 
       items.every(item => item.name !== "" && item.quantity > 0);
     
-    // Additional validation for type-specific required fields
     let typeSpecificFieldsValid = true;
     
     if (purchaseType === "shipment") {
@@ -104,7 +101,7 @@ export function CreatePurchaseForm({ purchaseType, setPurchaseType }: CreatePurc
       dueDate: dueDate ? new Date(dueDate) : null,
       status,
       itemCount: items.length,
-      amount, // Add amount field
+      amount,
       tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag !== ""),
       type: purchaseType,
       items,
@@ -145,7 +142,6 @@ export function CreatePurchaseForm({ purchaseType, setPurchaseType }: CreatePurc
     
     if (existingPurchasesString) {
       try {
-        // Parse the JSON string and ensure dates are properly converted back to Date objects
         const parsedPurchases = JSON.parse(existingPurchasesString);
         existingPurchases = parsedPurchases.map((purchase: any) => ({
           ...purchase,
@@ -189,7 +185,6 @@ export function CreatePurchaseForm({ purchaseType, setPurchaseType }: CreatePurc
           setStatus={setStatus}
           tags={tags}
           setTags={setTags}
-          // Type-specific fields
           trackingNumber={trackingNumber}
           setTrackingNumber={setTrackingNumber}
           carrier={carrier}
@@ -208,10 +203,11 @@ export function CreatePurchaseForm({ purchaseType, setPurchaseType }: CreatePurc
           setUrgency={setUrgency}
         />
 
-        {/* Items Section */}
+        {/* Items Section - Now with purchaseType prop */}
         <PurchaseItemsForm 
           items={items}
           setItems={setItems}
+          purchaseType={purchaseType} // Added this line
         />
 
         <div className="flex justify-end space-x-4">
