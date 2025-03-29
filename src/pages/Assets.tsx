@@ -11,11 +11,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AssetsTable } from "@/components/AssetsTable";
-import { SoldAssetsTable } from "@/components/SoldAssetsTable";
+import { AssetsTable } from "@/components/assets/AssetsTable";
+import { SoldAssetsTable } from "@/components/assets/SoldAssetsTable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AddAssetDialog } from "@/components/AddAssetDialog";
-import { DeleteAssetDialog } from "@/components/DeleteAssetDialog";
+import { AddAssetDialog } from "@/components/assets/AddAssetDialog";
+import { DeleteAssetDialog } from "@/components/assets/DeleteAssetDialog";
 import { toast } from "sonner";
 
 interface Asset {
