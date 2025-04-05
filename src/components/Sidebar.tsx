@@ -1,3 +1,4 @@
+
 import { 
   Home, 
   LayoutDashboard, 
@@ -10,7 +11,7 @@ import {
   Package,
   Database,
   Settings,
-  LogOut // Import the LogOut icon
+  LogOut
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -38,9 +39,13 @@ export const Sidebar = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // Clear user session or token (e.g., from localStorage or state management)
-    localStorage.removeItem('authToken'); // Example: Remove auth token
-    localStorage.removeItem('user'); // Example: Remove user data
+    // Clear all user-related data from localStorage
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    localStorage.removeItem('userEmail');
+    
+    // Don't remove username to persist it across sessions
+    // This is just for demo purposes - in a real app you'd likely clear all data
 
     // Redirect to the Login Page
     navigate('/login');
@@ -63,7 +68,7 @@ export const Sidebar = () => {
   return (
     <div className="w-56 h-screen bg-sidebar-bg border-r border-sidebar-border flex flex-col">
       <div className="flex-1 py-4 space-y-1">
-        {navItems.map((item, i) => (
+        {navItems.map((item) => (
           <NavItem
             key={item.href}
             icon={item.icon}
@@ -79,7 +84,7 @@ export const Sidebar = () => {
         onClick={handleLogout}
         className="flex items-center gap-3 px-4 py-3 text-sidebar-text hover:bg-sidebar-hover transition-colors duration-200 mx-2 rounded-[20px] mb-4"
       >
-        <LogOut size={20} className="text-red-500" /> {/* Red logout icon */}
+        <LogOut size={20} className="text-red-500" />
         <span className="text-sm font-medium">Logout</span>
       </button>
     </div>

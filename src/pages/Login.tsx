@@ -1,5 +1,7 @@
+
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { toast } from "sonner";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -8,9 +10,32 @@ const LoginPage = () => {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    // Add login logic here (e.g., API call)
-    console.log("Logging in with:", email, password);
-    navigate("/"); // Redirect to dashboard after login
+    
+    // Simple validation
+    if (!email || !password) {
+      toast.error("Please enter both email and password");
+      return;
+    }
+    
+    // Demo login logic (in a real app, this would validate against a backend)
+    if (email === "admin@gmail.com" && password === "admin") {
+      // Store user info in localStorage (in a real app, you would store a token)
+      localStorage.setItem("userEmail", email);
+      localStorage.setItem("username", "Admin User");
+      toast.success("Logged in as Admin");
+      navigate("/"); // Redirect to dashboard after login
+    } else if (email === "user@example.com" && password === "user") {
+      localStorage.setItem("userEmail", email);
+      localStorage.setItem("username", "Regular User");
+      toast.success("Logged in successfully");
+      navigate("/"); // Redirect to dashboard after login
+    } else {
+      // For demo purposes, allow any login
+      localStorage.setItem("userEmail", email);
+      localStorage.setItem("username", "User");
+      toast.success("Logged in successfully");
+      navigate("/"); // Redirect to dashboard after login
+    }
   };
 
   return (
@@ -28,7 +53,7 @@ const LoginPage = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full p-2 border border-gray-300 rounded-lg"
-              placeholder="asdhjk@gmail.com"
+              placeholder="email@example.com"
               required
             />
           </div>
@@ -61,6 +86,14 @@ const LoginPage = () => {
           <Link to="/forgot-password" className="text-sm text-[#6366F1] hover:underline">
             Forgot Password?
           </Link>
+        </div>
+        
+        <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
+          <h3 className="text-sm font-medium text-gray-700 mb-2">Demo Credentials:</h3>
+          <div className="text-xs text-gray-600 space-y-1">
+            <p><strong>Admin:</strong> admin@gmail.com / admin</p>
+            <p><strong>Regular User:</strong> user@example.com / user</p>
+          </div>
         </div>
       </div>
     </div>
