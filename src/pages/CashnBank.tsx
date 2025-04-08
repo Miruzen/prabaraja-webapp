@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -101,7 +100,6 @@ const CashnBank = () => {
     };
     setAccounts([...accounts, newAccount]);
     
-    // Create initial transaction for the new account
     if (formData.startBalance > 0) {
       const newTransaction: Transaction = {
         id: uuidv4(),
@@ -138,7 +136,6 @@ const CashnBank = () => {
 
   const handleDeleteAccount = (accountToDelete: Account) => {
     setAccounts(accounts.filter(account => account.code !== accountToDelete.code));
-    // Also delete associated transactions
     setTransactions(transactions.filter(transaction => transaction.accountCode !== accountToDelete.code));
     toast.success("Account deleted permanently");
   };
@@ -152,9 +149,7 @@ const CashnBank = () => {
     toast.success("Account updated successfully");
   };
   
-  // Handle transfer between accounts
   const handleTransferFunds = (fromCode: string, toCode: string, amount: number, notes: string) => {
-    // Create two transactions (outflow and inflow)
     const newTransactions: Transaction[] = [
       {
         id: uuidv4(),
@@ -178,10 +173,8 @@ const CashnBank = () => {
     
     setTransactions([...transactions, ...newTransactions]);
     
-    // Update account balances
     setAccounts(accounts.map(account => {
       if (account.code === fromCode) {
-        // Get current balance as number
         const currentBalance = parseInputCurrency(account.balance.replace(/[()]/g, ''));
         const newBalance = currentBalance - amount;
         return {
@@ -189,7 +182,6 @@ const CashnBank = () => {
           balance: newBalance >= 0 ? `Rp ${newBalance.toLocaleString('id-ID')}` : `(Rp ${Math.abs(newBalance).toLocaleString('id-ID')})`
         };
       } else if (account.code === toCode) {
-        // Get current balance as number
         const currentBalance = parseInputCurrency(account.balance.replace(/[()]/g, ''));
         const newBalance = currentBalance + amount;
         return {
@@ -203,9 +195,7 @@ const CashnBank = () => {
     toast.success("Funds transferred successfully");
   };
   
-  // Handle receiving money
   const handleReceiveMoney = (accountCode: string, amount: number, payer: string, reference: string, date: Date, notes: string) => {
-    // Create a new transaction
     const newTransaction: Transaction = {
       id: uuidv4(),
       date: date,
@@ -218,10 +208,8 @@ const CashnBank = () => {
     
     setTransactions([...transactions, newTransaction]);
     
-    // Update account balance
     setAccounts(accounts.map(account => {
       if (account.code === accountCode) {
-        // Get current balance as number
         const currentBalance = parseInputCurrency(account.balance.replace(/[()]/g, ''));
         const newBalance = currentBalance + amount;
         return {
@@ -242,6 +230,10 @@ const CashnBank = () => {
       const amount = parseInt(account.balance.replace(/[^\d-]/g, '')) || 0;
       return total + amount;
     }, 0);
+  };
+
+  const getAccountTransactions = (accountCode: string) => {
+    return transactions.filter(t => t.accountCode === accountCode);
   };
 
   return (
@@ -293,7 +285,10 @@ const CashnBank = () => {
                           onEdit={handleEditAccount}
                           onUnarchive={handleUnarchiveAccount}
                           onDelete={handleDeleteAccount}
-                          transactions={transactions}
+                          transactions={getAccountTransactions(account.code)}
+                          allAccounts={accounts}
+                          onTransferFunds={handleTransferFunds}
+                          onReceiveMoney={handleReceiveMoney}
                         />
                       </div>
                     </TableCell>
