@@ -54,11 +54,13 @@ export function CreatePurchaseForm({ purchaseType, setPurchaseType }: CreatePurc
 
   // Validate form
   useEffect(() => {
+    // For invoices, approver is required
+    const approverValid = purchaseType === "invoice" ? approver !== "" : true;
+    
     const requiredFieldsFilled = 
       date !== "" && 
       number !== "" && 
-      // Only validate approver for invoice type
-      (purchaseType !== "invoice" || approver !== "");
+      approverValid;
     
     const itemsValid = items.length > 0 && 
       items.every(item => item.name !== "" && item.quantity > 0);

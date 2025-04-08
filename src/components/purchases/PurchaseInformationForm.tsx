@@ -283,15 +283,17 @@ export function PurchaseInformationForm({
           </>
         )}
 
-        {/* Common fields for all types */}
-        <div className="space-y-2">
-          <Label htmlFor="approver">Approver</Label>
-          <Input
-            id="approver"
-            value={approver}
-            onChange={(e) => setApprover(e.target.value)}
-          />
-        </div>
+        {/* Only show approver field for invoice type */}
+        {purchaseType === "invoice" && (
+          <div className="space-y-2">
+            <Label htmlFor="approver">Approver</Label>
+            <Input
+              id="approver"
+              value={approver}
+              onChange={(e) => setApprover(e.target.value)}
+            />
+          </div>
+        )}
 
         <div className="space-y-2">
           <Label htmlFor="dueDate">Due Date</Label>
