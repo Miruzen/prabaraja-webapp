@@ -1,10 +1,23 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { PurchaseInformationForm } from "@/components/purchases/PurchaseInformationForm";
 import { PurchaseItemsForm } from "@/components/purchases/PurchaseItemsForm";
-import { Purchase, PurchaseItem, PurchaseType, PurchaseStatus, PURCHASES_STORAGE_KEY } from "@/types/purchase";
+import { 
+  Purchase, 
+  PurchaseItem, 
+  PurchaseType, 
+  PurchaseStatus,
+  PURCHASES_STORAGE_KEY,
+  PurchasePriority,
+  InvoicePurchase,
+  ShipmentPurchase,
+  OrderPurchase,
+  OfferPurchase,
+  RequestPurchase
+} from "@/types/purchase";
 
 interface CreatePurchaseFormProps {
   purchaseType: PurchaseType;
@@ -35,7 +48,7 @@ export function CreatePurchaseForm({ purchaseType, setPurchaseType }: CreatePurc
     new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0]
   );
   const [requestedBy, setRequestedBy] = useState("");
-  const [urgency, setUrgency] = useState("Medium");
+  const [urgency, setUrgency] = useState<PurchasePriority>("Medium");
   
   const [isFormValid, setIsFormValid] = useState(false);
 
@@ -44,7 +57,8 @@ export function CreatePurchaseForm({ purchaseType, setPurchaseType }: CreatePurc
     const requiredFieldsFilled = 
       date !== "" && 
       number !== "" && 
-      approver !== "";
+      // Only validate approver for invoice type
+      (purchaseType !== "invoice" || approver !== "");
     
     const itemsValid = items.length > 0 && 
       items.every(item => item.name !== "" && item.quantity > 0);
@@ -92,48 +106,75 @@ export function CreatePurchaseForm({ purchaseType, setPurchaseType }: CreatePurc
       return;
     }
 
-    // Base purchase object with common fields
-    const basePurchase = {
+    // Create purchase object based on type
+    let newPurchase: Purchase;
+    
+    // Base common fields
+    const baseFields = {
       id: Math.random().toString(36).substr(2, 9),
       date: new Date(date),
       number,
-      approver,
-      dueDate: dueDate ? new Date(dueDate) : null,
       status,
-      itemCount: items.length,
-      amount,
       tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag !== ""),
-      type: purchaseType,
       items,
+      amount,
+      itemCount: items.length,
     };
 
-    // Add type-specific fields
-    let newPurchase: Purchase = { ...basePurchase };
-    
-    if (purchaseType === "shipment") {
-      newPurchase = {
-        ...basePurchase,
-        trackingNumber,
-        carrier,
-        shippingDate: new Date(shippingDate),
-      };
-    } else if (purchaseType === "order") {
-      newPurchase = {
-        ...basePurchase,
-        orderDate: new Date(orderDate),
-      };
-    } else if (purchaseType === "offer") {
-      newPurchase = {
-        ...basePurchase,
-        discountTerms,
-        expiryDate: new Date(expiryDate),
-      };
-    } else if (purchaseType === "request") {
-      newPurchase = {
-        ...basePurchase,
-        requestedBy,
-        urgency,
-      };
+    // Create specific purchase type based on the form type
+    switch (purchaseType) {
+      case "invoice":
+        newPurchase = {
+          ...baseFields,
+          type: "invoice",
+          approver,
+          dueDate: dueDate ? new Date(dueDate) : new Date(),
+        } as InvoicePurchase;
+        break;
+        
+      case "shipment":
+        newPurchase = {
+          ...baseFields,
+          type: "shipment",
+          approver: "", // Empty approver for non-invoice types
+          trackingNumber,
+          carrier,
+          shippingDate: new Date(shippingDate),
+        } as ShipmentPurchase;
+        break;
+        
+      case "order":
+        newPurchase = {
+          ...baseFields,
+          type: "order",
+          approver: "", // Empty approver for non-invoice types
+          orderDate: new Date(orderDate),
+        } as OrderPurchase;
+        break;
+        
+      case "offer":
+        newPurchase = {
+          ...baseFields,
+          type: "offer",
+          approver: "", // Empty approver for non-invoice types
+          discountTerms,
+          expiryDate: new Date(expiryDate),
+        } as OfferPurchase;
+        break;
+        
+      case "request":
+        newPurchase = {
+          ...baseFields,
+          type: "request",
+          approver: "", // Empty approver for non-invoice types
+          requestedBy,
+          urgency,
+        } as RequestPurchase;
+        break;
+        
+      default:
+        toast.error("Invalid purchase type");
+        return;
     }
 
     // Get existing purchases from localStorage
@@ -203,11 +244,11 @@ export function CreatePurchaseForm({ purchaseType, setPurchaseType }: CreatePurc
           setUrgency={setUrgency}
         />
 
-        {/* Items Section - Now with purchaseType prop */}
+        {/* Items Section */}
         <PurchaseItemsForm 
           items={items}
           setItems={setItems}
-          purchaseType={purchaseType} // Added this line
+          purchaseType={purchaseType}
         />
 
         <div className="flex justify-end space-x-4">

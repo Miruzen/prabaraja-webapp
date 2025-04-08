@@ -113,37 +113,37 @@ export function PurchaseContent() {
   }, [transactions]);
 
   // Handle approve action
-    const handleApproveTransaction = (id: string) => {
-      const updatedTransactions = transactions.map(t => {
-        if (t.id === id && isRequest(t)) {
-          // Explicitly create a new OfferPurchase with all required fields
-          const approvedOffer: OfferPurchase = {
-            ...t,
-            id: t.id,
-            type: "offer",
-            status: "completed",
-            expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-            discountTerms: "Standard terms apply",
-            // Include all base purchase fields
-            date: t.date,
-            number: t.number,
-            approver: t.approver,
-            tags: t.tags,
-            items: t.items,
-            amount: t.amount,
-            itemCount: t.itemCount
-          };
-          return approvedOffer;
-        }
-        return t;
-      });
+  const handleApproveTransaction = (id: string) => {
+    const updatedTransactions = transactions.map(t => {
+      if (t.id === id && isRequest(t)) {
+        // Explicitly create a new OfferPurchase with all required fields
+        const approvedOffer: OfferPurchase = {
+          ...t,
+          id: t.id,
+          type: "offer",
+          status: "pending", // Changed from "completed" to "pending"
+          expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+          discountTerms: "Standard terms apply",
+          // Include all base purchase fields
+          date: t.date,
+          number: t.number,
+          approver: t.approver,
+          tags: t.tags,
+          items: t.items,
+          amount: t.amount,
+          itemCount: t.itemCount
+        };
+        return approvedOffer;
+      }
+      return t;
+    });
     
     setTransactions(updatedTransactions as Purchase[]);
     localStorage.setItem(PURCHASES_STORAGE_KEY, JSON.stringify(updatedTransactions));
     
     toast({
       title: "✓ Approved",
-      description: "Request has been approved and moved to Offers",
+      description: "Request has been approved and moved to Offers with pending status",
       variant: "default",
       className: "border-green-300 bg-green-50 text-green-700",
     });
