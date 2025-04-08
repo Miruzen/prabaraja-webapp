@@ -6,10 +6,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, ArrowRightLeft, PiggyBank, BarChart, Pencil, Archive, ArchiveRestore, Trash2 } from "lucide-react";
+import { ChevronDown, ArrowRightLeft, PiggyBank, BarChart, Pencil, Archive, ArchiveRestore, Trash2, History } from "lucide-react";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { useState } from "react";
 import { EditAccountDialog } from "./EditAccountDialog";
+import { TransactionHistoryDialog } from "./TransactionHistoryDialog"; 
 import { toast } from "sonner";
 
 interface Account {
@@ -21,19 +22,38 @@ interface Account {
   archived?: boolean;
 }
 
+interface Transaction {
+  id: string;
+  date: Date;
+  description: string;
+  amount: number;
+  type: "inflow" | "outflow";
+  accountCode: string;
+  reference?: string;
+}
+
 interface AccountActionDropdownProps {
   account: Account;
   onArchive: (account: Account) => void;
   onEdit: (account: Account) => void;
   onUnarchive?: (account: Account) => void;
   onDelete?: (account: Account) => void;
+  transactions?: Transaction[];
 }
 
-export function AccountActionDropdown({ account, onArchive, onEdit, onUnarchive, onDelete }: AccountActionDropdownProps) {
+export function AccountActionDropdown({ 
+  account, 
+  onArchive, 
+  onEdit, 
+  onUnarchive, 
+  onDelete,
+  transactions = []
+}: AccountActionDropdownProps) {
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showUnarchiveDialog, setShowUnarchiveDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
 
   const handleArchiveConfirm = () => {
     onArchive(account);
@@ -75,6 +95,10 @@ export function AccountActionDropdown({ account, onArchive, onEdit, onUnarchive,
 
   const renderActiveActions = () => (
     <DropdownMenuContent align="end" className="w-[200px] bg-white">
+      <DropdownMenuItem onClick={() => setShowHistoryDialog(true)} className="cursor-pointer">
+        <History className="mr-2 h-4 w-4 text-[#8B5CF6]" />
+        History
+      </DropdownMenuItem>
       <DropdownMenuItem onClick={() => setShowEditDialog(true)} className="cursor-pointer">
         <Pencil className="mr-2 h-4 w-4 text-[#0FA0CE]" />
         Edit Account
@@ -159,6 +183,13 @@ export function AccountActionDropdown({ account, onArchive, onEdit, onUnarchive,
         onOpenChange={setShowEditDialog}
         account={account}
         onSave={handleEditSave}
+      />
+      
+      <TransactionHistoryDialog
+        open={showHistoryDialog}
+        onOpenChange={setShowHistoryDialog}
+        account={account}
+        transactions={transactions}
       />
     </>
   );

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -7,10 +7,6 @@ import { Switch } from "@/components/ui/switch";
 import { Sidebar } from "@/components/Sidebar";
 import { CreateAccountDialog } from "@/components/bank/CreateAccountDialog";
 import { AccountActionDropdown } from "@/components/bank/AccountActionDropdown";
-import { TransferFundsDialog } from "@/components/bank/TransferFundsDialog";
-import { ReceiveMoneyDialog } from "@/components/bank/ReceiveMoneyDialog";
-import { CashflowAnalysis } from "@/components/bank/CashflowAnalysis";
-import { TransactionHistoryDialog } from "@/components/bank/TransactionHistoryDialog";
 import { toast } from "sonner";
 import { formatCurrency, parseInputCurrency } from "@/lib/utils";
 import { v4 as uuidv4 } from "uuid";
@@ -203,6 +199,8 @@ const CashnBank = () => {
       }
       return account;
     }));
+    
+    toast.success("Funds transferred successfully");
   };
   
   // Handle receiving money
@@ -233,6 +231,8 @@ const CashnBank = () => {
       }
       return account;
     }));
+    
+    toast.success("Money received successfully");
   };
 
   const visibleAccounts = accounts.filter(account => account.archived === showArchived);
@@ -258,27 +258,6 @@ const CashnBank = () => {
             <div className="flex justify-between items-center mb-4">
               <div className="flex gap-2">
                 <CreateAccountDialog onSubmit={handleCreateAccount} />
-                <div className="relative group">
-                  <Button variant="outline">
-                    Actions
-                  </Button>
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 hidden group-hover:block">
-                    <div className="py-1">
-                      <TransferFundsDialog 
-                        accounts={accounts} 
-                        onTransfer={handleTransferFunds} 
-                      />
-                      <ReceiveMoneyDialog 
-                        accounts={accounts}
-                        onReceive={handleReceiveMoney}
-                      />
-                      <CashflowAnalysis 
-                        accounts={accounts}
-                        transactions={transactions}
-                      />
-                    </div>
-                  </div>
-                </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">Show archived accounts</span>
@@ -308,16 +287,13 @@ const CashnBank = () => {
                     <TableCell>{account.balance}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end items-center space-x-1">
-                        <TransactionHistoryDialog
-                          account={account}
-                          transactions={transactions}
-                        />
                         <AccountActionDropdown
                           account={account}
                           onArchive={handleArchiveAccount}
                           onEdit={handleEditAccount}
                           onUnarchive={handleUnarchiveAccount}
                           onDelete={handleDeleteAccount}
+                          transactions={transactions}
                         />
                       </div>
                     </TableCell>
