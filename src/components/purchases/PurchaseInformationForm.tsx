@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -8,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PurchaseType, PurchaseStatus } from "@/types/purchase";
+import { PurchaseType, PurchaseStatus, PurchasePriority } from "@/types/purchase";
 import {
   FileText,
   Truck,
@@ -259,8 +260,15 @@ export function PurchaseInformationForm({
             <div className="space-y-2">
               <Label htmlFor="urgency">Urgency</Label>
               <Select
-                value={urgency}
-                onValueChange={(value) => setUrgency(value)}
+                value={urgency || "Medium"}
+                onValueChange={(value) => {
+                  if (setUrgency) {
+                    // Fix the type mismatch by ensuring we pass a valid PurchasePriority value
+                    if (value === "High" || value === "Medium" || value === "Low") {
+                      setUrgency(value);
+                    }
+                  }
+                }}
               >
                 <SelectTrigger>
                   <SelectValue />

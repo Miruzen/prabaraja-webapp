@@ -207,6 +207,13 @@ export function CreatePurchaseForm({ purchaseType, setPurchaseType }: CreatePurc
     navigate("/purchases");
   };
 
+  // Helper function for the urgency setter that maintains type safety
+  const handleUrgencyChange = (value: string) => {
+    if (value === "High" || value === "Medium" || value === "Low") {
+      setUrgency(value);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit}>
       <div className="space-y-6">
@@ -241,7 +248,7 @@ export function CreatePurchaseForm({ purchaseType, setPurchaseType }: CreatePurc
           requestedBy={requestedBy}
           setRequestedBy={setRequestedBy}
           urgency={urgency}
-          setUrgency={setUrgency}
+          setUrgency={handleUrgencyChange}
         />
 
         {/* Items Section */}

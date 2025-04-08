@@ -1,3 +1,4 @@
+
 // src/types/purchase.ts
 export interface PurchaseItem {
   id: string;
@@ -22,12 +23,15 @@ interface BasePurchase {
   items: PurchaseItem[];
   amount: number;
   itemCount: number;
+  // Add common fields that were causing issues
+  dueDate?: Date;
+  priority?: PurchasePriority;
 }
 
 // Category-specific interfaces
 export interface InvoicePurchase extends BasePurchase {
   type: "invoice";
-  dueDate: Date;
+  dueDate: Date; // Required for invoice type
   paidAmount?: number;
 }
 
@@ -54,7 +58,6 @@ export interface RequestPurchase extends BasePurchase {
   type: "request";
   requestedBy: string;
   urgency: PurchasePriority;
-  dueDate?: Date;
 }
 
 // Union type for all purchases
