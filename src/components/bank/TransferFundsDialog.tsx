@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import React from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,9 @@ interface Account {
 }
 
 interface TransferFundsDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  fromAccount: Account;
   accounts: Account[];
   onTransfer: (from: string, to: string, amount: number, notes: string) => void;
 }
@@ -36,15 +39,20 @@ const transferFormSchema = z.object({
   path: ["toAccount"],
 });
 
-export function TransferFundsDialog({ accounts, onTransfer }: TransferFundsDialogProps) {
-  const [open, setOpen] = useState(false);
-  const [previewMode, setPreviewMode] = useState(false);
+export function TransferFundsDialog({ 
+  open, 
+  onOpenChange, 
+  fromAccount,
+  accounts, 
+  onTransfer 
+}: TransferFundsDialogProps) {
+  const [previewMode, setPreviewMode] = React.useState(false);
   const activeAccounts = accounts.filter(account => !account.archived);
   
   const form = useForm<z.infer<typeof transferFormSchema>>({
     resolver: zodResolver(transferFormSchema),
     defaultValues: {
-      fromAccount: "",
+      fromAccount: fromAccount.code,
       toAccount: "",
       amount: "",
       notes: "",
@@ -70,7 +78,7 @@ export function TransferFundsDialog({ accounts, onTransfer }: TransferFundsDialo
   const handleClose = () => {
     form.reset();
     setPreviewMode(false);
-    setOpen(false);
+    onOpenChange(false);
   };
 
   const onSubmit = (data: z.infer<typeof transferFormSchema>) => {
@@ -94,12 +102,7 @@ export function TransferFundsDialog({ accounts, onTransfer }: TransferFundsDialo
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" className="w-full justify-start px-2 py-1.5 text-sm">
-          Transfer Funds
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
@@ -145,33 +148,12 @@ export function TransferFundsDialog({ accounts, onTransfer }: TransferFundsDialo
               </div>
             ) : (
               <>
-                <FormField
-                  control={form.control}
-                  name="fromAccount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>From Account</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select source account" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {activeAccounts.map((account) => (
-                            <SelectItem key={account.code} value={account.code}>
-                              {account.name} - {account.balance}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="p-3 border rounded-md bg-muted/10">
+                  <div className="text-sm font-medium">From Account:</div>
+                  <div className="text-sm">
+                    {fromAccount.name} ({fromAccount.code}) - {fromAccount.balance}
+                  </div>
+                </div>
                 
                 <FormField
                   control={form.control}
@@ -182,7 +164,6 @@ export function TransferFundsDialog({ accounts, onTransfer }: TransferFundsDialo
                       <Select 
                         onValueChange={field.onChange} 
                         defaultValue={field.value}
-                        disabled={!watchFromAccount}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -191,7 +172,7 @@ export function TransferFundsDialog({ accounts, onTransfer }: TransferFundsDialo
                         </FormControl>
                         <SelectContent>
                           {activeAccounts
-                            .filter(account => account.code !== watchFromAccount)
+                            .filter(account => account.code !== fromAccount.code)
                             .map((account) => (
                               <SelectItem key={account.code} value={account.code}>
                                 {account.name} - {account.balance}
@@ -215,7 +196,6 @@ export function TransferFundsDialog({ accounts, onTransfer }: TransferFundsDialo
                           {...field}
                           onChange={handleAmountChange}
                           prefix="Rp"
-                          disabled={!watchFromAccount || !watchToAccount}
                         />
                       </FormControl>
                       {insufficientFunds && watchAmount && (
@@ -265,7 +245,7 @@ export function TransferFundsDialog({ accounts, onTransfer }: TransferFundsDialo
               ) : (
                 <Button 
                   type="submit" 
-                  disabled={!watchFromAccount || !watchToAccount || !watchAmount || insufficientFunds}
+                  disabled={!watchToAccount || !watchAmount || insufficientFunds}
                 >
                   Review Transfer
                 </Button>

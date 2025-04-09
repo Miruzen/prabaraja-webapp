@@ -1,8 +1,6 @@
-
-import React, { useState } from "react";
+import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,12 +25,13 @@ interface Account {
 }
 
 interface ReceiveMoneyDialogProps {
-  accounts: Account[];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  account: Account;
   onReceive: (accountCode: string, amount: number, payer: string, reference: string, date: Date, notes: string) => void;
 }
 
 const receiveMoneySchema = z.object({
-  accountCode: z.string().min(1, "Please select an account"),
   amount: z.string().min(1, "Amount is required"),
   payer: z.string().min(1, "Payer name is required"),
   reference: z.string().optional(),
@@ -40,17 +39,18 @@ const receiveMoneySchema = z.object({
   notes: z.string().optional(),
 });
 
-export function ReceiveMoneyDialog({ accounts, onReceive }: ReceiveMoneyDialogProps) {
-  const [open, setOpen] = useState(false);
-  const [previewMode, setPreviewMode] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
-  
-  const activeAccounts = accounts.filter(account => !account.archived);
+export function ReceiveMoneyDialog({ 
+  open, 
+  onOpenChange, 
+  account, 
+  onReceive 
+}: ReceiveMoneyDialogProps) {
+  const [previewMode, setPreviewMode] = React.useState(false);
+  const [file, setFile] = React.useState<File | null>(null);
   
   const form = useForm<z.infer<typeof receiveMoneySchema>>({
     resolver: zodResolver(receiveMoneySchema),
     defaultValues: {
-      accountCode: "",
       amount: "",
       payer: "",
       reference: "",
@@ -59,22 +59,19 @@ export function ReceiveMoneyDialog({ accounts, onReceive }: ReceiveMoneyDialogPr
     },
   });
 
-  const watchAccountCode = form.watch("accountCode");
   const watchAmount = form.watch("amount");
   
-  // Reset form and close dialog
   const handleClose = () => {
     form.reset();
     setFile(null);
     setPreviewMode(false);
-    setOpen(false);
+    onOpenChange(false);
   };
 
   const onSubmit = (data: z.infer<typeof receiveMoneySchema>) => {
     if (previewMode) {
-      // Process the payment receipt
       onReceive(
-        data.accountCode,
+        account.code,
         parseInputCurrency(data.amount),
         data.payer,
         data.reference || "",
@@ -84,21 +81,15 @@ export function ReceiveMoneyDialog({ accounts, onReceive }: ReceiveMoneyDialogPr
       toast.success("Payment received successfully");
       handleClose();
     } else {
-      // Show preview
       setPreviewMode(true);
     }
   };
 
-  // Selected account details for preview
-  const selectedAccount = activeAccounts.find(acc => acc.code === watchAccountCode);
-  
-  // Format input as currency
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatInputCurrency(e.target.value);
     form.setValue("amount", formatted);
   };
   
-  // File upload handler
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
@@ -106,12 +97,7 @@ export function ReceiveMoneyDialog({ accounts, onReceive }: ReceiveMoneyDialogPr
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" className="w-full justify-start px-2 py-1.5 text-sm">
-          Receive Money
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
@@ -126,7 +112,7 @@ export function ReceiveMoneyDialog({ accounts, onReceive }: ReceiveMoneyDialogPr
                 <div className="grid grid-cols-2 gap-2">
                   <div className="text-sm text-muted-foreground">To Account:</div>
                   <div className="text-sm font-medium">
-                    {selectedAccount?.name} ({selectedAccount?.code})
+                    {account.name} ({account.code})
                   </div>
                   
                   <div className="text-sm text-muted-foreground">Amount:</div>
@@ -162,33 +148,12 @@ export function ReceiveMoneyDialog({ accounts, onReceive }: ReceiveMoneyDialogPr
               </div>
             ) : (
               <>
-                <FormField
-                  control={form.control}
-                  name="accountCode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Target Account</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select receiving account" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {activeAccounts.map((account) => (
-                            <SelectItem key={account.code} value={account.code}>
-                              {account.name} - {account.balance}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="p-3 border rounded-md bg-muted/10">
+                  <div className="text-sm font-medium">Receiving Account:</div>
+                  <div className="text-sm">
+                    {account.name} ({account.code})
+                  </div>
+                </div>
                 
                 <FormField
                   control={form.control}
@@ -343,7 +308,7 @@ export function ReceiveMoneyDialog({ accounts, onReceive }: ReceiveMoneyDialogPr
               ) : (
                 <Button 
                   type="submit" 
-                  disabled={!watchAccountCode || !watchAmount || !form.getValues("payer")}
+                  disabled={!watchAmount || !form.getValues("payer")}
                 >
                   Review Receipt
                 </Button>

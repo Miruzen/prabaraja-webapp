@@ -5,11 +5,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, ArrowRightLeft, PiggyBank, BarChart, Pencil, Archive, ArchiveRestore, Trash2, History, Clock } from "lucide-react";
+import { ChevronDown, ArrowRightLeft, PiggyBank, BarChart, Pencil, Archive, ArchiveRestore, Trash2, History } from "lucide-react";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { useState } from "react";
 import { EditAccountDialog } from "./EditAccountDialog";
-import { TransactionHistoryDialog } from "./TransactionHistoryDialog"; 
+import { TransactionHistoryDialog } from "./TransactionHistoryDialog";
 import { TransferFundsDialog } from "./TransferFundsDialog";
 import { ReceiveMoneyDialog } from "./ReceiveMoneyDialog";
 import { CashflowAnalysis } from "./CashflowAnalysis";
@@ -76,6 +76,7 @@ export function AccountActionDropdown({
     if (onDelete) {
       onDelete(account);
       setShowDeleteDialog(false);
+      toast.success("Account deleted permanently");
     }
   };
 
@@ -83,11 +84,13 @@ export function AccountActionDropdown({
     if (onUnarchive) {
       onUnarchive(account);
       setShowUnarchiveDialog(false);
+      toast.success("Account unarchived successfully");
     }
   };
 
   const handleEditSave = (updatedAccount: Account) => {
     onEdit(updatedAccount);
+    setShowEditDialog(false);
     toast.success("Account updated successfully");
   };
 
@@ -95,6 +98,7 @@ export function AccountActionDropdown({
     if (onTransferFunds) {
       onTransferFunds(fromCode, toCode, amount, notes);
       setShowTransferDialog(false);
+      toast.success("Funds transferred successfully");
     }
   };
 
@@ -102,6 +106,7 @@ export function AccountActionDropdown({
     if (onReceiveMoney) {
       onReceiveMoney(accountCode, amount, payer, reference, date, notes);
       setShowReceiveDialog(false);
+      toast.success("Payment received successfully");
     }
   };
 
@@ -167,8 +172,8 @@ export function AccountActionDropdown({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>No</AlertDialogCancel>
-            <AlertDialogAction onClick={handleArchiveConfirm}>Yes</AlertDialogAction>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleArchiveConfirm}>Archive</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -182,8 +187,8 @@ export function AccountActionDropdown({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>No</AlertDialogCancel>
-            <AlertDialogAction onClick={handleUnarchiveConfirm}>Yes</AlertDialogAction>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleUnarchiveConfirm}>Unarchive</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -193,12 +198,12 @@ export function AccountActionDropdown({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Account Permanently</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this account permanently? This action cannot be undone.
+              This will permanently delete the account and all its transaction history.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>No</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm}>Yes</AlertDialogAction>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm}>Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -214,7 +219,7 @@ export function AccountActionDropdown({
         open={showHistoryDialog}
         onOpenChange={setShowHistoryDialog}
         account={account}
-        transactions={transactions}
+        transactions={transactions.filter(t => t.accountCode === account.code)}
       />
 
       {onTransferFunds && (
@@ -240,6 +245,7 @@ export function AccountActionDropdown({
         <CashflowAnalysis
           accounts={allAccounts.filter(a => !a.archived)}
           transactions={transactions}
+          onClose={() => setShowCashflowDialog(false)}
         />
       )}
     </>

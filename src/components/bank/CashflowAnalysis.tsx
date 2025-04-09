@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import React from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
+import { useState } from "react";
 
 interface Account {
   code: string;
@@ -34,6 +35,8 @@ interface Transaction {
 }
 
 interface CashflowAnalysisProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   accounts: Account[];
   transactions: Transaction[];
 }
@@ -65,8 +68,7 @@ const upcomingTransactions = [
   },
 ];
 
-export function CashflowAnalysis({ accounts, transactions }: CashflowAnalysisProps) {
-  const [open, setOpen] = useState(false);
+export function CashflowAnalysis({ open, onOpenChange, accounts, transactions }: CashflowAnalysisProps) {
   const [period, setPeriod] = useState<"week" | "month" | "quarter">("month");
   const [selectedAccount, setSelectedAccount] = useState<string>("all");
   
@@ -166,22 +168,17 @@ export function CashflowAnalysis({ accounts, transactions }: CashflowAnalysisPro
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" className="w-full justify-start px-2 py-1.5 text-sm">
-          Cashflow Analysis
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[90vw] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-xl flex justify-between items-center">
-            <span>Cashflow Analysis</span>
-            <Button variant="outline" size="sm" onClick={handleExport}>
-              <FileDown className="mr-2 h-4 w-4" />
-              Export Report
-            </Button>
-          </DialogTitle>
-        </DialogHeader>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+    <DialogContent className="sm:max-w-[90vw] max-h-[90vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle className="text-xl flex justify-between items-center">
+          <span>Cashflow Analysis</span>
+          <Button variant="outline" size="sm" onClick={handleExport}>
+            <FileDown className="mr-2 h-4 w-4" />
+            Export Report
+          </Button>
+        </DialogTitle>
+      </DialogHeader>
         
         <div className="flex items-center gap-4 mb-4">
           <div className="flex items-center gap-2">
@@ -463,7 +460,7 @@ export function CashflowAnalysis({ accounts, transactions }: CashflowAnalysisPro
                           'bg-gray-100 text-gray-800'
                         }`}>
                           {transaction.status === 'pending' ? 'Pending' : 
-                           transaction.status === 'scheduled' ? 'Scheduled' : 'Upcoming'}
+                          transaction.status === 'scheduled' ? 'Scheduled' : 'Upcoming'}
                         </span>
                       </td>
                     </tr>
