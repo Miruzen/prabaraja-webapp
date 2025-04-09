@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+=======
+
+import React, { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+>>>>>>> e707e64ff2913728f46ab635ef450f868c45b79f
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -39,6 +45,8 @@ interface CashflowAnalysisProps {
   onOpenChange: (open: boolean) => void;
   accounts: Account[];
   transactions: Transaction[];
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const upcomingTransactions = [
@@ -68,9 +76,24 @@ const upcomingTransactions = [
   },
 ];
 
+<<<<<<< HEAD
 export function CashflowAnalysis({ open, onOpenChange, accounts, transactions }: CashflowAnalysisProps) {
+=======
+export function CashflowAnalysis({ 
+  accounts = [], 
+  transactions = [],
+  open: controlledOpen,
+  onOpenChange: setControlledOpen 
+}: CashflowAnalysisProps) {
+  const [open, setOpen] = useState(false);
+>>>>>>> e707e64ff2913728f46ab635ef450f868c45b79f
   const [period, setPeriod] = useState<"week" | "month" | "quarter">("month");
   const [selectedAccount, setSelectedAccount] = useState<string>("all");
+  
+  // Handle both controlled and uncontrolled states
+  const isControlled = controlledOpen !== undefined && setControlledOpen !== undefined;
+  const isOpen = isControlled ? controlledOpen : open;
+  const setIsOpen = isControlled ? setControlledOpen : setOpen;
   
   const processTransactions = () => {
     const filtered = transactions.filter(trans => {
@@ -168,6 +191,7 @@ export function CashflowAnalysis({ open, onOpenChange, accounts, transactions }:
   };
 
   return (
+<<<<<<< HEAD
     <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className="sm:max-w-[90vw] max-h-[90vh] overflow-y-auto">
       <DialogHeader>
@@ -179,6 +203,26 @@ export function CashflowAnalysis({ open, onOpenChange, accounts, transactions }:
           </Button>
         </DialogTitle>
       </DialogHeader>
+=======
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          <Button variant="ghost" className="w-full justify-start px-2 py-1.5 text-sm">
+            Cashflow Analysis
+          </Button>
+        </DialogTrigger>
+      )}
+      <DialogContent className="sm:max-w-[90vw] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-xl flex justify-between items-center">
+            <span>Cashflow Analysis</span>
+            <Button variant="outline" size="sm" onClick={handleExport}>
+              <FileDown className="mr-2 h-4 w-4" />
+              Export Report
+            </Button>
+          </DialogTitle>
+        </DialogHeader>
+>>>>>>> e707e64ff2913728f46ab635ef450f868c45b79f
         
         <div className="flex items-center gap-4 mb-4">
           <div className="flex items-center gap-2">

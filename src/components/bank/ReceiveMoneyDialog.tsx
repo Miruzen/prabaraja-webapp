@@ -25,10 +25,17 @@ interface Account {
 }
 
 interface ReceiveMoneyDialogProps {
+<<<<<<< HEAD
   open: boolean;
   onOpenChange: (open: boolean) => void;
   account: Account;
+=======
+  account?: Account;
+  accounts?: Account[];
+>>>>>>> e707e64ff2913728f46ab635ef450f868c45b79f
   onReceive: (accountCode: string, amount: number, payer: string, reference: string, date: Date, notes: string) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const receiveMoneySchema = z.object({
@@ -40,6 +47,7 @@ const receiveMoneySchema = z.object({
 });
 
 export function ReceiveMoneyDialog({ 
+<<<<<<< HEAD
   open, 
   onOpenChange, 
   account, 
@@ -47,10 +55,37 @@ export function ReceiveMoneyDialog({
 }: ReceiveMoneyDialogProps) {
   const [previewMode, setPreviewMode] = React.useState(false);
   const [file, setFile] = React.useState<File | null>(null);
+=======
+  account, 
+  accounts = [], 
+  onReceive,
+  open: controlledOpen,
+  onOpenChange: setControlledOpen 
+}: ReceiveMoneyDialogProps) {
+  const [open, setOpen] = useState(false);
+  const [previewMode, setPreviewMode] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  
+  // Handle both controlled and uncontrolled states
+  const isControlled = controlledOpen !== undefined && setControlledOpen !== undefined;
+  const isOpen = isControlled ? controlledOpen : open;
+  const setIsOpen = isControlled ? setControlledOpen : setOpen;
+  
+  // Use either the single account provided or filter the active accounts from the accounts array
+  const activeAccounts = account 
+    ? [account] 
+    : accounts && accounts.length > 0 
+      ? accounts.filter(acc => !acc.archived) 
+      : [];
+>>>>>>> e707e64ff2913728f46ab635ef450f868c45b79f
   
   const form = useForm<z.infer<typeof receiveMoneySchema>>({
     resolver: zodResolver(receiveMoneySchema),
     defaultValues: {
+<<<<<<< HEAD
+=======
+      accountCode: account ? account.code : "",
+>>>>>>> e707e64ff2913728f46ab635ef450f868c45b79f
       amount: "",
       payer: "",
       reference: "",
@@ -65,7 +100,11 @@ export function ReceiveMoneyDialog({
     form.reset();
     setFile(null);
     setPreviewMode(false);
+<<<<<<< HEAD
     onOpenChange(false);
+=======
+    setIsOpen(false);
+>>>>>>> e707e64ff2913728f46ab635ef450f868c45b79f
   };
 
   const onSubmit = (data: z.infer<typeof receiveMoneySchema>) => {
@@ -97,7 +136,18 @@ export function ReceiveMoneyDialog({
   };
 
   return (
+<<<<<<< HEAD
     <Dialog open={open} onOpenChange={onOpenChange}>
+=======
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          <Button variant="ghost" className="w-full justify-start px-2 py-1.5 text-sm">
+            Receive Money
+          </Button>
+        </DialogTrigger>
+      )}
+>>>>>>> e707e64ff2913728f46ab635ef450f868c45b79f
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
@@ -148,12 +198,43 @@ export function ReceiveMoneyDialog({
               </div>
             ) : (
               <>
+<<<<<<< HEAD
                 <div className="p-3 border rounded-md bg-muted/10">
                   <div className="text-sm font-medium">Receiving Account:</div>
                   <div className="text-sm">
                     {account.name} ({account.code})
                   </div>
                 </div>
+=======
+                <FormField
+                  control={form.control}
+                  name="accountCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Target Account</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        disabled={!!account}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select receiving account" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {activeAccounts.map((acc) => (
+                            <SelectItem key={acc.code} value={acc.code}>
+                              {acc.name} - {acc.balance}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+>>>>>>> e707e64ff2913728f46ab635ef450f868c45b79f
                 
                 <FormField
                   control={form.control}
