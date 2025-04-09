@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
@@ -23,6 +24,9 @@ interface Account {
 interface TransferFundsDialogProps {
   accounts: Account[];
   onTransfer: (from: string, to: string, amount: number, notes: string) => void;
+  fromAccount?: Account;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const transferFormSchema = z.object({
@@ -36,20 +40,38 @@ const transferFormSchema = z.object({
   path: ["toAccount"],
 });
 
-export function TransferFundsDialog({ accounts, onTransfer }: TransferFundsDialogProps) {
+export function TransferFundsDialog({ 
+  accounts, 
+  onTransfer, 
+  fromAccount,
+  open: controlledOpen,
+  onOpenChange: setControlledOpen 
+}: TransferFundsDialogProps) {
   const [open, setOpen] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
-  const activeAccounts = accounts.filter(account => !account.archived);
+  const activeAccounts = accounts && accounts.length > 0 ? accounts.filter(account => !account.archived) : [];
+  
+  // Handle both controlled and uncontrolled states
+  const isControlled = controlledOpen !== undefined && setControlledOpen !== undefined;
+  const isOpen = isControlled ? controlledOpen : open;
+  const setIsOpen = isControlled ? setControlledOpen : setOpen;
   
   const form = useForm<z.infer<typeof transferFormSchema>>({
     resolver: zodResolver(transferFormSchema),
     defaultValues: {
-      fromAccount: "",
+      fromAccount: fromAccount ? fromAccount.code : "",
       toAccount: "",
       amount: "",
       notes: "",
     },
   });
+  
+  // Update form when fromAccount changes
+  useEffect(() => {
+    if (fromAccount) {
+      form.setValue("fromAccount", fromAccount.code);
+    }
+  }, [fromAccount, form]);
 
   const watchFromAccount = form.watch("fromAccount");
   const watchToAccount = form.watch("toAccount");
@@ -70,7 +92,7 @@ export function TransferFundsDialog({ accounts, onTransfer }: TransferFundsDialo
   const handleClose = () => {
     form.reset();
     setPreviewMode(false);
-    setOpen(false);
+    setIsOpen(false);
   };
 
   const onSubmit = (data: z.infer<typeof transferFormSchema>) => {
@@ -94,12 +116,14 @@ export function TransferFundsDialog({ accounts, onTransfer }: TransferFundsDialo
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" className="w-full justify-start px-2 py-1.5 text-sm">
-          Transfer Funds
-        </Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          <Button variant="ghost" className="w-full justify-start px-2 py-1.5 text-sm">
+            Transfer Funds
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
@@ -154,6 +178,7 @@ export function TransferFundsDialog({ accounts, onTransfer }: TransferFundsDialo
                       <Select 
                         onValueChange={field.onChange} 
                         defaultValue={field.value}
+                        disabled={!!fromAccount}
                       >
                         <FormControl>
                           <SelectTrigger>

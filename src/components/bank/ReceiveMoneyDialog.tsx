@@ -27,8 +27,11 @@ interface Account {
 }
 
 interface ReceiveMoneyDialogProps {
-  accounts: Account[];
+  account?: Account;
+  accounts?: Account[];
   onReceive: (accountCode: string, amount: number, payer: string, reference: string, date: Date, notes: string) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const receiveMoneySchema = z.object({
@@ -40,17 +43,33 @@ const receiveMoneySchema = z.object({
   notes: z.string().optional(),
 });
 
-export function ReceiveMoneyDialog({ accounts, onReceive }: ReceiveMoneyDialogProps) {
+export function ReceiveMoneyDialog({ 
+  account, 
+  accounts = [], 
+  onReceive,
+  open: controlledOpen,
+  onOpenChange: setControlledOpen 
+}: ReceiveMoneyDialogProps) {
   const [open, setOpen] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   
-  const activeAccounts = accounts.filter(account => !account.archived);
+  // Handle both controlled and uncontrolled states
+  const isControlled = controlledOpen !== undefined && setControlledOpen !== undefined;
+  const isOpen = isControlled ? controlledOpen : open;
+  const setIsOpen = isControlled ? setControlledOpen : setOpen;
+  
+  // Use either the single account provided or filter the active accounts from the accounts array
+  const activeAccounts = account 
+    ? [account] 
+    : accounts && accounts.length > 0 
+      ? accounts.filter(acc => !acc.archived) 
+      : [];
   
   const form = useForm<z.infer<typeof receiveMoneySchema>>({
     resolver: zodResolver(receiveMoneySchema),
     defaultValues: {
-      accountCode: "",
+      accountCode: account ? account.code : "",
       amount: "",
       payer: "",
       reference: "",
@@ -67,7 +86,7 @@ export function ReceiveMoneyDialog({ accounts, onReceive }: ReceiveMoneyDialogPr
     form.reset();
     setFile(null);
     setPreviewMode(false);
-    setOpen(false);
+    setIsOpen(false);
   };
 
   const onSubmit = (data: z.infer<typeof receiveMoneySchema>) => {
@@ -106,12 +125,14 @@ export function ReceiveMoneyDialog({ accounts, onReceive }: ReceiveMoneyDialogPr
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" className="w-full justify-start px-2 py-1.5 text-sm">
-          Receive Money
-        </Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          <Button variant="ghost" className="w-full justify-start px-2 py-1.5 text-sm">
+            Receive Money
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
@@ -171,6 +192,7 @@ export function ReceiveMoneyDialog({ accounts, onReceive }: ReceiveMoneyDialogPr
                       <Select 
                         onValueChange={field.onChange} 
                         defaultValue={field.value}
+                        disabled={!!account}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -178,9 +200,9 @@ export function ReceiveMoneyDialog({ accounts, onReceive }: ReceiveMoneyDialogPr
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {activeAccounts.map((account) => (
-                            <SelectItem key={account.code} value={account.code}>
-                              {account.name} - {account.balance}
+                          {activeAccounts.map((acc) => (
+                            <SelectItem key={acc.code} value={acc.code}>
+                              {acc.name} - {acc.balance}
                             </SelectItem>
                           ))}
                         </SelectContent>

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,8 @@ interface Transaction {
 interface CashflowAnalysisProps {
   accounts: Account[];
   transactions: Transaction[];
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const upcomingTransactions = [
@@ -65,10 +68,20 @@ const upcomingTransactions = [
   },
 ];
 
-export function CashflowAnalysis({ accounts, transactions }: CashflowAnalysisProps) {
+export function CashflowAnalysis({ 
+  accounts = [], 
+  transactions = [],
+  open: controlledOpen,
+  onOpenChange: setControlledOpen 
+}: CashflowAnalysisProps) {
   const [open, setOpen] = useState(false);
   const [period, setPeriod] = useState<"week" | "month" | "quarter">("month");
   const [selectedAccount, setSelectedAccount] = useState<string>("all");
+  
+  // Handle both controlled and uncontrolled states
+  const isControlled = controlledOpen !== undefined && setControlledOpen !== undefined;
+  const isOpen = isControlled ? controlledOpen : open;
+  const setIsOpen = isControlled ? setControlledOpen : setOpen;
   
   const processTransactions = () => {
     const filtered = transactions.filter(trans => {
@@ -166,12 +179,14 @@ export function CashflowAnalysis({ accounts, transactions }: CashflowAnalysisPro
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" className="w-full justify-start px-2 py-1.5 text-sm">
-          Cashflow Analysis
-        </Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          <Button variant="ghost" className="w-full justify-start px-2 py-1.5 text-sm">
+            Cashflow Analysis
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[90vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl flex justify-between items-center">
