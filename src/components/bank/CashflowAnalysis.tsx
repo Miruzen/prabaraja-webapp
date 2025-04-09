@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -73,6 +74,11 @@ export function CashflowAnalysis({ open, onOpenChange, accounts, transactions }:
   const [selectedAccount, setSelectedAccount] = useState<string>("all");
   
   const processTransactions = () => {
+    // Ensure we have transactions before filtering
+    if (!transactions || transactions.length === 0) {
+      return [];
+    }
+    
     const filtered = transactions.filter(trans => {
       const isAccountMatch = selectedAccount === "all" || trans.accountCode === selectedAccount;
       
@@ -125,6 +131,11 @@ export function CashflowAnalysis({ open, onOpenChange, accounts, transactions }:
   };
   
   const calculateTotals = () => {
+    // Ensure we have transactions before filtering
+    if (!transactions || transactions.length === 0) {
+      return { inflows: 0, outflows: 0, netCashflow: 0 };
+    }
+    
     const filtered = transactions.filter(trans => {
       const isAccountMatch = selectedAccount === "all" || trans.accountCode === selectedAccount;
       
@@ -180,7 +191,267 @@ export function CashflowAnalysis({ open, onOpenChange, accounts, transactions }:
           </DialogTitle>
         </DialogHeader>
         
-        {/* ... rest of the component remains the same ... */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Card className="bg-[#F3F4F6]">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Inflows</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">
+                {formatCurrency(totals.inflows)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                During selected {period} period
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-[#F3F4F6]">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Outflows</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">
+                {formatCurrency(totals.outflows)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                During selected {period} period
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-[#F3F4F6]">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Net Cash Flow</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${totals.netCashflow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {formatCurrency(totals.netCashflow)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                During selected {period} period
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-1 space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Filters</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Time Period</label>
+                  <Select 
+                    value={period} 
+                    onValueChange={(value) => setPeriod(value as "week" | "month" | "quarter")}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select period" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="week">Last 7 Days</SelectItem>
+                      <SelectItem value="month">Last 30 Days</SelectItem>
+                      <SelectItem value="quarter">Last 90 Days</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Account</label>
+                  <Select 
+                    value={selectedAccount} 
+                    onValueChange={setSelectedAccount}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select account" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Accounts</SelectItem>
+                      {accounts && accounts.filter(a => !a.archived).map(account => (
+                        <SelectItem key={account.code} value={account.code}>
+                          {account.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <div className="lg:col-span-3">
+            <Tabs defaultValue="cashflow">
+              <TabsList>
+                <TabsTrigger value="cashflow">Cash Flow</TabsTrigger>
+                <TabsTrigger value="balance">Running Balance</TabsTrigger>
+                <TabsTrigger value="comparison">Income vs. Expenses</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="cashflow" className="h-[300px] mt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart
+                    data={cashflowData}
+                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="date" 
+                      tickFormatter={(date) => {
+                        const d = new Date(date);
+                        return `${d.getDate()}/${d.getMonth() + 1}`;
+                      }}
+                    />
+                    <YAxis tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} />
+                    <ChartTooltip 
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <ChartTooltipContent>
+                              <div className="font-medium">{new Date(label).toLocaleDateString()}</div>
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center">
+                                  <div className="h-2 w-2 rounded-full bg-[#4ade80] mr-1" />
+                                  <span className="font-medium">Inflow:</span>
+                                  <span className="ml-1">{formatCurrency(payload[0].value as number)}</span>
+                                </div>
+                                <div className="flex items-center">
+                                  <div className="h-2 w-2 rounded-full bg-[#f87171] mr-1" />
+                                  <span className="font-medium">Outflow:</span>
+                                  <span className="ml-1">{formatCurrency(payload[1].value as number)}</span>
+                                </div>
+                              </div>
+                            </ChartTooltipContent>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="inflow" 
+                      stackId="1"
+                      stroke="#4ade80" 
+                      fill="#4ade80" 
+                      fillOpacity={0.6}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="outflow" 
+                      stackId="2"
+                      stroke="#f87171" 
+                      fill="#f87171" 
+                      fillOpacity={0.6}
+                    />
+                    <Legend />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </TabsContent>
+              
+              <TabsContent value="balance" className="h-[300px] mt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={balanceData}
+                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="date" 
+                      tickFormatter={(date) => {
+                        const d = new Date(date);
+                        return `${d.getDate()}/${d.getMonth() + 1}`;
+                      }}
+                    />
+                    <YAxis tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} />
+                    <ChartTooltip
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <ChartTooltipContent>
+                              <div className="font-medium">{new Date(label).toLocaleDateString()}</div>
+                              <div className="flex items-center">
+                                <div className="h-2 w-2 rounded-full bg-[#8B5CF6] mr-1" />
+                                <span className="font-medium">Balance:</span>
+                                <span className="ml-1">{formatCurrency(payload[0].value as number)}</span>
+                              </div>
+                            </ChartTooltipContent>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="balance" 
+                      stroke="#8B5CF6" 
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </TabsContent>
+              
+              <TabsContent value="comparison" className="h-[300px] mt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={cashflowData}
+                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="date" 
+                      tickFormatter={(date) => {
+                        const d = new Date(date);
+                        return `${d.getDate()}/${d.getMonth() + 1}`;
+                      }}
+                    />
+                    <YAxis tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} />
+                    <ChartTooltip
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <ChartTooltipContent>
+                              <div className="font-medium">{new Date(label).toLocaleDateString()}</div>
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center">
+                                  <div className="h-2 w-2 rounded-full bg-[#4ade80] mr-1" />
+                                  <span className="font-medium">Income:</span>
+                                  <span className="ml-1">{formatCurrency(payload[0].value as number)}</span>
+                                </div>
+                                <div className="flex items-center">
+                                  <div className="h-2 w-2 rounded-full bg-[#f87171] mr-1" />
+                                  <span className="font-medium">Expenses:</span>
+                                  <span className="ml-1">{formatCurrency(payload[1].value as number)}</span>
+                                </div>
+                              </div>
+                            </ChartTooltipContent>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Bar 
+                      dataKey="inflow" 
+                      name="Income" 
+                      fill="#4ade80" 
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar 
+                      dataKey="outflow" 
+                      name="Expenses" 
+                      fill="#f87171" 
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Legend />
+                  </BarChart>
+                </ResponsiveContainer>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

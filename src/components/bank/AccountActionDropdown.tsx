@@ -15,6 +15,7 @@ import { TransferFundsDialog } from "./TransferFundsDialog";
 import { ReceiveMoneyDialog } from "./ReceiveMoneyDialog";
 import { CashflowAnalysis } from "./CashflowAnalysis";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface Account {
   code: string;
@@ -58,6 +59,7 @@ export function AccountActionDropdown({
   onTransferFunds,
   onReceiveMoney
 }: AccountActionDropdownProps) {
+  const navigate = useNavigate();
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showUnarchiveDialog, setShowUnarchiveDialog] = useState(false);
@@ -65,7 +67,6 @@ export function AccountActionDropdown({
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
   const [showTransferDialog, setShowTransferDialog] = useState(false);
   const [showReceiveDialog, setShowReceiveDialog] = useState(false);
-  const [showCashflowDialog, setShowCashflowDialog] = useState(false);
 
   const handleArchiveConfirm = () => {
     onArchive(account);
@@ -111,6 +112,17 @@ export function AccountActionDropdown({
     }
   };
 
+  const handleCashflowAnalysisClick = () => {
+    // Navigate to the cashflow analysis page with account data in state
+    navigate('/cashflow-analysis', { 
+      state: { 
+        selectedAccount: account.code,
+        accounts: allAccounts,
+        transactions
+      }
+    });
+  };
+
   const renderArchivedActions = () => (
     <DropdownMenuContent align="end" className="w-[200px] bg-white">
       <DropdownMenuItem onClick={() => setShowUnarchiveDialog(true)} className="cursor-pointer">
@@ -146,7 +158,7 @@ export function AccountActionDropdown({
         <PiggyBank className="mr-2 h-4 w-4 text-[#10B981]" />
         Receive Money
       </DropdownMenuItem>
-      <DropdownMenuItem onClick={() => setShowCashflowDialog(true)} className="cursor-pointer">
+      <DropdownMenuItem onClick={handleCashflowAnalysisClick} className="cursor-pointer">
         <BarChart className="mr-2 h-4 w-4 text-[#8B5CF6]" />
         Cashflow Analysis
       </DropdownMenuItem>
@@ -239,14 +251,6 @@ export function AccountActionDropdown({
           onOpenChange={setShowReceiveDialog}
           account={account}
           onReceive={handleReceiveMoney}
-        />
-      )}
-
-      {showCashflowDialog && (
-        <CashflowAnalysis
-          accounts={allAccounts.filter(a => !a.archived)}
-          transactions={transactions}
-          onClose={() => setShowCashflowDialog(false)}
         />
       )}
     </>
