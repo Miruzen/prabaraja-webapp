@@ -7,9 +7,21 @@ import {
   Receipt, 
   Package, 
   BarChart, 
-  CreditCard 
+  CreditCard,
+  UserRound,
+  Save
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle,
+  DialogFooter
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface ActionButtonProps {
   icon: React.ReactNode;
@@ -49,6 +61,8 @@ const AdBanner = () => (
 const Index = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState("User");
+  const [newUsername, setNewUsername] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   useEffect(() => {
     const savedUsername = localStorage.getItem("username");
@@ -82,6 +96,22 @@ const Index = () => {
     }
   };
 
+  const handleOpenDialog = () => {
+    setNewUsername(username);
+    setIsDialogOpen(true);
+  };
+
+  const handleSaveUsername = () => {
+    if (newUsername.trim()) {
+      localStorage.setItem("username", newUsername.trim());
+      setUsername(newUsername.trim());
+      setIsDialogOpen(false);
+      toast.success("Username updated successfully");
+    } else {
+      toast.error("Username cannot be empty");
+    }
+  };
+
   const actions = [
     { icon: <Receipt size={24} />, label: "Create sales invoice", action: "sales-invoice" },
     { icon: <ShoppingBag size={24} />, label: "Create sales order", action: "sales-order" },
@@ -97,7 +127,18 @@ const Index = () => {
       <main className="flex-1">
         <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] bg-[length:100%_200%] bg-[100%] p-6">
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-2xl font-semibold mb-2 text-white">Hello, {username}</h1>
+            <div className="flex justify-between items-center">
+              <h1 className="text-2xl font-semibold mb-2 text-white">Hello, {username}</h1>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="bg-white text-blue-600 hover:bg-blue-50"
+                onClick={handleOpenDialog}
+              >
+                <UserRound size={16} className="mr-2" />
+                Change Username
+              </Button>
+            </div>
             <p className="text-white">What activity do you want to do?</p>
           </div>
         </div>
@@ -116,6 +157,32 @@ const Index = () => {
         </div>
 
         <AdBanner />
+
+        {/* Username Change Dialog */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Change Username</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <Input 
+                id="username"
+                type="text"
+                value={newUsername}
+                onChange={(e) => setNewUsername(e.target.value)}
+                placeholder="Enter your username"
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveUsername} className="flex items-center gap-2">
+                <Save className="h-4 w-4" /> Save
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );
