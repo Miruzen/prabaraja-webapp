@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,34 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { User, Users, Building2, Save, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+
+// This would come from your API/database in a real app
+const contacts = [
+  {
+    id: 1,
+    category: "Customer",
+    name: "PT Maju Jaya",
+    number: "CUST-001",
+    email: "contact@majujaya.com",
+    address: "Jl. Sudirman No. 123, Jakarta",
+  },
+  {
+    id: 2,
+    category: "Vendor",
+    name: "CV Sukses Makmur",
+    number: "VEN-001",
+    email: "info@suksesmakmur.com",
+    address: "Jl. Gatot Subroto No. 45, Bandung",
+  },
+  {
+    id: 3,
+    category: "Employee",
+    name: "Budi Santoso",
+    number: "EMP-001",
+    email: "budi.s@company.com",
+    address: "Jl. Melati No. 67, Surabaya",
+  },
+];
 
 const contactSchema = z.object({
   category: z.string({
@@ -50,7 +78,48 @@ const CreateContact = () => {
       phone: "",
       address: "",
     },
+    mode: "onChange", // Enable validation on change for better UX
   });
+  
+  // Function to generate the next contact ID based on category
+  const generateNextId = (category: string) => {
+    if (!category) return "";
+    
+    const prefix = category === "Customer" ? "CUST-" : 
+                  category === "Vendor" ? "VEN-" : 
+                  category === "Employee" ? "EMP-" : "";
+    
+    // Find the highest ID number for the selected category
+    const categoryContacts = contacts.filter(c => c.category === category);
+    
+    if (categoryContacts.length === 0) {
+      return `${prefix}001`; // First contact of this category
+    }
+    
+    // Extract numbers from IDs and find the highest one
+    const idNumbers = categoryContacts.map(contact => {
+      const match = contact.number.match(/\d+/);
+      return match ? parseInt(match[0], 10) : 0;
+    });
+    
+    const highestId = Math.max(...idNumbers);
+    const nextId = highestId + 1;
+    
+    // Format with leading zeros (e.g., 001, 010, 100)
+    return `${prefix}${nextId.toString().padStart(3, '0')}`;
+  };
+
+  // Update ID when category changes
+  useEffect(() => {
+    const category = form.watch("category");
+    if (category) {
+      const nextId = generateNextId(category);
+      form.setValue("number", nextId);
+    }
+  }, [form.watch("category")]);
+  
+  // Check if all fields are filled
+  const isFormComplete = form.formState.isValid;
 
   const onSubmit = (data: ContactFormValues) => {
     // In a real app, this would save to a database
@@ -157,7 +226,12 @@ const CreateContact = () => {
                     <FormItem>
                       <FormLabel>ID</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter contact ID" {...field} />
+                        <Input 
+                          placeholder="Auto-generated ID" 
+                          {...field} 
+                          readOnly 
+                          className="bg-gray-100 cursor-not-allowed"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -206,7 +280,11 @@ const CreateContact = () => {
                   )}
                 />
                 
-                <Button type="submit" className="w-full mt-6">
+                <Button 
+                  type="submit" 
+                  className="w-full mt-6" 
+                  disabled={!isFormComplete}
+                >
                   <Save className="mr-2 h-4 w-4" />
                   Create Contact
                 </Button>
