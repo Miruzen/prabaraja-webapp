@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
@@ -23,7 +22,6 @@ import { ArrowLeft, Mail, Phone, MapPin, DollarSign, Wallet } from "lucide-react
 import { formatPriceWithSeparator } from "@/utils/salesUtils";
 import { getSalesInvoiceById } from "@/utils/invoiceUtils";
 
-// Mock contact data - in a real app, this would come from an API
 const contacts = [
   {
     id: 1,
@@ -54,7 +52,6 @@ const contacts = [
   },
 ];
 
-// Mock transaction data
 const salesTransactions = [
   { 
     id: "S001", 
@@ -124,14 +121,10 @@ const ContactDetails = () => {
   const [salesData, setSalesData] = useState<any[]>([]);
   const [purchasesData, setPurchasesData] = useState<any[]>([]);
   
-  // Find the contact by ID
   const contactId = parseInt(id || "0");
   const contact = contacts.find(c => c.id === contactId);
 
-  // Load sales and purchase data
   useEffect(() => {
-    // In a real app, this would fetch data from an API
-    // For now, we're using our mock data
     const sales = salesTransactions.filter(t => t.contactId === contactId);
     const purchases = purchaseTransactions.filter(t => t.contactId === contactId);
     
@@ -157,11 +150,9 @@ const ContactDetails = () => {
     );
   }
   
-  // Calculate total income and expenses
   const totalIncome = salesData.reduce((sum, sale) => sum + sale.amount, 0);
   const totalExpenses = purchasesData.reduce((sum, purchase) => sum + purchase.amount, 0);
 
-  // Determine empty state messages based on contact category
   const getEmptyPurchasesMessage = () => {
     if (contact.category === "Customer") {
       return `${contact.name} hasn't made any purchases yet.`;
@@ -179,7 +170,9 @@ const ContactDetails = () => {
   };
 
   const getEmptyTransactionsMessage = () => {
-    if (contact.category === "Customer") {
+    if (contact.category === "Employee") {
+      return `No transactions made with ${contact.name}`;
+    } else if (contact.category === "Customer") {
       return `You haven't made any transactions with ${contact.name} yet.`;
     } else if (contact.category === "Vendor") {
       return `You haven't made any transactions with ${contact.name} yet.`;
