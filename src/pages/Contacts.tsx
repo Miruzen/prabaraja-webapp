@@ -1,4 +1,6 @@
+
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,7 +37,6 @@ const contacts = [
     number: "CUST-001",
     email: "contact@majujaya.com",
     address: "Jl. Sudirman No. 123, Jakarta",
-    balance: 5000000,
   },
   {
     id: 2,
@@ -44,7 +45,6 @@ const contacts = [
     number: "VEN-001",
     email: "info@suksesmakmur.com",
     address: "Jl. Gatot Subroto No. 45, Bandung",
-    balance: -2500000,
   },
   {
     id: 3,
@@ -53,23 +53,17 @@ const contacts = [
     number: "EMP-001",
     email: "budi.s@company.com",
     address: "Jl. Melati No. 67, Surabaya",
-    balance: 1500000,
   },
 ];
 
 const ITEMS_PER_PAGE_OPTIONS = [5, 10, 15];
 
 const Contacts = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE_OPTIONS[1]);
-
-  const formatCurrency = (amount: number) => {
-    const absAmount = Math.abs(amount);
-    const formatted = new Intl.NumberFormat('id-ID').format(absAmount);
-    return `${amount < 0 ? '-' : ''}Rp ${formatted}`;
-  };
 
   const getCategoryColor = (category: string) => {
     switch (category) {
@@ -121,8 +115,11 @@ const Contacts = () => {
         <div className="p-6">
           <div className="flex flex-col gap-4 mb-6">
             <div className="bg-[#F8F7FF] p-5 rounded-lg inline-block">
-              <Button className="bg-[#8B5CF6] text-white hover:bg-[#7C3AED]">
-                Create Contact<UserPlus className="mr-2" />
+              <Button 
+                className="bg-[#8B5CF6] text-white hover:bg-[#7C3AED]"
+                onClick={() => navigate('/create-contact')}
+              >
+                Create Contact<UserPlus className="ml-2" />
               </Button>
             </div>
 
@@ -199,7 +196,6 @@ const Contacts = () => {
                   <TableHead>Number</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Address</TableHead>
-                  <TableHead>Balance</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -215,9 +211,6 @@ const Contacts = () => {
                     <TableCell>{contact.number}</TableCell>
                     <TableCell>{contact.email}</TableCell>
                     <TableCell className="max-w-[200px] truncate">{contact.address}</TableCell>
-                    <TableCell className={contact.balance < 0 ? 'text-red-600' : 'text-green-600'}>
-                      {formatCurrency(contact.balance)}
-                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

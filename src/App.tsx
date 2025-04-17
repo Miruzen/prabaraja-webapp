@@ -12,6 +12,7 @@ import CreateNewPurchase from "@/components/create/CreateNewPurchase";
 import CreateExpense from "./components/create/CreateExpense";
 import Products from "@/pages/Products";
 import Contacts from "@/pages/Contacts";
+import CreateContact from "@/pages/CreateContact";
 import CashnBank from "@/pages/CashnBank";
 import CashflowAnalysisPage from "@/pages/CashflowAnalysis";
 import Expenses from "@/pages/Expenses";
@@ -55,6 +56,7 @@ function App() {
             <Route path="/create-new-purchase" element={<CreateNewPurchase />} />
             <Route path="/products" element={<Products />} />
             <Route path="/contacts" element={<Contacts />} />
+            <Route path="/create-contact" element={<CreateContact />} />
             <Route path="/expenses" element={<Expenses />} />
             <Route path="/expense/:id" element={<ExpenseDetail />} />
             <Route path="/assets" element={<Assets />} />
