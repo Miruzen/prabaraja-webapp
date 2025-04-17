@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,8 +21,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Mail, Phone, MapPin, DollarSign, Wallet } from "lucide-react";
 import { formatPriceWithSeparator } from "@/utils/salesUtils";
+import { getSalesInvoiceById } from "@/utils/invoiceUtils";
 
-// This would come from your API/database in a real app
+// Mock contact data - in a real app, this would come from an API
 const contacts = [
   {
     id: 1,
@@ -120,10 +121,23 @@ const ContactDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("info");
+  const [salesData, setSalesData] = useState<any[]>([]);
+  const [purchasesData, setPurchasesData] = useState<any[]>([]);
   
   // Find the contact by ID
   const contactId = parseInt(id || "0");
   const contact = contacts.find(c => c.id === contactId);
+
+  // Load sales and purchase data
+  useEffect(() => {
+    // In a real app, this would fetch data from an API
+    // For now, we're using our mock data
+    const sales = salesTransactions.filter(t => t.contactId === contactId);
+    const purchases = purchaseTransactions.filter(t => t.contactId === contactId);
+    
+    setSalesData(sales);
+    setPurchasesData(purchases);
+  }, [contactId]);
   
   if (!contact) {
     return (
@@ -143,13 +157,36 @@ const ContactDetails = () => {
     );
   }
   
-  // Filter transactions for this contact
-  const sales = salesTransactions.filter(t => t.contactId === contactId);
-  const purchases = purchaseTransactions.filter(t => t.contactId === contactId);
-  
   // Calculate total income and expenses
-  const totalIncome = sales.reduce((sum, sale) => sum + sale.amount, 0);
-  const totalExpenses = purchases.reduce((sum, purchase) => sum + purchase.amount, 0);
+  const totalIncome = salesData.reduce((sum, sale) => sum + sale.amount, 0);
+  const totalExpenses = purchasesData.reduce((sum, purchase) => sum + purchase.amount, 0);
+
+  // Determine empty state messages based on contact category
+  const getEmptyPurchasesMessage = () => {
+    if (contact.category === "Customer") {
+      return `${contact.name} hasn't made any purchases yet.`;
+    } else {
+      return "No purchases found for this contact.";
+    }
+  };
+
+  const getEmptySuppliedMessage = () => {
+    if (contact.category === "Vendor") {
+      return `You haven't received any items from ${contact.name} yet.`;
+    } else {
+      return "No supplied items found for this contact.";
+    }
+  };
+
+  const getEmptyTransactionsMessage = () => {
+    if (contact.category === "Customer") {
+      return `You haven't made any transactions with ${contact.name} yet.`;
+    } else if (contact.category === "Vendor") {
+      return `You haven't made any transactions with ${contact.name} yet.`;
+    } else {
+      return `You haven't made any transactions with ${contact.name} yet.`;
+    }
+  };
 
   return (
     <div className="flex min-h-screen">
@@ -258,39 +295,46 @@ const ContactDetails = () => {
                     <CardDescription>Products purchased by {contact.name}</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Invoice #</TableHead>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Item</TableHead>
-                          <TableHead>Quantity</TableHead>
-                          <TableHead>Price</TableHead>
-                          <TableHead>Total</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {sales.flatMap(sale => 
-                          sale.items.map(item => (
-                            <TableRow key={`${sale.id}-${item.id}`}>
-                              <TableCell>{sale.invoiceNumber}</TableCell>
-                              <TableCell>{sale.date}</TableCell>
-                              <TableCell>{item.name}</TableCell>
-                              <TableCell>{item.quantity}</TableCell>
-                              <TableCell>Rp {formatPriceWithSeparator(item.price)}</TableCell>
-                              <TableCell>Rp {formatPriceWithSeparator(item.total)}</TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                        {sales.length === 0 && (
+                    {salesData.length > 0 ? (
+                      <Table>
+                        <TableHeader>
                           <TableRow>
-                            <TableCell colSpan={6} className="text-center py-4 text-gray-500">
-                              No purchases found
-                            </TableCell>
+                            <TableHead>Invoice #</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Item</TableHead>
+                            <TableHead>Quantity</TableHead>
+                            <TableHead>Price</TableHead>
+                            <TableHead>Total</TableHead>
                           </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {salesData.flatMap(sale => 
+                            sale.items.map(item => (
+                              <TableRow key={`${sale.id}-${item.id}`}>
+                                <TableCell>
+                                  <Button 
+                                    variant="link" 
+                                    className="p-0 h-auto font-normal text-blue-600 hover:text-blue-800 hover:underline"
+                                    onClick={() => navigate(`/sales-invoice/${sale.id}`)}
+                                  >
+                                    {sale.invoiceNumber}
+                                  </Button>
+                                </TableCell>
+                                <TableCell>{sale.date}</TableCell>
+                                <TableCell>{item.name}</TableCell>
+                                <TableCell>{item.quantity}</TableCell>
+                                <TableCell>Rp {formatPriceWithSeparator(item.price)}</TableCell>
+                                <TableCell>Rp {formatPriceWithSeparator(item.total)}</TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        {getEmptyPurchasesMessage()}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -304,39 +348,46 @@ const ContactDetails = () => {
                     <CardDescription>Products or services supplied by {contact.name}</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>PO #</TableHead>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Item</TableHead>
-                          <TableHead>Quantity</TableHead>
-                          <TableHead>Price</TableHead>
-                          <TableHead>Total</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {purchases.flatMap(purchase => 
-                          purchase.items.map(item => (
-                            <TableRow key={`${purchase.id}-${item.id}`}>
-                              <TableCell>{purchase.invoiceNumber}</TableCell>
-                              <TableCell>{purchase.date}</TableCell>
-                              <TableCell>{item.name}</TableCell>
-                              <TableCell>{item.quantity}</TableCell>
-                              <TableCell>Rp {formatPriceWithSeparator(item.price)}</TableCell>
-                              <TableCell>Rp {formatPriceWithSeparator(item.total)}</TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                        {purchases.length === 0 && (
+                    {purchasesData.length > 0 ? (
+                      <Table>
+                        <TableHeader>
                           <TableRow>
-                            <TableCell colSpan={6} className="text-center py-4 text-gray-500">
-                              No supplied items found
-                            </TableCell>
+                            <TableHead>PO #</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Item</TableHead>
+                            <TableHead>Quantity</TableHead>
+                            <TableHead>Price</TableHead>
+                            <TableHead>Total</TableHead>
                           </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {purchasesData.flatMap(purchase => 
+                            purchase.items.map(item => (
+                              <TableRow key={`${purchase.id}-${item.id}`}>
+                                <TableCell>
+                                  <Button 
+                                    variant="link" 
+                                    className="p-0 h-auto font-normal text-blue-600 hover:text-blue-800 hover:underline"
+                                    onClick={() => navigate(`/invoices/${purchase.id}`)}
+                                  >
+                                    {purchase.invoiceNumber}
+                                  </Button>
+                                </TableCell>
+                                <TableCell>{purchase.date}</TableCell>
+                                <TableCell>{item.name}</TableCell>
+                                <TableCell>{item.quantity}</TableCell>
+                                <TableCell>Rp {formatPriceWithSeparator(item.price)}</TableCell>
+                                <TableCell>Rp {formatPriceWithSeparator(item.total)}</TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        {getEmptySuppliedMessage()}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -349,43 +400,55 @@ const ContactDetails = () => {
                   <CardDescription>All financial transactions with {contact.name}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Transaction Type</TableHead>
-                        <TableHead>Reference #</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {[...sales.map(s => ({...s, type: "Sale"})), ...purchases.map(p => ({...p, type: "Purchase"}))]
-                        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                        .map(transaction => (
-                          <TableRow key={transaction.id}>
-                            <TableCell>{transaction.date}</TableCell>
-                            <TableCell>{transaction.type}</TableCell>
-                            <TableCell>{transaction.invoiceNumber}</TableCell>
-                            <TableCell className={transaction.type === "Sale" ? "text-green-600" : "text-red-600"}>
-                              {transaction.type === "Sale" ? "+" : "-"}Rp {formatPriceWithSeparator(transaction.amount)}
-                            </TableCell>
-                            <TableCell>
-                              <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                {transaction.status}
-                              </span>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      {sales.length === 0 && purchases.length === 0 && (
+                  {salesData.length > 0 || purchasesData.length > 0 ? (
+                    <Table>
+                      <TableHeader>
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center py-4 text-gray-500">
-                            No transaction history found
-                          </TableCell>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Transaction Type</TableHead>
+                          <TableHead>Reference #</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Status</TableHead>
                         </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {[...salesData.map(s => ({...s, type: "Sale"})), ...purchasesData.map(p => ({...p, type: "Purchase"}))]
+                          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                          .map(transaction => (
+                            <TableRow key={transaction.id}>
+                              <TableCell>{transaction.date}</TableCell>
+                              <TableCell>{transaction.type}</TableCell>
+                              <TableCell>
+                                <Button 
+                                  variant="link" 
+                                  className="p-0 h-auto font-normal text-blue-600 hover:text-blue-800 hover:underline"
+                                  onClick={() => {
+                                    const path = transaction.type === "Sale" 
+                                      ? `/sales-invoice/${transaction.id}` 
+                                      : `/invoices/${transaction.id}`;
+                                    navigate(path);
+                                  }}
+                                >
+                                  {transaction.invoiceNumber}
+                                </Button>
+                              </TableCell>
+                              <TableCell className={transaction.type === "Sale" ? "text-green-600" : "text-red-600"}>
+                                {transaction.type === "Sale" ? "+" : "-"}Rp {formatPriceWithSeparator(transaction.amount)}
+                              </TableCell>
+                              <TableCell>
+                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                  {transaction.status}
+                                </span>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      {getEmptyTransactionsMessage()}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

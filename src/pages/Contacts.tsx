@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
@@ -19,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, User, UserPlus, Users, Building2, ArrowRight } from "lucide-react";
+import { Search, User, UserPlus, Users, Building2 } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -214,11 +213,10 @@ const Contacts = () => {
                     <TableCell>
                       <Button 
                         variant="link" 
-                        className="p-0 h-auto font-normal text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
+                        className="p-0 h-auto font-normal text-blue-600 hover:text-blue-800 hover:underline"
                         onClick={() => handleContactClick(contact.id)}
                       >
                         {contact.name}
-                        <ArrowRight size={14} />
                       </Button>
                     </TableCell>
                     <TableCell>{contact.number}</TableCell>
