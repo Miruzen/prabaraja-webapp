@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, User, UserPlus, Users, Building2 } from "lucide-react";
+import { Search, User, UserPlus, Users, Building2, ArrowRight } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -89,6 +89,10 @@ const Contacts = () => {
       default:
         return <User size={16} color={getCategoryColor("default")} />;
     }
+  };
+
+  const handleContactClick = (contactId: number) => {
+    navigate(`/contact-details/${contactId}`);
   };
 
   const filteredContacts = contacts.filter(contact => {
@@ -207,7 +211,16 @@ const Contacts = () => {
                         {contact.category}
                       </div>
                     </TableCell>
-                    <TableCell>{contact.name}</TableCell>
+                    <TableCell>
+                      <Button 
+                        variant="link" 
+                        className="p-0 h-auto font-normal text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
+                        onClick={() => handleContactClick(contact.id)}
+                      >
+                        {contact.name}
+                        <ArrowRight size={14} />
+                      </Button>
+                    </TableCell>
                     <TableCell>{contact.number}</TableCell>
                     <TableCell>{contact.email}</TableCell>
                     <TableCell className="max-w-[200px] truncate">{contact.address}</TableCell>

@@ -227,7 +227,7 @@ const CreateContact = () => {
                       <FormLabel>ID</FormLabel>
                       <FormControl>
                         <Input 
-                          placeholder="Auto-generated ID" 
+                          placeholder={form.getValues("category") ? generateNextId(form.getValues("category")) : "ID will be generated"} 
                           {...field} 
                           readOnly 
                           className="bg-gray-100 cursor-not-allowed"

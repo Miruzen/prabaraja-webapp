@@ -13,6 +13,7 @@ import CreateExpense from "./components/create/CreateExpense";
 import Products from "@/pages/Products";
 import Contacts from "@/pages/Contacts";
 import CreateContact from "@/pages/CreateContact";
+import ContactDetails from "@/pages/ContactDetails";
 import CashnBank from "@/pages/CashnBank";
 import CashflowAnalysisPage from "@/pages/CashflowAnalysis";
 import Expenses from "@/pages/Expenses";
@@ -57,6 +58,7 @@ function App() {
             <Route path="/products" element={<Products />} />
             <Route path="/contacts" element={<Contacts />} />
             <Route path="/create-contact" element={<CreateContact />} />
+            <Route path="/contact-details/:id" element={<ContactDetails />} />
             <Route path="/expenses" element={<Expenses />} />
             <Route path="/expense/:id" element={<ExpenseDetail />} />
             <Route path="/assets" element={<Assets />} />
