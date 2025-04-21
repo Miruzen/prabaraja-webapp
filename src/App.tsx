@@ -35,6 +35,10 @@ import ForgotPasswordPage from "./pages/ForgotPass";
 import Neraca from "./components/reports/neraca";
 import { ReceivePaymentPage } from "./pages/ReceivePaymentPage";
 
+import AddProduct from "@/pages/AddProduct";
+import AddWarehouse from "@/pages/AddWarehouse";
+import AdjustStock from "@/pages/AdjustStock";
+
 // Create a client
 const queryClient = new QueryClient();
 
@@ -73,6 +77,9 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPasswordPage/> }/>
             <Route path="/neraca" element={<Neraca/> } />
             <Route path="/receive-payment/:invoiceId" element={<ReceivePaymentPage />} />
+            <Route path="/add-product" element={<AddProduct />} />
+            <Route path="/add-warehouse" element={<AddWarehouse />} />
+            <Route path="/adjust-stock" element={<AdjustStock />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Toaster />
