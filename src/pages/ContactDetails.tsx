@@ -393,7 +393,7 @@ const ContactDetails = () => {
                   <CardDescription>All financial transactions with {contact.name}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {salesData.length > 0 || purchasesData.length > 0 ? (
+                  {((salesData.length > 0 || purchasesData.length > 0)) ? (
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -439,7 +439,10 @@ const ContactDetails = () => {
                     </Table>
                   ) : (
                     <div className="text-center py-8 text-gray-500">
-                      {getEmptyTransactionsMessage()}
+                      {contact.category === "Employee" 
+                        ? `No transactions made with ${contact.name}` 
+                        : getEmptyTransactionsMessage()
+                      }
                     </div>
                   )}
                 </CardContent>
