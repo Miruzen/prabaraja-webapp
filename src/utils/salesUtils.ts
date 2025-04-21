@@ -14,3 +14,15 @@ export const formatPriceWithSeparator = (price: number) => {
     maximumFractionDigits: 2
   });
 };
+
+// Find a contact ID by customer name, or create a mapping (default to 1 for now)
+export const findContactIdByName = (customerName: string): number => {
+  // This is a simplified function that would normally query the contacts database
+  // For now, we'll return 1 as default since we have limited contacts
+  if (customerName === "PT Maju Jaya") return 1;
+  if (customerName === "CV Sukses Makmur") return 2;
+  if (customerName === "Budi Santoso") return 3;
+  
+  // Default to the first contact (PT Maju Jaya)
+  return 1;
+};

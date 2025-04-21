@@ -21,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Mail, Phone, MapPin, DollarSign, Wallet } from "lucide-react";
 import { formatPriceWithSeparator } from "@/utils/salesUtils";
 import { getSalesInvoiceById } from "@/utils/invoiceUtils";
+import { salesData } from "@/data/salesData";
 
 const contacts = [
   {
@@ -125,10 +126,26 @@ const ContactDetails = () => {
   const contact = contacts.find(c => c.id === contactId);
 
   useEffect(() => {
-    const sales = salesTransactions.filter(t => t.contactId === contactId);
+    const legacySales = salesTransactions.filter(t => t.contactId === contactId);
+    
+    const mainSales = salesData.filter(s => s.customerId === contactId).map(sale => {
+      const numericTotal = parseFloat(sale.total.replace("Rp ", "").replace(".", "").replace(",", "."));
+      return {
+        id: sale.id,
+        contactId: sale.customerId,
+        date: sale.date,
+        invoiceNumber: sale.number,
+        amount: numericTotal || 0,
+        status: sale.status,
+        items: []
+      };
+    });
+    
+    const combinedSales = [...legacySales, ...mainSales];
+    
     const purchases = purchaseTransactions.filter(t => t.contactId === contactId);
     
-    setSalesData(sales);
+    setSalesData(combinedSales);
     setPurchasesData(purchases);
   }, [contactId]);
   
@@ -302,7 +319,7 @@ const ContactDetails = () => {
                         </TableHeader>
                         <TableBody>
                           {salesData.flatMap(sale => 
-                            sale.items.map(item => (
+                            sale.items && sale.items.length > 0 ? sale.items.map(item => (
                               <TableRow key={`${sale.id}-${item.id}`}>
                                 <TableCell>
                                   <Button 
@@ -319,7 +336,23 @@ const ContactDetails = () => {
                                 <TableCell>Rp {formatPriceWithSeparator(item.price)}</TableCell>
                                 <TableCell>Rp {formatPriceWithSeparator(item.total)}</TableCell>
                               </TableRow>
-                            ))
+                            )) : (
+                              <TableRow key={sale.id}>
+                                <TableCell>
+                                  <Button 
+                                    variant="link" 
+                                    className="p-0 h-auto font-normal text-blue-600 hover:text-blue-800 hover:underline"
+                                    onClick={() => navigate(`/sales-invoice/${sale.id}`)}
+                                  >
+                                    {sale.invoiceNumber}
+                                  </Button>
+                                </TableCell>
+                                <TableCell>{sale.date}</TableCell>
+                                <TableCell colSpan={4}>
+                                  <span className="text-gray-500 italic">Item details not available</span>
+                                </TableCell>
+                              </TableRow>
+                            )
                           )}
                         </TableBody>
                       </Table>
@@ -406,7 +439,14 @@ const ContactDetails = () => {
                       </TableHeader>
                       <TableBody>
                         {[...salesData.map(s => ({...s, type: "Sale"})), ...purchasesData.map(p => ({...p, type: "Purchase"}))]
-                          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                          .sort((a, b) => {
+                            const dateA = a.date.includes('-') ? new Date(a.date) : 
+                              new Date(a.date.split('/').reverse().join('-'));
+                            const dateB = b.date.includes('-') ? new Date(b.date) : 
+                              new Date(b.date.split('/').reverse().join('-'));
+                            
+                            return dateB.getTime() - dateA.getTime();
+                          })
                           .map(transaction => (
                             <TableRow key={transaction.id}>
                               <TableCell>{transaction.date}</TableCell>

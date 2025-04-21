@@ -1,9 +1,9 @@
-
 export interface SalesData {
   id: string;
   date: string;
   number: string;
   customer: string;
+  customerId?: number;
   dueDate: string;
   status: string;
   total: string;
@@ -16,6 +16,7 @@ export const salesData: SalesData[] = [
     date: "18/02/2025",
     number: "Sales Invoice #10005",
     customer: "AABVCDD",
+    customerId: 1,
     dueDate: "18/02/2025",
     status: "Paid",
     total: "Rp 13.440"
@@ -25,6 +26,7 @@ export const salesData: SalesData[] = [
     date: "18/02/2025",
     number: "Sales Invoice #10004",
     customer: "AABVCDD",
+    customerId: 1,
     dueDate: "18/02/2025",
     status: "Paid",
     total: "Rp 133.440"
@@ -34,6 +36,7 @@ export const salesData: SalesData[] = [
     date: "14/02/2025",
     number: "Sales Invoice #10003",
     customer: "Nanda goaw putra",
+    customerId: 1,
     dueDate: "16/03/2025",
     status: "Paid",
     total: "Rp 106.560"
@@ -43,6 +46,7 @@ export const salesData: SalesData[] = [
     date: "10/02/2025",
     number: "Sales Invoice #10002",
     customer: "Sutejo Enterprises",
+    customerId: 1,
     dueDate: "10/02/2025",
     status: "Paid",
     total: "Rp 245.000"
@@ -52,6 +56,7 @@ export const salesData: SalesData[] = [
     date: "05/02/2025",
     number: "Sales Invoice #10001",
     customer: "Pak Budi Store",
+    customerId: 1,
     dueDate: "05/02/2025",
     status: "Paid",
     total: "Rp 89.750"
@@ -63,6 +68,7 @@ export const salesData: SalesData[] = [
     date: "22/02/2025",
     number: "Sales Invoice #10006",
     customer: "Toko Makmur",
+    customerId: 1,
     dueDate: "10/03/2025",
     status: "Unpaid",
     total: "Rp 320.500"
@@ -72,6 +78,7 @@ export const salesData: SalesData[] = [
     date: "23/02/2025",
     number: "Sales Invoice #10007",
     customer: "CV Berkah",
+    customerId: 2,
     dueDate: "15/03/2025",
     status: "Unpaid",
     total: "Rp 175.200"
@@ -81,6 +88,7 @@ export const salesData: SalesData[] = [
     date: "25/02/2025",
     number: "Sales Invoice #10008",
     customer: "PT Maju Jaya",
+    customerId: 1,
     dueDate: "25/03/2025",
     status: "Unpaid",
     total: "Rp 425.750"
@@ -90,6 +98,7 @@ export const salesData: SalesData[] = [
     date: "26/02/2025",
     number: "Sales Invoice #10009",
     customer: "Ibu Sari Catering",
+    customerId: 1,
     dueDate: "26/03/2025",
     status: "Unpaid",
     total: "Rp 92.800"
@@ -99,6 +108,7 @@ export const salesData: SalesData[] = [
     date: "28/02/2025",
     number: "Sales Invoice #10010",
     customer: "Warung Padang",
+    customerId: 1,
     dueDate: "28/03/2025",
     status: "Unpaid",
     total: "Rp 65.000"
@@ -110,6 +120,7 @@ export const salesData: SalesData[] = [
     date: "10/01/2025",
     number: "Sales Invoice #9995",
     customer: "Supermarket Indah",
+    customerId: 1,
     dueDate: "10/02/2025",
     status: "Late Payment",
     total: "Rp 456.000"
@@ -119,6 +130,7 @@ export const salesData: SalesData[] = [
     date: "15/01/2025",
     number: "Sales Invoice #9996",
     customer: "Restoran Sedap",
+    customerId: 1,
     dueDate: "15/02/2025",
     status: "Late Payment",
     total: "Rp 215.700"
@@ -128,6 +140,7 @@ export const salesData: SalesData[] = [
     date: "18/01/2025",
     number: "Sales Invoice #9997",
     customer: "Toko Elektronik",
+    customerId: 1,
     dueDate: "18/02/2025",
     status: "Late Payment",
     total: "Rp 650.250"
@@ -137,6 +150,7 @@ export const salesData: SalesData[] = [
     date: "20/01/2025",
     number: "Sales Invoice #9998",
     customer: "Apotek Sehat",
+    customerId: 1,
     dueDate: "20/02/2025",
     status: "Late Payment",
     total: "Rp 125.400"
@@ -146,6 +160,7 @@ export const salesData: SalesData[] = [
     date: "25/01/2025",
     number: "Sales Invoice #9999",
     customer: "PT Textile Indonesia",
+    customerId: 1,
     dueDate: "25/02/2025",
     status: "Late Payment",
     total: "Rp 875.000"
@@ -157,6 +172,7 @@ export const salesData: SalesData[] = [
     date: "01/03/2025",
     number: "Sales Invoice #10011",
     customer: "Hotel Merdeka",
+    customerId: 1,
     dueDate: "15/03/2025",
     status: "Awaiting Payment",
     total: "Rp 520.000"
@@ -166,6 +182,7 @@ export const salesData: SalesData[] = [
     date: "02/03/2025",
     number: "Sales Invoice #10012",
     customer: "Toko Bangunan Jaya",
+    customerId: 1,
     dueDate: "16/03/2025",
     status: "Awaiting Payment",
     total: "Rp 327.500"
@@ -175,6 +192,7 @@ export const salesData: SalesData[] = [
     date: "03/03/2025",
     number: "Sales Invoice #10013",
     customer: "Bengkel Motor Cepat",
+    customerId: 1,
     dueDate: "17/03/2025",
     status: "Awaiting Payment",
     total: "Rp 85.300"
@@ -184,6 +202,7 @@ export const salesData: SalesData[] = [
     date: "04/03/2025",
     number: "Sales Invoice #10014",
     customer: "Salon Cantik",
+    customerId: 1,
     dueDate: "18/03/2025",
     status: "Awaiting Payment",
     total: "Rp 142.500"
@@ -193,6 +212,7 @@ export const salesData: SalesData[] = [
     date: "05/03/2025",
     number: "Sales Invoice #10015",
     customer: "Klinik Hewan",
+    customerId: 1,
     dueDate: "19/03/2025",
     status: "Awaiting Payment",
     total: "Rp 275.800"

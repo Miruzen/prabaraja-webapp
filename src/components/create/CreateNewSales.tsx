@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
@@ -6,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import CustomerInfoSection from "@/components/sales/CustomerInfoSection";
 import SalesItemsSection from "@/components/sales/SalesItemsSection";
-import { getLatestInvoiceNumber, formatPriceWithSeparator } from "@/utils/salesUtils";
+import { getLatestInvoiceNumber, formatPriceWithSeparator, findContactIdByName } from "@/utils/salesUtils";
 import { salesData } from "@/data/salesData";
 
 interface SalesItemType {
@@ -86,12 +85,16 @@ const CreateNewSales = () => {
       formattedDueDate = formattedInvoiceDate; // Default to invoice date if not provided
     }
     
+    // Find or create contact ID for the customer
+    const customerId = findContactIdByName(customerName);
+    
     // Create the new invoice with properly formatted data
     const newInvoice = {
       id: invoiceNumber,
       date: formattedInvoiceDate,
       number: `Sales Invoice #${invoiceNumber}`,
       customer: customerName,
+      customerId: customerId, // Add the customerId
       dueDate: formattedDueDate,
       status: status.charAt(0).toUpperCase() + status.slice(1),
       total: `Rp ${formatPrice(calculateTotal())}`
