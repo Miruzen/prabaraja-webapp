@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
@@ -27,16 +28,10 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { salesData } from "@/data/salesData";
 
-const contacts = [
-  {
-    id: 1,
-    category: "Customer",
-    name: "PT Maju Jaya",
-    number: "CUST-001",
-    email: "contact@majujaya.com",
-    address: "Jl. Sudirman No. 123, Jakarta",
-  },
+// Static vendor/employee contacts
+const fixedContacts = [
   {
     id: 2,
     category: "Vendor",
@@ -55,6 +50,51 @@ const contacts = [
   },
 ];
 
+// Generate unique Customers from salesData
+function getSalesCustomers() {
+  // Map to store uniqueness by customer name
+  const map = new Map<string, any>();
+  for (const sale of salesData) {
+    if (!map.has(sale.customer)) {
+      map.set(sale.customer, {
+        id: sale.customerId || Math.floor(Math.random() * 10000) + 100, // fallback
+        category: "Customer",
+        name: sale.customer,
+        number: `CUST-${(sale.customerId || 1).toString().padStart(3, "0")}`,
+        email: `contact+${sale.customer.replace(/\s/g, "").toLowerCase()}@company.com`,
+        address: "Unknown Address",
+      });
+    }
+  }
+  return Array.from(map.values());
+}
+
+const getCategoryColor = (category: string) => {
+  switch (category) {
+    case "Employee":
+      return "#0EA5E9";
+    case "Customer":
+      return "#8B5CF6";
+    case "Vendor":
+      return "#F97316";
+    default:
+      return "#64748B";
+  }
+};
+
+const getCategoryIcon = (category: string) => {
+  switch (category) {
+    case "Employee":
+      return <User size={16} color={getCategoryColor("Employee")} />;
+    case "Customer":
+      return <Users size={16} color={getCategoryColor("Customer")} />;
+    case "Vendor":
+      return <Building2 size={16} color={getCategoryColor("Vendor")} />;
+    default:
+      return <User size={16} color={getCategoryColor("default")} />;
+  }
+};
+
 const ITEMS_PER_PAGE_OPTIONS = [5, 10, 15];
 
 const Contacts = () => {
@@ -64,37 +104,17 @@ const Contacts = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE_OPTIONS[1]);
 
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case "Employee":
-        return "#0EA5E9";
-      case "Customer":
-        return "#8B5CF6";
-      case "Vendor":
-        return "#F97316";
-      default:
-        return "#64748B";
-    }
-  };
-
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case "Employee":
-        return <User size={16} color={getCategoryColor("Employee")} />;
-      case "Customer":
-        return <Users size={16} color={getCategoryColor("Customer")} />;
-      case "Vendor":
-        return <Building2 size={16} color={getCategoryColor("Vendor")} />;
-      default:
-        return <User size={16} color={getCategoryColor("default")} />;
-    }
-  };
+  // Contacts = all (unique) customers from sales + the static vendor/employee contacts.
+  const allContacts = [
+    ...getSalesCustomers(),
+    ...fixedContacts,
+  ];
 
   const handleContactClick = (contactId: number) => {
     navigate(`/contact-details/${contactId}`);
   };
 
-  const filteredContacts = contacts.filter(contact => {
+  const filteredContacts = allContacts.filter(contact => {
     const matchesSearch = contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       contact.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       contact.number.toLowerCase().includes(searchQuery.toLowerCase());
@@ -263,3 +283,4 @@ const Contacts = () => {
 };
 
 export default Contacts;
+
