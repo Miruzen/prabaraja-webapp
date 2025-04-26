@@ -101,17 +101,11 @@ const Assets = () => {
             <p className="text-white/80">Manage your company assets</p>
           </div>
         </div>
-
         {/* Content */}
         <div className="max-w-7xl mx-auto p-6">
           <div className="space-y-4">
             {/* Actions */}
             <div className="flex flex-col gap-4">
-              <div className="flex justify-end">
-                <Button onClick={() => setIsAddDialogOpen(true)}>
-                  Add Assets<Plus className="mr-2" />
-                </Button>
-              </div>
               <div className="flex items-center gap-4">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -132,6 +126,11 @@ const Assets = () => {
                     <SelectItem value="15">15 items</SelectItem>
                   </SelectContent>
                 </Select>
+                <div className="flex justify-end">
+                <Button onClick={() => setIsAddDialogOpen(true)}>
+                  Add Assets<Plus className="mr-2" />
+                </Button>
+              </div>
               </div>
             </div>
 
