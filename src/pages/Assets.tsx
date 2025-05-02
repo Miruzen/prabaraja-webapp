@@ -53,22 +53,6 @@ const Assets = () => {
       currentValue: 20000000,
       warrantyDeadline: "2025-05-15",
     },
-    {
-      id: "2",
-      tag: "AST-2023-002",
-      type: "furniture",
-      name: "Ergonomic Chair",
-      model: "Model X",
-      assignedTo: {
-        name: "Jane Smith",
-        department: "HR",
-        avatar: "",
-      },
-      purchaseDate: "2023-06-20",
-      purchasePrice: 5000000,
-      currentValue: 4000000,
-      warrantyDeadline: "2024-06-20",
-    },
   ]);
 
   const handleAddAsset = (newAsset: Omit<Asset, "id" | "currentValue">) => {
