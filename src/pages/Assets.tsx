@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,83 +10,93 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AssetsTable } from "@/components/assets/AssetsTable";
-import { SoldAssetsTable } from "@/components/assets/SoldAssetsTable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddAssetDialog } from "@/components/assets/AddAssetDialog";
-import { DeleteAssetDialog } from "@/components/assets/DeleteAssetDialog";
+import { AssetsTable } from "@/components/assets/AssetsTable";
 import { toast } from "sonner";
 
 interface Asset {
   id: string;
-  dateAdded: string;
-  detail: string;
+  tag: string;
+  type: "computer" | "furniture" | "vehicle" | "other";
+  name: string;
+  model: string;
+  assignedTo: {
+    name: string;
+    department: string;
+    avatar?: string;
+  };
+  purchaseDate: string;
+  purchasePrice: number;
+  currentValue: number;
   warrantyDeadline: string;
-  price: number;
-  depreciation: number;
-}
-
-interface SoldAsset {
-  id: string;
-  dateSold: string;
-  detail: string;
-  transactionNo: string;
-  boughtPrice: number;
-  sellingPrice: number;
 }
 
 const Assets = () => {
   const [search, setSearch] = useState("");
   const [itemsPerPage, setItemsPerPage] = useState("10");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [assets, setAssets] = useState<Asset[]>([]);
-  const [soldAssets, setSoldAssets] = useState<SoldAsset[]>([]);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [assetToDelete, setAssetToDelete] = useState<string | null>(null);
+  const [assets, setAssets] = useState<Asset[]>([
+    {
+      id: "1",
+      tag: "AST-2023-001",
+      type: "computer",
+      name: "MacBook Pro",
+      model: "M2 16GB",
+      assignedTo: {
+        name: "John Doe",
+        department: "Engineering",
+        avatar: "",
+      },
+      purchaseDate: "2023-05-15",
+      purchasePrice: 25000000,
+      currentValue: 20000000,
+      warrantyDeadline: "2025-05-15",
+    },
+    {
+      id: "2",
+      tag: "AST-2023-002",
+      type: "furniture",
+      name: "Ergonomic Chair",
+      model: "Model X",
+      assignedTo: {
+        name: "Jane Smith",
+        department: "HR",
+        avatar: "",
+      },
+      purchaseDate: "2023-06-20",
+      purchasePrice: 5000000,
+      currentValue: 4000000,
+      warrantyDeadline: "2024-06-20",
+    },
+  ]);
 
-  const handleAddAsset = (newAsset: Omit<Asset, "id" | "dateAdded" | "depreciation">) => {
+  const handleAddAsset = (newAsset: Omit<Asset, "id" | "currentValue">) => {
+    const currentValue = calculateCurrentValue(
+      newAsset.purchasePrice, 
+      newAsset.purchaseDate
+    );
+    
     const asset: Asset = {
+      ...newAsset, 
       id: Math.random().toString(36).substr(2, 9),
-      dateAdded: new Date().toISOString(),
-      detail: newAsset.detail,
-      warrantyDeadline: newAsset.warrantyDeadline,
-      price: Number(newAsset.price),
-      depreciation: Number(newAsset.price) * 0.2,
+      currentValue,
     };
+    
     setAssets([...assets, asset]);
     setIsAddDialogOpen(false);
+    toast.success("Asset added successfully");
+  };
+
+  const calculateCurrentValue = (price: number, purchaseDate: string) => {
+    // Simplified straight-line depreciation (20% per year)
+    const years = (new Date().getTime() - new Date(purchaseDate).getTime()) / (1000 * 60 * 60 * 24 * 365);
+    return Math.max(0, price * (1 - 0.2 * years));
   };
 
   const handleDeleteAsset = (id: string) => {
-    setAssetToDelete(id);
-    setDeleteDialogOpen(true);
-  };
-
-  const confirmDelete = () => {
-    if (assetToDelete) {
-      setAssets(assets.filter(asset => asset.id !== assetToDelete));
-      setDeleteDialogOpen(false);
-      setAssetToDelete(null);
-      toast.success("Asset deleted successfully");
-    }
-  };
-
-  const handleDeleteSoldAsset = (id: string) => {
-    toast.warning("Are you sure you want to delete this sold asset record?", {
-      action: {
-        label: "Delete",
-        onClick: () => {
-          setSoldAssets(soldAssets.filter(asset => asset.id !== id));
-          toast.success("Sold asset record deleted successfully");
-        },
-      },
-      cancel: {
-        label: "No",
-        onClick: () => {
-          toast.info("Deletion cancelled");
-        },
-      },
-    });
+    setAssets(assets.filter(asset => asset.id !== id));
+    toast.success("Asset deleted successfully");
   };
 
   return (
@@ -101,6 +110,7 @@ const Assets = () => {
             <p className="text-white/80">Manage your company assets</p>
           </div>
         </div>
+
         {/* Content */}
         <div className="max-w-7xl mx-auto p-6">
           <div className="space-y-4">
@@ -126,20 +136,19 @@ const Assets = () => {
                     <SelectItem value="15">15 items</SelectItem>
                   </SelectContent>
                 </Select>
-                <div className="flex justify-end">
                 <Button onClick={() => setIsAddDialogOpen(true)}>
-                  Add Assets<Plus className="mr-2" />
+                  <Plus className="mr-2 h-4 w-4" /> Add Asset
                 </Button>
-              </div>
               </div>
             </div>
 
-            {/* Tables */}
+            {/* Table */}
             <Tabs defaultValue="current" className="w-full">
               <TabsList>
                 <TabsTrigger value="current">Current Assets</TabsTrigger>
                 <TabsTrigger value="sold">Sold Assets</TabsTrigger>
               </TabsList>
+              
               <TabsContent value="current">
                 <AssetsTable 
                   itemsPerPage={Number(itemsPerPage)} 
@@ -148,27 +157,22 @@ const Assets = () => {
                   onDeleteAsset={handleDeleteAsset}
                 />
               </TabsContent>
+
               <TabsContent value="sold">
-                <SoldAssetsTable 
-                  itemsPerPage={Number(itemsPerPage)} 
-                  search={search}
-                  soldAssets={soldAssets}
-                  onDeleteSoldAsset={handleDeleteSoldAsset}
-                />
+                <div className="text-center py-8 text-muted-foreground">
+                  No sold assets yet
+                </div>
               </TabsContent>
             </Tabs>
           </div>
         </div>
       </div>
+
       <AddAssetDialog 
         open={isAddDialogOpen} 
         onOpenChange={setIsAddDialogOpen} 
         onSubmit={handleAddAsset}
-      />
-      <DeleteAssetDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        onConfirm={confirmDelete}
+        existingAssets={assets}
       />
     </div>
   );

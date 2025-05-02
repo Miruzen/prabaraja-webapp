@@ -1,4 +1,3 @@
-
 import {
   Table,
   TableBody,
@@ -16,17 +15,27 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Button } from "@/components/ui/button";
-import { Trash } from "lucide-react";
+import { Trash, MoreHorizontal, Laptop, Armchair, Car, Box } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Asset {
   id: string;
-  dateAdded: string;
-  detail: string;
+  tag: string;
+  type: "computer" | "furniture" | "vehicle" | "other";
+  name: string;
+  model: string;
+  assignedTo: {
+    name: string;
+    department: string;
+    avatar?: string;
+  };
+  purchaseDate: string;
+  purchasePrice: number;
+  currentValue: number;
   warrantyDeadline: string;
-  price: number;
-  depreciation: number;
 }
 
 interface AssetsTableProps {
@@ -47,8 +56,19 @@ export const AssetsTable = ({ itemsPerPage, search, assets, onDeleteAsset }: Ass
     }).format(amount);
   };
 
+  const getAssetIcon = (type: Asset["type"]) => {
+    switch (type) {
+      case "computer": return <Laptop className="h-4 w-4" />;
+      case "furniture": return <Armchair className="h-4 w-4" />;
+      case "vehicle": return <Car className="h-4 w-4" />;
+      default: return <Box className="h-4 w-4" />;
+    }
+  };
+
   const filteredAssets = assets.filter((asset) =>
-    asset.detail.toLowerCase().includes(search.toLowerCase())
+    asset.name.toLowerCase().includes(search.toLowerCase()) ||
+    asset.tag.toLowerCase().includes(search.toLowerCase()) ||
+    asset.assignedTo.name.toLowerCase().includes(search.toLowerCase())
   );
 
   const totalPages = Math.ceil(filteredAssets.length / itemsPerPage);
@@ -66,7 +86,7 @@ export const AssetsTable = ({ itemsPerPage, search, assets, onDeleteAsset }: Ass
   if (filteredAssets.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
-        No assets listed. Add your first asset using the "Add Assets" button above.
+        No assets found. Try adjusting your search or add a new asset.
       </div>
     );
   }
@@ -76,33 +96,75 @@ export const AssetsTable = ({ itemsPerPage, search, assets, onDeleteAsset }: Ass
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Date Added</TableHead>
+            <TableHead>Asset Tag</TableHead>
+            <TableHead>Type</TableHead>
             <TableHead>Asset Detail</TableHead>
-            <TableHead>Warranty Deadline</TableHead>
-            <TableHead>Sale Price</TableHead>
-            <TableHead>Depreciation</TableHead>
+            <TableHead>Assigned To</TableHead>
+            <TableHead>Purchase Date</TableHead>
+            <TableHead>Current Value</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {paginatedAssets.map((asset) => (
             <TableRow key={asset.id}>
-              <TableCell>{new Date(asset.dateAdded).toLocaleDateString()}</TableCell>
-              <TableCell>{asset.detail}</TableCell>
+              <TableCell className="font-medium">{asset.tag}</TableCell>
               <TableCell>
-                {new Date(asset.warrantyDeadline).toLocaleDateString()}
+                <Badge variant="outline" className="flex items-center gap-1">
+                  {getAssetIcon(asset.type)}
+                  {asset.type.charAt(0).toUpperCase() + asset.type.slice(1)}
+                </Badge>
               </TableCell>
-              <TableCell>{formatCurrency(asset.price)}</TableCell>
-              <TableCell>{formatCurrency(asset.depreciation)}</TableCell>
+              <TableCell>
+                <div className="font-medium">{asset.name}</div>
+                <div className="text-sm text-muted-foreground">{asset.model}</div>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={asset.assignedTo.avatar} />
+                    <AvatarFallback>
+                      {asset.assignedTo.name.split(" ").map(n => n[0]).join("")}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="font-medium">{asset.assignedTo.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {asset.assignedTo.department}
+                    </div>
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-1">
+                  {new Date(asset.purchaseDate).toLocaleDateString()}
+                  {new Date(asset.warrantyDeadline) > new Date() ? (
+                    <span className="h-2 w-2 rounded-full bg-green-500" />
+                  ) : (
+                    <span className="h-2 w-2 rounded-full bg-red-500" />
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="font-medium">{formatCurrency(asset.currentValue)}</div>
+                <div className="text-sm text-muted-foreground">
+                  {((asset.currentValue / asset.purchasePrice) * 100).toFixed(0)}% of original
+                </div>
+              </TableCell>
               <TableCell className="text-right">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDelete(asset.id)}
-                  className="text-red-500 hover:text-red-700 hover:bg-red-100"
-                >
-                  <Trash className="h-4 w-4" />
-                </Button>
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDelete(asset.id)}
+                    className="text-red-500 hover:text-red-700 hover:bg-red-100"
+                  >
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}
