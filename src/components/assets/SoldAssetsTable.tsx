@@ -1,4 +1,3 @@
-
 import {
   Table,
   TableBody,
@@ -19,24 +18,23 @@ import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-
-interface SoldAsset {
-  id: string;
-  dateSold: string;
-  detail: string;
-  transactionNo: string;
-  boughtPrice: number;
-  sellingPrice: number;
-}
+import { SoldAsset } from "@/pages/Assets";
 
 interface SoldAssetsTableProps {
   itemsPerPage: number;
   search: string;
   soldAssets: SoldAsset[];
   onDeleteSoldAsset: (id: string) => void;
+  isAdmin: boolean;
 }
 
-export const SoldAssetsTable = ({ itemsPerPage, search, soldAssets, onDeleteSoldAsset }: SoldAssetsTableProps) => {
+export const SoldAssetsTable = ({ 
+  itemsPerPage, 
+  search, 
+  soldAssets, 
+  onDeleteSoldAsset,
+  isAdmin 
+}: SoldAssetsTableProps) => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const formatCurrency = (amount: number) => {
@@ -48,7 +46,9 @@ export const SoldAssetsTable = ({ itemsPerPage, search, soldAssets, onDeleteSold
   };
 
   const filteredAssets = soldAssets.filter((asset) =>
-    asset.detail.toLowerCase().includes(search.toLowerCase())
+    asset.assetName.toLowerCase().includes(search.toLowerCase()) ||
+    asset.assetTag.toLowerCase().includes(search.toLowerCase()) ||
+    asset.soldTo.toLowerCase().includes(search.toLowerCase())
   );
 
   const totalPages = Math.ceil(filteredAssets.length / itemsPerPage);
@@ -76,24 +76,27 @@ export const SoldAssetsTable = ({ itemsPerPage, search, soldAssets, onDeleteSold
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead>Asset Tag</TableHead>
+            <TableHead>Asset Name</TableHead>
             <TableHead>Date Sold</TableHead>
-            <TableHead>Asset Detail</TableHead>
-            <TableHead>Transaction No</TableHead>
+            <TableHead>Sold To</TableHead>
+            <TableHead>Sale Price</TableHead>
             <TableHead>Profit/Loss</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            {isAdmin && <TableHead className="text-right">Actions</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
-          {paginatedAssets.map((asset) => {
-            const profitLoss = asset.sellingPrice - asset.boughtPrice;
-            return (
-              <TableRow key={asset.id}>
-                <TableCell>{new Date(asset.dateSold).toLocaleDateString()}</TableCell>
-                <TableCell>{asset.detail}</TableCell>
-                <TableCell>{asset.transactionNo}</TableCell>
-                <TableCell className={profitLoss >= 0 ? "text-green-600" : "text-red-600"}>
-                  {formatCurrency(profitLoss)}
-                </TableCell>
+          {paginatedAssets.map((asset) => (
+            <TableRow key={asset.id}>
+              <TableCell className="font-medium">{asset.assetTag}</TableCell>
+              <TableCell>{asset.assetName}</TableCell>
+              <TableCell>{new Date(asset.dateSold).toLocaleDateString()}</TableCell>
+              <TableCell>{asset.soldTo}</TableCell>
+              <TableCell>{formatCurrency(asset.salePrice)}</TableCell>
+              <TableCell className={asset.profitLoss >= 0 ? "text-green-600" : "text-red-600"}>
+                {formatCurrency(asset.profitLoss)}
+              </TableCell>
+              {isAdmin && (
                 <TableCell className="text-right">
                   <Button
                     variant="ghost"
@@ -104,8 +107,9 @@ export const SoldAssetsTable = ({ itemsPerPage, search, soldAssets, onDeleteSold
                     <Trash className="h-4 w-4" />
                   </Button>
                 </TableCell>
-              </TableRow>
-            )})}
+              )}
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
 

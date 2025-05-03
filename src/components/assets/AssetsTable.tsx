@@ -20,32 +20,26 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-interface Asset {
-  id: string;
-  tag: string;
-  type: "computer" | "furniture" | "vehicle" | "other";
-  name: string;
-  model: string;
-  assignedTo: {
-    name: string;
-    department: string;
-    avatar?: string;
-  };
-  purchaseDate: string;
-  purchasePrice: number;
-  currentValue: number;
-  warrantyDeadline: string;
-}
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Asset } from "@/pages/Assets";
 
 interface AssetsTableProps {
   itemsPerPage: number;
   search: string;
   assets: Asset[];
   onDeleteAsset: (id: string) => void;
+  onSellAsset: (asset: Asset) => void;
+  isAdmin: boolean;
 }
 
-export const AssetsTable = ({ itemsPerPage, search, assets, onDeleteAsset }: AssetsTableProps) => {
+export const AssetsTable = ({ 
+  itemsPerPage, 
+  search, 
+  assets, 
+  onDeleteAsset, 
+  onSellAsset,
+  isAdmin 
+}: AssetsTableProps) => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const formatCurrency = (amount: number) => {
@@ -152,19 +146,28 @@ export const AssetsTable = ({ itemsPerPage, search, assets, onDeleteAsset }: Ass
                 </div>
               </TableCell>
               <TableCell className="text-right">
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(asset.id)}
-                    className="text-red-500 hover:text-red-700 hover:bg-red-100"
-                  >
-                    <Trash className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {isAdmin && (
+                      <>
+                        <DropdownMenuItem onClick={() => onSellAsset(asset)}>
+                          Sell Asset
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleDelete(asset.id)}
+                          className="text-red-500"
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </TableCell>
             </TableRow>
           ))}

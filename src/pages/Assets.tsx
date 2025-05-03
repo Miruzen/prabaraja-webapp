@@ -13,9 +13,11 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddAssetDialog } from "@/components/assets/AddAssetDialog";
 import { AssetsTable } from "@/components/assets/AssetsTable";
+import { SoldAssetsTable } from "@/components/assets/SoldAssetsTable";
+import { SellAssetDialog } from "@/components/assets/SellAssetDialog";
 import { toast } from "sonner";
 
-interface Asset {
+export interface Asset {
   id: string;
   tag: string;
   type: "computer" | "furniture" | "vehicle" | "other";
@@ -30,12 +32,36 @@ interface Asset {
   purchasePrice: number;
   currentValue: number;
   warrantyDeadline: string;
+  manufacturer?: string;
+  serialNumber?: string;
+}
+
+export interface SoldAsset {
+  id: string;
+  originalAssetId: string;
+  assetTag: string;
+  assetName: string;
+  assetType: string;
+  dateSold: string;
+  soldTo: string;
+  salePrice: number;
+  boughtPrice: number;
+  profitLoss: number;
+  saleReason?: "upgrade" | "obsolete" | "downsizing" | "other";
+  transactionNo?: string;
+  notes?: string;
 }
 
 const Assets = () => {
   const [search, setSearch] = useState("");
   const [itemsPerPage, setItemsPerPage] = useState("10");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isSellDialogOpen, setIsSellDialogOpen] = useState(false);
+  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+  
+  // Sample admin detection - replace with your actual auth logic
+  const [isAdmin] = useState(localStorage.getItem('userEmail') === 'admin@gmail.com');
+  
   const [assets, setAssets] = useState<Asset[]>([
     {
       id: "1",
@@ -54,6 +80,8 @@ const Assets = () => {
       warrantyDeadline: "2025-05-15",
     },
   ]);
+
+  const [soldAssets, setSoldAssets] = useState<SoldAsset[]>([]);
 
   const handleAddAsset = (newAsset: Omit<Asset, "id" | "currentValue">) => {
     const currentValue = calculateCurrentValue(
@@ -81,6 +109,58 @@ const Assets = () => {
   const handleDeleteAsset = (id: string) => {
     setAssets(assets.filter(asset => asset.id !== id));
     toast.success("Asset deleted successfully");
+  };
+
+  const handleDeleteSoldAsset = (id: string) => {
+    setSoldAssets(soldAssets.filter(asset => asset.id !== id));
+    toast.success("Sold asset record deleted");
+  };
+
+  const handleSellAsset = (asset: Asset) => {
+    setSelectedAsset(asset);
+    setIsSellDialogOpen(true);
+  };
+
+  const handleConfirmSale = (soldAssetData: {
+    dateSold: string;
+    soldTo: string;
+    salePrice: number;
+    saleReason?: string;
+    transactionNo?: string;
+    notes?: string;
+  }) => {
+    if (!selectedAsset) return;
+
+    const validReasons = ["upgrade", "obsolete", "downsizing", "other"] as const;
+const saleReason = validReasons.includes(soldAssetData.saleReason as any) 
+  ? soldAssetData.saleReason as typeof validReasons[number]
+  : undefined;
+  
+
+    const newSoldAsset: SoldAsset = {
+      id: Math.random().toString(36).substr(2, 9),
+      originalAssetId: selectedAsset.id,
+      assetTag: selectedAsset.tag,
+      assetName: selectedAsset.name,
+      assetType: selectedAsset.type,
+      dateSold: soldAssetData.dateSold,
+      soldTo: soldAssetData.soldTo,
+      salePrice: soldAssetData.salePrice,
+      boughtPrice: selectedAsset.purchasePrice,
+      profitLoss: soldAssetData.salePrice - selectedAsset.purchasePrice,
+      saleReason: saleReason,
+      transactionNo: soldAssetData.transactionNo,
+      notes: soldAssetData.notes
+    };
+
+    // Remove from current assets
+    setAssets(assets.filter(a => a.id !== selectedAsset.id));
+    // Add to sold assets
+    setSoldAssets([...soldAssets, newSoldAsset]);
+    
+    setIsSellDialogOpen(false);
+    setSelectedAsset(null);
+    toast.success("Asset sold successfully");
   };
 
   return (
@@ -120,9 +200,11 @@ const Assets = () => {
                     <SelectItem value="15">15 items</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button onClick={() => setIsAddDialogOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" /> Add Asset
-                </Button>
+                {isAdmin && (
+                  <Button onClick={() => setIsAddDialogOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" /> Add Asset
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -139,13 +221,19 @@ const Assets = () => {
                   search={search} 
                   assets={assets}
                   onDeleteAsset={handleDeleteAsset}
+                  onSellAsset={handleSellAsset}
+                  isAdmin={isAdmin}
                 />
               </TabsContent>
 
               <TabsContent value="sold">
-                <div className="text-center py-8 text-muted-foreground">
-                  No sold assets yet
-                </div>
+                <SoldAssetsTable
+                  itemsPerPage={Number(itemsPerPage)}
+                  search={search}
+                  soldAssets={soldAssets}
+                  onDeleteSoldAsset={handleDeleteSoldAsset}
+                  isAdmin={isAdmin}
+                />
               </TabsContent>
             </Tabs>
           </div>
@@ -158,6 +246,15 @@ const Assets = () => {
         onSubmit={handleAddAsset}
         existingAssets={assets}
       />
+
+      {selectedAsset && (
+        <SellAssetDialog
+          open={isSellDialogOpen}
+          onOpenChange={setIsSellDialogOpen}
+          onSubmit={handleConfirmSale}
+          asset={selectedAsset}
+        />
+      )}
     </div>
   );
 };
