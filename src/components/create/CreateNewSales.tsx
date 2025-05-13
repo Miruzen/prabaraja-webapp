@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Truck, User, Calendar, CreditCard, Package, Tag, MapPin, FileText } from "lucide-react";
 import CustomerInfoSection from "@/components/sales/CustomerInfoSection";
 import SalesItemsSection from "@/components/sales/SalesItemsSection";
 import { getLatestInvoiceNumber, formatPriceWithSeparator, findContactIdByName } from "@/utils/salesUtils";
