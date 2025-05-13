@@ -9,13 +9,27 @@ import CustomerInfoSection from "@/components/sales/CustomerInfoSection";
 import SalesItemsSection from "@/components/sales/SalesItemsSection";
 import { getLatestInvoiceNumber, formatPriceWithSeparator, findContactIdByName } from "@/utils/salesUtils";
 import { salesData } from "@/data/salesData";
+import { v4 as uuidv4 } from 'uuid';
 
 interface SalesItemType {
   id: string;
   name: string;
   quantity: number;
   price: number;
+  discount?: number;
 }
+
+// Mock data for product catalog
+const productCatalog = [
+  { id: "prod-1", name: "Laptop Dell XPS 13", price: 15000000 },
+  { id: "prod-2", name: "iPhone 15 Pro", price: 18000000 },
+  { id: "prod-3", name: "Samsung Galaxy S24", price: 12000000 },
+  { id: "prod-4", name: "Mechanical Keyboard", price: 1500000 },
+  { id: "prod-5", name: "Wireless Mouse", price: 500000 },
+  { id: "prod-6", name: "27-inch Monitor", price: 3500000 },
+  { id: "prod-7", name: "Wireless Earbuds", price: 2000000 },
+  { id: "prod-8", name: "USB-C Hub", price: 750000 }
+];
 
 interface LocationState {
   type: "delivery" | "order" | "quotation";
@@ -30,16 +44,19 @@ const CreateNewSales = () => {
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [invoiceDate, setInvoiceDate] = useState("");
   const [dueDate, setDueDate] = useState("");
-  const [status, setStatus] = useState("unpaid");
+  const [status, setStatus] = useState(type === "order" ? "pending_payment" : "unpaid");
   const [items, setItems] = useState<SalesItemType[]>([
-    { id: '1', name: '', quantity: 1, price: 0 }
+    { id: '1', name: '', quantity: 1, price: 0, discount: 0 }
   ]);
   
   // For Order & Delivery specific fields
-  const [shippingAddress, setShippingAddress] = useState("");
-  const [deliveryDate, setDeliveryDate] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [customerAddress, setCustomerAddress] = useState("");
+  const [shippingMethod, setShippingMethod] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
-  const [orderStatus, setOrderStatus] = useState("processing");
+  const [notes, setNotes] = useState("");
   
   // For Quotation specific fields
   const [validUntil, setValidUntil] = useState("");
@@ -62,11 +79,20 @@ const CreateNewSales = () => {
   };
 
   useEffect(() => {
-    // Get the latest invoice/order/quote number when component mounts
-    const lastInvoiceNumber = getLatestInvoiceNumber();
-    const numericPart = parseInt(lastInvoiceNumber);
-    const nextInvoiceNumber = (numericPart + 1).toString();
-    setInvoiceNumber(nextInvoiceNumber);
+    // Generate a unique order number when creating a new Order & Delivery
+    if (type === "order") {
+      const orderPrefix = "ORD";
+      const timestamp = new Date().getTime().toString().slice(-6);
+      const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      const generatedOrderNum = `${orderPrefix}-${timestamp}-${randomNum}`;
+      setInvoiceNumber(generatedOrderNum);
+    } else {
+      // Get the latest invoice/order/quote number when component mounts
+      const lastInvoiceNumber = getLatestInvoiceNumber();
+      const numericPart = parseInt(lastInvoiceNumber || "0");
+      const nextInvoiceNumber = (numericPart + 1).toString();
+      setInvoiceNumber(nextInvoiceNumber);
+    }
     
     // Set current date as default for invoice date
     const today = new Date();
@@ -89,7 +115,8 @@ const CreateNewSales = () => {
     if (type === "order") {
       const deliveryDate = new Date();
       deliveryDate.setDate(today.getDate() + 7);
-      setDeliveryDate(deliveryDate.toISOString().split('T')[0]);
+      setDueDate(deliveryDate.toISOString().split('T')[0]);
+      setStatus("pending_payment");
     }
   }, [type]);
 
@@ -102,25 +129,42 @@ const CreateNewSales = () => {
         invoiceDate !== "";
         
       const itemsValid = items.length > 0 && 
-        items.every(item => item.name !== "" && item.quantity > 0);
+        items.every(item => item.name !== "" && item.quantity > 0 && item.price > 0);
       
       switch(type) {
         case "delivery":
           return commonFieldsValid && dueDate !== "" && itemsValid;
+          
         case "order":
-          return commonFieldsValid && deliveryDate !== "" && shippingAddress !== "" && itemsValid;
+          return commonFieldsValid && 
+            dueDate !== "" && 
+            customerAddress !== "" && 
+            customerPhone !== "" &&
+            customerEmail !== "" &&
+            shippingMethod !== "" &&
+            paymentMethod !== "" &&
+            itemsValid;
+            
         case "quotation":
           return commonFieldsValid && validUntil !== "" && itemsValid;
+          
         default:
           return false;
       }
     };
     
     setIsFormValid(validateForm());
-  }, [customerName, invoiceNumber, invoiceDate, dueDate, items, type, shippingAddress, deliveryDate, validUntil]);
+  }, [customerName, invoiceNumber, invoiceDate, dueDate, items, type, customerAddress, customerPhone, customerEmail, shippingMethod, paymentMethod, validUntil]);
 
+  // Calculate total with consideration for discounts
   const calculateTotal = () => {
-    return items.reduce((total, item) => total + (item.quantity * item.price), 0);
+    return items.reduce((total, item) => {
+      const itemSubtotal = item.quantity * item.price;
+      if (item.discount && item.discount > 0) {
+        return total + (itemSubtotal - (itemSubtotal * (item.discount / 100)));
+      }
+      return total + itemSubtotal;
+    }, 0);
   };
 
   const formatPrice = (price: number) => {
@@ -169,7 +213,7 @@ const CreateNewSales = () => {
         break;
       case "order":
         documentTitle = `Order #${invoiceNumber}`;
-        documentStatus = orderStatus.charAt(0).toUpperCase() + orderStatus.slice(1);
+        documentStatus = status.charAt(0).toUpperCase() + status.slice(1).replace("_", " ");
         break;
       case "quotation":
         documentTitle = `Quotation #${invoiceNumber}`;
@@ -195,9 +239,13 @@ const CreateNewSales = () => {
     // Add additional data based on type
     if (type === "order") {
       Object.assign(newDocument, {
-        shippingAddress,
-        deliveryDate,
+        customerPhone,
+        customerEmail,
+        customerAddress,
+        shippingMethod,
+        paymentMethod,
         trackingNumber,
+        notes
       });
     } else if (type === "quotation") {
       Object.assign(newDocument, {
@@ -222,51 +270,18 @@ const CreateNewSales = () => {
       case "order":
         return (
           <div className="space-y-4 bg-white p-6 rounded-lg border">
-            <h2 className="text-lg font-medium">Shipping Information</h2>
+            <h2 className="text-lg font-medium">Shipping Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label htmlFor="shippingAddress" className="text-sm font-medium">Shipping Address</label>
-                <textarea
-                  id="shippingAddress"
-                  className="w-full p-2 border rounded-md"
-                  value={shippingAddress}
-                  onChange={(e) => setShippingAddress(e.target.value)}
-                  rows={3}
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="deliveryDate" className="text-sm font-medium">Delivery Date</label>
-                <input
-                  type="date"
-                  id="deliveryDate"
-                  className="w-full p-2 border rounded-md"
-                  value={deliveryDate}
-                  onChange={(e) => setDeliveryDate(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="trackingNumber" className="text-sm font-medium">Tracking Number</label>
+                <label htmlFor="trackingNumber" className="text-sm font-medium">Tracking Number (Optional)</label>
                 <input
                   type="text"
                   id="trackingNumber"
                   className="w-full p-2 border rounded-md"
                   value={trackingNumber}
                   onChange={(e) => setTrackingNumber(e.target.value)}
+                  placeholder="Enter tracking number if available"
                 />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="orderStatus" className="text-sm font-medium">Order Status</label>
-                <select
-                  id="orderStatus"
-                  className="w-full p-2 border rounded-md"
-                  value={orderStatus}
-                  onChange={(e) => setOrderStatus(e.target.value)}
-                >
-                  <option value="processing">Processing</option>
-                  <option value="shipped">Shipped</option>
-                  <option value="delivered">Delivered</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
               </div>
             </div>
           </div>
@@ -337,6 +352,18 @@ const CreateNewSales = () => {
                 status={status}
                 setStatus={setStatus}
                 type={type}
+                customerPhone={customerPhone}
+                setCustomerPhone={setCustomerPhone}
+                customerEmail={customerEmail}
+                setCustomerEmail={setCustomerEmail}
+                customerAddress={customerAddress}
+                setCustomerAddress={setCustomerAddress}
+                shippingMethod={shippingMethod}
+                setShippingMethod={setShippingMethod}
+                paymentMethod={paymentMethod}
+                setPaymentMethod={setPaymentMethod}
+                notes={notes}
+                setNotes={setNotes}
               />
 
               {/* Render type-specific fields */}
@@ -347,6 +374,8 @@ const CreateNewSales = () => {
                 setItems={setItems}
                 calculateTotal={calculateTotal}
                 formatPrice={formatPrice}
+                allowProductSearch={type === "order"}
+                availableProducts={productCatalog}
               />
 
               <div className="flex justify-end space-x-4">

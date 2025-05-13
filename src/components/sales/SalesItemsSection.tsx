@@ -3,12 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X, Plus } from "lucide-react";
+import { useState } from "react";
 
 interface SalesItemType {
   id: string;
   name: string;
   quantity: number;
   price: number;
+  discount?: number;
 }
 
 interface SalesItemsSectionProps {
@@ -16,19 +18,25 @@ interface SalesItemsSectionProps {
   setItems: React.Dispatch<React.SetStateAction<SalesItemType[]>>;
   calculateTotal: () => number;
   formatPrice: (price: number) => string;
+  allowProductSearch?: boolean;
+  availableProducts?: Array<{id: string, name: string, price: number}>;
 }
 
 const SalesItemsSection = ({ 
   items, 
   setItems, 
   calculateTotal,
-  formatPrice
+  formatPrice,
+  allowProductSearch = false,
+  availableProducts = []
 }: SalesItemsSectionProps) => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showProductSearch, setShowProductSearch] = useState(false);
   
   const addItem = () => {
     setItems([
       ...items,
-      { id: Date.now().toString(), name: '', quantity: 1, price: 0 }
+      { id: Date.now().toString(), name: '', quantity: 1, price: 0, discount: 0 }
     ]);
   };
 
@@ -46,6 +54,26 @@ const SalesItemsSection = ({
       return item;
     }));
   };
+  
+  const handleProductSelect = (id: string, product: {id: string, name: string, price: number}) => {
+    updateItem(id, 'name', product.name);
+    updateItem(id, 'price', product.price);
+    setShowProductSearch(false);
+    setSearchTerm("");
+  };
+  
+  const filteredProducts = availableProducts.filter(product => 
+    product.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  // Calculate item subtotal with discount consideration
+  const calculateItemSubtotal = (item: SalesItemType) => {
+    const subtotal = item.quantity * item.price;
+    if (item.discount && item.discount > 0) {
+      return subtotal - (subtotal * (item.discount / 100));
+    }
+    return subtotal;
+  };
 
   return (
     <Card>
@@ -56,12 +84,45 @@ const SalesItemsSection = ({
         <div className="space-y-4">
           {items.map((item) => (
             <div key={item.id} className="grid grid-cols-12 gap-4 items-center">
-              <div className="col-span-5">
-                <Input 
-                  placeholder="Item name" 
-                  value={item.name}
-                  onChange={(e) => updateItem(item.id, 'name', e.target.value)}
-                />
+              <div className={allowProductSearch ? "col-span-4" : "col-span-5"}>
+                {allowProductSearch ? (
+                  <div className="relative">
+                    <Input 
+                      placeholder="Search product" 
+                      value={item.name}
+                      onChange={(e) => {
+                        updateItem(item.id, 'name', e.target.value);
+                        setSearchTerm(e.target.value);
+                        if (!showProductSearch) setShowProductSearch(true);
+                      }}
+                      onFocus={() => setShowProductSearch(true)}
+                    />
+                    {showProductSearch && searchTerm && (
+                      <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                        {filteredProducts.length > 0 ? (
+                          filteredProducts.map((product) => (
+                            <div 
+                              key={product.id} 
+                              className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                              onClick={() => handleProductSelect(item.id, product)}
+                            >
+                              <div className="font-medium">{product.name}</div>
+                              <div className="text-sm text-gray-500">Rp {formatPrice(product.price)}</div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="px-4 py-2 text-gray-500">No products found</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Input 
+                    placeholder="Item name" 
+                    value={item.name}
+                    onChange={(e) => updateItem(item.id, 'name', e.target.value)}
+                  />
+                )}
               </div>
               <div className="col-span-2">
                 <Input 
@@ -72,7 +133,7 @@ const SalesItemsSection = ({
                   onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
                 />
               </div>
-              <div className="col-span-3">
+              <div className="col-span-2">
                 <Input 
                   type="number" 
                   min="0"
@@ -82,8 +143,20 @@ const SalesItemsSection = ({
                   onChange={(e) => updateItem(item.id, 'price', parseFloat(e.target.value) || 0)}
                 />
               </div>
-              <div className="col-span-1 text-right">
-                Rp {formatPrice(item.price * item.quantity)}
+              {allowProductSearch && (
+                <div className="col-span-1">
+                  <Input 
+                    type="number" 
+                    min="0"
+                    max="100"
+                    placeholder="%" 
+                    value={item.discount || 0}
+                    onChange={(e) => updateItem(item.id, 'discount', parseFloat(e.target.value) || 0)}
+                  />
+                </div>
+              )}
+              <div className="col-span-2 text-right">
+                Rp {formatPrice(calculateItemSubtotal(item))}
               </div>
               <div className="col-span-1 flex justify-center">
                 <Button 
