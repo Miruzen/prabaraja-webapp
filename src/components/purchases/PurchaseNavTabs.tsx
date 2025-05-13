@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileInvoice, Truck, FileText } from "lucide-react";
+import { FileText, Truck } from "lucide-react";
 
 interface PurchaseNavTabsProps {
   activeTab: string;
@@ -18,7 +18,7 @@ export const PurchaseNavTabs = ({ activeTab, setActiveTab }: PurchaseNavTabsProp
             activeTab === "invoice" ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-500"
           }`}
         >
-          <FileInvoice className="h-4 w-4" />
+          <FileText className="h-4 w-4" />
           Invoices
         </TabsTrigger>
         

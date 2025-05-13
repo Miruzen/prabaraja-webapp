@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { FileInvoice, Truck, FileText, Plus } from "lucide-react";
+import { FileText, Truck, Plus } from "lucide-react";
 
 type FilterCategory = "all" | "unpaid" | "paid" | "late" | "awaiting";
 
@@ -156,7 +156,7 @@ const Sales = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-white">
                 <DropdownMenuItem onClick={() => handleCreateNew("delivery")} className="flex items-center cursor-pointer">
-                  <FileInvoice className="mr-2 h-4 w-4 text-purple-500" /> Sales Invoice
+                  <FileText className="mr-2 h-4 w-4 text-purple-500" /> Sales Invoice
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleCreateNew("order")} className="flex items-center cursor-pointer">
                   <Truck className="mr-2 h-4 w-4 text-orange-500" /> Order & Delivery
