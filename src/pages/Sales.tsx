@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { SalesNavTabs } from "@/components/sales/SalesNavTabs";
 import { SalesFilters } from "@/components/sales/SalesFilters";
@@ -7,10 +8,19 @@ import { SalesTable } from "@/components/sales/SalesTable";
 import { SalesSummaryCards } from "@/components/sales/SalesSummaryCards";
 import { salesData } from "@/data/salesData";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { FileInvoice, Truck, FileText, Plus } from "lucide-react";
 
 type FilterCategory = "all" | "unpaid" | "paid" | "late" | "awaiting";
 
 const Sales = () => {
+  const navigate = useNavigate();
   // Add active tab state
   const [activeTab, setActiveTab] = useState("delivery");
   const [filterCategory, setFilterCategory] = useState<FilterCategory>("all");
@@ -121,19 +131,47 @@ const Sales = () => {
         return null;
     }
   };
+
+  // Handle creating a new sales item based on type
+  const handleCreateNew = (type: string) => {
+    navigate("/create-new-sales", { state: { type } });
+  };
   
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
       <div className="flex-1 overflow-auto">
         <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
-          <h1 className="text-2xl font-semibold text-white">Sales</h1>
-          <p className="text-white/80"> Manage your company sales transaction</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold text-white">Sales</h1>
+              <p className="text-white/80"> Manage your company sales transaction</p>
+            </div>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="bg-white text-indigo-600 hover:bg-gray-100">
+                  <Plus className="mr-2 h-4 w-4" /> Create New
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-white">
+                <DropdownMenuItem onClick={() => handleCreateNew("delivery")} className="flex items-center cursor-pointer">
+                  <FileInvoice className="mr-2 h-4 w-4 text-purple-500" /> Sales Invoice
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleCreateNew("order")} className="flex items-center cursor-pointer">
+                  <Truck className="mr-2 h-4 w-4 text-orange-500" /> Order & Delivery
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleCreateNew("quotation")} className="flex items-center cursor-pointer">
+                  <FileText className="mr-2 h-4 w-4 text-blue-500" /> Quotation
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         <div className="p-6">
           <div className="space-y-6">
-            {/* Top Navigation - Pass the active tab state */}
+            {/* Use the SalesNavTabs component with lucide icons */}
             <SalesNavTabs 
               activeTab={activeTab} 
               setActiveTab={setActiveTab} 
