@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,9 +22,12 @@ const INDONESIAN_BANKS = [
   "Bank EFGH"
 ];
 
+const BANK_TYPES = ["Debit", "Credit"];
+
 interface CreateAccountFormData {
   accountName: string;
   accountCode: string;
+  bankType: string;
   bankName: string;
   accountNumber: string;
   startBalance: number;
@@ -38,6 +42,7 @@ export function CreateAccountDialog({ onSubmit }: CreateAccountDialogProps) {
   const [formData, setFormData] = useState<CreateAccountFormData>({
     accountName: "",
     accountCode: "",
+    bankType: "",
     bankName: "",
     accountNumber: "",
     startBalance: 0
@@ -54,6 +59,7 @@ export function CreateAccountDialog({ onSubmit }: CreateAccountDialogProps) {
     setFormData({
       accountName: "",
       accountCode: "",
+      bankType: "",
       bankName: "",
       accountNumber: "",
       startBalance: 0
@@ -90,6 +96,23 @@ export function CreateAccountDialog({ onSubmit }: CreateAccountDialogProps) {
               onChange={(e) => setFormData({ ...formData, accountCode: e.target.value })}
               required
             />
+          </div>
+          <div className="grid w-full items-center gap-2">
+            <Label htmlFor="bankType">Bank Type</Label>
+            <Select 
+              value={formData.bankType} 
+              onValueChange={(value) => setFormData({ ...formData, bankType: value })}>
+              <SelectTrigger id="bankType" className="w-full">
+                <SelectValue placeholder="Select type..." />
+              </SelectTrigger>
+              <SelectContent className="bg-white">
+                {BANK_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid w-full items-center gap-2">
             <Label htmlFor="bankName">Bank Name</Label>

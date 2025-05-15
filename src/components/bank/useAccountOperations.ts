@@ -9,6 +9,7 @@ interface Account {
   name: string;
   balance: string;
   bankName?: string;
+  bankType?: string;
   accountNumber?: string;
   archived?: boolean;
 }
@@ -26,11 +27,11 @@ interface Transaction {
 
 export function useAccountOperations() {
   const [accounts, setAccounts] = useState<Account[]>([
-    { code: "1-10001", name: "Cash", bankName: "Bank Central Asia (BCA)", balance: "Rp 4.490.871", archived: false },
-    { code: "1-10002", name: "Bank Account", bankName: "Bank Central Asia (BCA)", balance: "Rp 1.800.002", archived: false },
-    { code: "1-10003", name: "Giro", bankName: "Bank Central Asia (BCA)", balance: "Rp 184.651.887", archived: false },
-    { code: "1-10004", name: "Test AKUN", bankName: "Bank Central Asia (BCA)", balance: "Rp 0", archived: false },
-    { code: "1-10012", name: "Test BCA", bankName: "Bank Central Asia (BCA)", balance: "(Rp 151.623.322)", archived: false },
+    { code: "1-10001", name: "Cash", bankName: "Bank Central Asia (BCA)", bankType: "Debit", balance: "Rp 4.490.871", archived: false },
+    { code: "1-10002", name: "Bank Account", bankName: "Bank Central Asia (BCA)", bankType: "Debit", balance: "Rp 1.800.002", archived: false },
+    { code: "1-10003", name: "Giro", bankName: "Bank Central Asia (BCA)", bankType: "Credit", balance: "Rp 184.651.887", archived: false },
+    { code: "1-10004", name: "Test AKUN", bankName: "Bank Central Asia (BCA)", bankType: "Debit", balance: "Rp 0", archived: false },
+    { code: "1-10012", name: "Test BCA", bankName: "Bank Central Asia (BCA)", bankType: "Credit", balance: "(Rp 151.623.322)", archived: false },
   ]);
   
   const [transactions, setTransactions] = useState<Transaction[]>([
@@ -87,6 +88,7 @@ export function useAccountOperations() {
       name: formData.accountName,
       balance: `Rp ${formData.startBalance.toLocaleString('id-ID')}`,
       bankName: formData.bankName,
+      bankType: formData.bankType,
       accountNumber: formData.accountNumber,
       archived: false,
     };

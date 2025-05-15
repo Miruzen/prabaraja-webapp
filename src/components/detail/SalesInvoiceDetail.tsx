@@ -1,9 +1,8 @@
-
 import { useParams, Link } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Download, Printer, Share2, FileText } from "lucide-react";
+import { ArrowLeft, Download, Printer, FileText } from "lucide-react";
 import { useEffect, useState } from "react";
 import { formatCurrency } from "@/lib/utils";
 import { getSalesInvoiceById, parseDateString } from "@/utils/invoiceUtils";
@@ -101,10 +100,6 @@ const SalesInvoiceDetail = () => {
               <Button variant="outline" className="flex items-center">
                 <Download className="mr-2 h-4 w-4" />
                 Download
-              </Button>
-              <Button variant="outline" className="flex items-center">
-                <Share2 className="mr-2 h-4 w-4" />
-                Share
               </Button>
             </div>
           </div>

@@ -1,5 +1,5 @@
 
-import { ArrowLeft, Download, Printer, Share2, FileText } from "lucide-react";
+import { ArrowLeft, Download, Printer, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
@@ -43,10 +43,6 @@ export const InvoiceHeader = ({ number, date }: InvoiceHeaderProps) => {
             <Button variant="outline" className="flex items-center">
               <Download className="mr-2 h-4 w-4" />
               Download
-            </Button>
-            <Button variant="outline" className="flex items-center">
-              <Share2 className="mr-2 h-4 w-4" />
-              Share
             </Button>
           </div>
         </div>
