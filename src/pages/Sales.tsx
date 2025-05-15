@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
@@ -16,6 +15,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { FileText, Truck, Plus } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
+import { Toaster } from "@/components/ui/toaster";
 
 type FilterCategory = "all" | "unpaid" | "paid" | "late" | "awaiting";
 
@@ -104,6 +105,22 @@ const Sales = () => {
     setCurrentPage(1); // Reset to first page when changing page size
   };
 
+  // Handle delete action
+  const handleDeleteSale = (id: string) => {
+    // In a real app, this would call an API to delete the sale
+    // For now we'll just show a toast message
+    toast({
+      title: "Sale deleted",
+      description: `Sale with ID ${id} has been deleted.`,
+      variant: "default",
+    });
+  };
+
+  // Handle edit action
+  const handleEditSale = (id: string) => {
+    navigate(`/edit-sales/${id}`);
+  };
+
   // Render empty table for Quotation tab
   const renderEmptyTable = (message: string) => (
     <div className="rounded-md border">
@@ -116,11 +133,12 @@ const Sales = () => {
             <TableHead>Due date</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Total</TableHead>
+            <TableHead>Action</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <TableRow>
-            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+            <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
               {message}
             </TableCell>
           </TableRow>
@@ -151,6 +169,8 @@ const Sales = () => {
               onPageChange={handlePageChange}
               onPageSizeChange={handlePageSizeChange}
               showTopControls={false}
+              onDelete={handleDeleteSale}
+              onEdit={handleEditSale}
             />
           </>
         );
@@ -169,6 +189,8 @@ const Sales = () => {
             onSearchChange={setOrderSearchValue}
             statusFilter={orderStatusFilter}
             onStatusFilterChange={setOrderStatusFilter}
+            onDelete={handleDeleteSale}
+            onEdit={handleEditSale}
           />
         );
       case "quotation":
@@ -187,6 +209,7 @@ const Sales = () => {
     <div className="flex h-screen bg-background">
       <Sidebar />
       <div className="flex-1 overflow-auto">
+        <Toaster />
         <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
           <div className="flex items-center justify-between">
             <div>

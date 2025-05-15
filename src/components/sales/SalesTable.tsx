@@ -40,6 +40,8 @@ interface SalesTableProps {
   onSearchChange?: (value: string) => void;
   statusFilter?: string;
   onStatusFilterChange?: (value: string) => void;
+  onDelete?: (id: string) => void;
+  onEdit?: (id: string) => void;
 }
 
 export const SalesTable = ({ 
@@ -55,7 +57,9 @@ export const SalesTable = ({
   searchValue = "",
   onSearchChange = () => {},
   statusFilter = "all",
-  onStatusFilterChange = () => {}
+  onStatusFilterChange = () => {},
+  onDelete,
+  onEdit
 }: SalesTableProps) => {
   const navigate = useNavigate();
 
@@ -105,7 +109,7 @@ export const SalesTable = ({
         <TableBody>
           {filteredSalesData.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+              <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
                 {isOrderTab 
                   ? "There haven't been any Orders added to the table yet." 
                   : "No sales data found"}
@@ -113,7 +117,12 @@ export const SalesTable = ({
             </TableRow>
           ) : (
             filteredSalesData.map((row) => (
-              <SalesTableRow key={row.id} row={row} />
+              <SalesTableRow 
+                key={row.id} 
+                row={row} 
+                onDelete={onDelete}
+                onEdit={onEdit}
+              />
             ))
           )}
         </TableBody>

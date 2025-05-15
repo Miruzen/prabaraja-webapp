@@ -11,6 +11,7 @@ export const SalesTableHeader = () => {
         <TableHead>Due date</TableHead>
         <TableHead>Status</TableHead>
         <TableHead>Total</TableHead>
+        <TableHead>Action</TableHead>
       </TableRow>
     </TableHeader>
   );
