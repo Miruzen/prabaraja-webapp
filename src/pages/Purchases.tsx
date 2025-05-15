@@ -18,9 +18,9 @@ const Purchases = () => {
     <div className="flex h-screen w-full">
       <Sidebar />
       <div className="flex-1 overflow-auto">
-        <PurchaseHeader />
+        <PurchaseHeader showAddButton={false} />
         <div className="p-6">
-          <PurchaseContent />
+          <PurchaseContent onAddPurchase={handleAddPurchase} />
         </div>
       </div>
     </div>

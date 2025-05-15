@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
@@ -491,9 +492,9 @@ const CreateNewSales = () => {
   };
   
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background overflow-hidden">
       <Sidebar />
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 flex flex-col">
         {type === "delivery" ? (
           <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
             <div className="flex items-center space-x-2">
@@ -550,7 +551,7 @@ const CreateNewSales = () => {
           </div>
         )}
 
-        <div className="p-6">
+        <div className="p-6 flex-1 overflow-auto">
           <form onSubmit={handleSubmit}>
             <div className="space-y-6">
               <CustomerInfoSection 
