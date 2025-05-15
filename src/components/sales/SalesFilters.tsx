@@ -1,16 +1,9 @@
-
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, FileText, Truck, DollarSign, CheckCircle, Clock, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue 
-} from "@/components/ui/select";
-import { DollarSign, CheckCircle, Clock, AlertTriangle } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 type FilterCategory = "all" | "unpaid" | "paid" | "late" | "awaiting";
 
@@ -21,16 +14,20 @@ interface SalesFiltersProps {
   setSearchValue: (value: string) => void;
 }
 
+const navigate = useNavigate();
+
+const handleCreateNew = (type: string) => {
+  navigate("/create-new-sales", { state: { type } });
+};
+
 export const SalesFilters = ({
   filterCategory,
   setFilterCategory,
   searchValue,
   setSearchValue
 }: SalesFiltersProps) => {
-  const navigate = useNavigate();
-
   return (
-    <div className="flex justify-between items-center">
+    <div className="flex justify-between items-center space-x-4">
       <div className="flex space-x-2 items-center">
         <Select value={filterCategory} onValueChange={(value) => setFilterCategory(value as FilterCategory)}>
           <SelectTrigger className="w-[180px]">
@@ -65,25 +62,40 @@ export const SalesFilters = ({
           </SelectContent>
         </Select>
       </div>
-      <div className="flex space-x-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-3.5 h-4 w-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-md w-[300px] focus:outline-none focus:ring-1 focus:ring-indigo-300"
-                    value={searchValue}
-                    onChange={(e) => setSearchValue(e.target.value)}
-                  />
-            </div>
-      <div className="flex  space-x-2 items-end">
-        <Button 
-          className="bg-indigo-600 text-white"
-          onClick={() => navigate('/create-new-sales')}>
-          Create new sales <Plus className="mr-1 h-4 w-4" />
-        </Button>
+
+      <div className="flex space-x-2 items-center">
+        <div className="relative w-[300px]">
+          <Search className="absolute left-3 top-3.5 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search..."
+            className="pl-10 pr-4 py-2 border border-gray-300 rounded-md w-full focus:outline-none focus:ring-1 focus:ring-indigo-300"
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+          />
+        </div>
+
+        <div className="flex items-end space-x-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="bg-indigo-600 text-white hover:bg-indigo-700">
+                <Plus className="mr-2 h-4 w-4" /> Create New
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-white shadow-lg rounded-md">
+              <DropdownMenuItem onClick={() => handleCreateNew("delivery")} className="flex items-center cursor-pointer hover:bg-indigo-100">
+                <FileText className="mr-2 h-4 w-4 text-purple-500" /> Sales Invoice
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleCreateNew("order")} className="flex items-center cursor-pointer hover:bg-indigo-100">
+                <Truck className="mr-2 h-4 w-4 text-orange-500" /> Order & Delivery
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleCreateNew("quotation")} className="flex items-center cursor-pointer hover:bg-indigo-100">
+                <FileText className="mr-2 h-4 w-4 text-blue-500" /> Quotation
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
-    </div>
     </div>
   );
 };

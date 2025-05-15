@@ -5,7 +5,7 @@ import { SalesTableRow } from "./SalesTableRow";
 import { SalesTablePagination } from "./SalesTablePagination";
 import { SalesTableFooter } from "./SalesTableFooter";
 import { Button } from "@/components/ui/button";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, FileText, Truck, } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { 
   Select,
@@ -15,6 +15,13 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 
 interface SalesData {
   id: string;
@@ -43,6 +50,12 @@ interface SalesTableProps {
   onDelete?: (id: string) => void;
   onEdit?: (id: string) => void;
 }
+
+const navigate = useNavigate();
+
+  const handleCreateNew = (type: string) => {
+    navigate("/create-new-sales", { state: { type } });
+  };
 
 export const SalesTable = ({ 
   filteredSalesData, 
@@ -95,12 +108,24 @@ export const SalesTable = ({
           </div>
           
           {/* Add New Button */}
-          <Button 
-            onClick={() => navigate(isOrderTab ? "/create-new-sales" : "/create-new-sales", { state: { type: isOrderTab ? "order" : "delivery" }})}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white"
-          >
-            <Plus className="h-4 w-4 mr-2" /> Add New
-          </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="bg-white text-indigo-600 hover:bg-gray-100">
+                  <Plus className="mr-2 h-4 w-4" /> Add New
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-white">
+                <DropdownMenuItem onClick={() => handleCreateNew("delivery")} className="flex items-center cursor-pointer">
+                  <FileText className="mr-2 h-4 w-4 text-purple-500" /> Sales Invoice
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleCreateNew("order")} className="flex items-center cursor-pointer">
+                  <Truck className="mr-2 h-4 w-4 text-orange-500" /> Order & Delivery
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleCreateNew("quotation")} className="flex items-center cursor-pointer">
+                  <FileText className="mr-2 h-4 w-4 text-blue-500" /> Quotation
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
         </div>
       )}
 
