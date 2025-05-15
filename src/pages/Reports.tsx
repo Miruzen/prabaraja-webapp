@@ -1,3 +1,4 @@
+
 // pages/Reports.tsx
 import { Sidebar } from "@/components/Sidebar";
 import { ReportBox } from "@/components/reports/Reportbox";
@@ -17,17 +18,17 @@ import {
 
 const Reports = () => {
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen">
       <Sidebar />
-      <main className="flex-1">
+      <div className="flex flex-col flex-1 overflow-hidden">
         {/* Header with Gradient Background */}
         <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
           <h1 className="text-2xl font-semibold text-white">Reports</h1>
           <p className="text-white/80">View your company reports</p>
         </div>
 
-        {/* Grid Layout for Reports */}
-        <div className="p-6">
+        {/* Grid Layout for Reports - Now Scrollable */}
+        <div className="flex-1 overflow-y-auto p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <ReportBox
               icon={Scale}
@@ -130,7 +131,7 @@ const Reports = () => {
             />
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 };

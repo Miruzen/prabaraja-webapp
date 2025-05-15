@@ -183,14 +183,14 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen">
       <Sidebar />
-      <main className="flex-1">
+      <div className="flex flex-col flex-1 overflow-hidden">
         <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
           <h1 className="text-2xl font-semibold text-white">Dashboard Overview</h1>
         </div>
         
-        <div className="p-8 bg-gray-50">
+        <div className="flex-1 overflow-y-auto bg-gray-50 p-8">
           <div className="max-w-6xl mx-auto space-y-8">            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <StatCard 
@@ -245,7 +245,7 @@ const Dashboard = () => {
             </Card>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 };
