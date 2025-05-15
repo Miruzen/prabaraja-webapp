@@ -33,6 +33,7 @@ export function PurchaseContent() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>("invoices");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [searchValue, setSearchValue] = useState<string>(""); // Added searchValue state
   const [transactions, setTransactions] = useState<Purchase[]>([]);
   const [pendingRequestCount, setPendingRequestCount] = useState<number>(0);
   
@@ -185,7 +186,7 @@ export function PurchaseContent() {
     });
   };
 
-  // Filter transactions based on active tab
+  // Filter transactions based on active tab and search value
   const filteredTransactions = transactions.filter(transaction => {
     if (activeTab === "approval") {
       return isRequest(transaction) && transaction.status === "pending";
@@ -193,7 +194,10 @@ export function PurchaseContent() {
     
     const matchesType = activeTab === transaction.type + "s";
     const matchesStatus = statusFilter === "all" || statusFilter === transaction.status;
-    return matchesType && matchesStatus;
+    const matchesSearch = searchValue 
+      ? transaction.number.toLowerCase().includes(searchValue.toLowerCase())
+      : true;
+    return matchesType && matchesStatus && matchesSearch;
   });
 
   // Handle tab change
@@ -306,6 +310,8 @@ export function PurchaseContent() {
             statusFilter={statusFilter}
             onStatusFilterChange={setStatusFilter}
             showStatusFilter={activeTab !== "approval"}
+            searchValue={searchValue}
+            onSearchChange={setSearchValue}
           />
           
           <PurchaseAddButton onAddPurchase={(type) => navigate(`/create-new-purchase?type=${type}`)} />
