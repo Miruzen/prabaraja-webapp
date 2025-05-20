@@ -7,6 +7,14 @@ import { SalesTable } from "@/components/sales/SalesTable";
 import { SalesSummaryCards } from "@/components/sales/SalesSummaryCards";
 import { salesData } from "@/data/salesData";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { FileText, Truck, Plus } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 
@@ -193,7 +201,9 @@ const Sales = () => {
   };
 
   // Handle creating a new sales item based on type
-
+  const handleCreateNew = (type: string) => {
+    navigate("/create-new-sales", { state: { type } });
+  };
   
   return (
     <div className="flex h-screen bg-background">
@@ -206,6 +216,25 @@ const Sales = () => {
               <h1 className="text-2xl font-semibold text-white">Sales</h1>
               <p className="text-white/80"> Manage your company sales transaction</p>
             </div>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="bg-white text-indigo-600 hover:bg-gray-100">
+                  <Plus className="mr-2 h-4 w-4" /> Create New
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-white">
+                <DropdownMenuItem onClick={() => handleCreateNew("delivery")} className="flex items-center cursor-pointer">
+                  <FileText className="mr-2 h-4 w-4 text-purple-500" /> Sales Invoice
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleCreateNew("order")} className="flex items-center cursor-pointer">
+                  <Truck className="mr-2 h-4 w-4 text-orange-500" /> Order & Delivery
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleCreateNew("quotation")} className="flex items-center cursor-pointer">
+                  <FileText className="mr-2 h-4 w-4 text-blue-500" /> Quotation
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
