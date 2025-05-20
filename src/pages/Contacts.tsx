@@ -127,9 +127,9 @@ const Contacts = () => {
   const paginatedContacts = filteredContacts.slice(startIndex, startIndex + itemsPerPage);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen">
       <Sidebar />
-      <main className="flex-1">
+      <main className="flex-1 overflow-auto">
         <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
           <h1 className="text-2xl font-semibold text-white mb-4">Contacts</h1>
           <p className="text-white/80"> View your company Contacts</p>
