@@ -27,12 +27,6 @@ interface SalesFiltersProps {
   setSearchValue: (value: string) => void;
 }
 
-const navigate = useNavigate();
-
-const handleCreateNew = (type: string) => {
-    navigate("/create-new-sales", { state: { type } });
-  };
-
 export const SalesFilters = ({
   filterCategory,
   setFilterCategory,
@@ -40,6 +34,10 @@ export const SalesFilters = ({
   setSearchValue
 }: SalesFiltersProps) => {
   const navigate = useNavigate();
+
+  const handleCreateNew = (type: string) => {
+    navigate("/create-new-sales", { state: { type } });
+  };
 
   return (
     <div className="flex justify-between items-center">
@@ -78,37 +76,37 @@ export const SalesFilters = ({
         </Select>
       </div>
       <div className="flex space-x-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-3.5 h-4 w-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-md w-[300px] focus:outline-none focus:ring-1 focus:ring-indigo-300"
-                    value={searchValue}
-                    onChange={(e) => setSearchValue(e.target.value)}
-                  />
-            </div>
-      <div className="flex  space-x-2 items-end">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button className="bg-white text-indigo-600 hover:bg-gray-100">
-                  <Plus className="mr-2 h-4 w-4" /> Create New
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-white">
-                <DropdownMenuItem onClick={() => handleCreateNew("delivery")} className="flex items-center cursor-pointer">
-                  <FileText className="mr-2 h-4 w-4 text-purple-500" /> Sales Invoice
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleCreateNew("order")} className="flex items-center cursor-pointer">
-                  <Truck className="mr-2 h-4 w-4 text-orange-500" /> Order & Delivery
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleCreateNew("quotation")} className="flex items-center cursor-pointer">
-                  <FileText className="mr-2 h-4 w-4 text-blue-500" /> Quotation
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+        <div className="relative">
+          <Search className="absolute left-3 top-3.5 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search..."
+            className="pl-10 pr-4 py-2 border border-gray-300 rounded-md w-[300px] focus:outline-none focus:ring-1 focus:ring-indigo-300"
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+          />
+        </div>
+        <div className="flex space-x-2 items-end">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="bg-white text-indigo-600 hover:bg-gray-100">
+                <Plus className="mr-2 h-4 w-4" /> Create New
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-white">
+              <DropdownMenuItem onClick={() => handleCreateNew("delivery")} className="flex items-center cursor-pointer">
+                <FileText className="mr-2 h-4 w-4 text-purple-500" /> Sales Invoice
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleCreateNew("order")} className="flex items-center cursor-pointer">
+                <Truck className="mr-2 h-4 w-4 text-orange-500" /> Order & Delivery
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleCreateNew("quotation")} className="flex items-center cursor-pointer">
+                <FileText className="mr-2 h-4 w-4 text-blue-500" /> Quotation
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
-    </div>
     </div>
   );
 };

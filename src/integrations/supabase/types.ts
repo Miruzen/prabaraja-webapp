@@ -9,6 +9,81 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      assets: {
+        Row: {
+          asset_name: string
+          asset_tag: number
+          asset_type: string
+          assigned_to: string
+          created_at: string
+          department: string
+          id: string
+          invoice_no: string | null
+          manufacturer: string | null
+          model: string | null
+          notes: string | null
+          purchase_date: string
+          purchase_price: number
+          reason_for_sale: string | null
+          sale_date: string | null
+          sale_price: number | null
+          serial_number: string | null
+          sold_to: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+          warranty_deadline: string | null
+        }
+        Insert: {
+          asset_name: string
+          asset_tag: number
+          asset_type: string
+          assigned_to: string
+          created_at?: string
+          department: string
+          id?: string
+          invoice_no?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          notes?: string | null
+          purchase_date: string
+          purchase_price: number
+          reason_for_sale?: string | null
+          sale_date?: string | null
+          sale_price?: number | null
+          serial_number?: string | null
+          sold_to?: string | null
+          status: string
+          updated_at?: string | null
+          user_id: string
+          warranty_deadline?: string | null
+        }
+        Update: {
+          asset_name?: string
+          asset_tag?: number
+          asset_type?: string
+          assigned_to?: string
+          created_at?: string
+          department?: string
+          id?: string
+          invoice_no?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          notes?: string | null
+          purchase_date?: string
+          purchase_price?: number
+          reason_for_sale?: string | null
+          sale_date?: string | null
+          sale_price?: number | null
+          serial_number?: string | null
+          sold_to?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+          warranty_deadline?: string | null
+        }
+        Relationships: []
+      }
       bank_receive_transactions: {
         Row: {
           amount: number
@@ -475,24 +550,27 @@ export type Database = {
       }
       profiles: {
         Row: {
-          created_at: string
+          created_at: string | null
           email: string | null
           id: string
-          name: string
+          name: string | null
+          role: string | null
           updated_at: string | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           email?: string | null
-          id?: string
-          name: string
+          id: string
+          name?: string | null
+          role?: string | null
           updated_at?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           email?: string | null
           id?: string
-          name?: string
+          name?: string | null
+          role?: string | null
           updated_at?: string | null
         }
         Relationships: []
