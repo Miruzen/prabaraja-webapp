@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
@@ -7,14 +8,6 @@ import { SalesTable } from "@/components/sales/SalesTable";
 import { SalesSummaryCards } from "@/components/sales/SalesSummaryCards";
 import { salesData } from "@/data/salesData";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { FileText, Truck, Plus } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 
@@ -22,21 +15,31 @@ type FilterCategory = "all" | "unpaid" | "paid" | "late" | "awaiting";
 
 const Sales = () => {
   const navigate = useNavigate();
-  // Add active tab state
   const [activeTab, setActiveTab] = useState("delivery");
   const [filterCategory, setFilterCategory] = useState<FilterCategory>("all");
   const [searchValue, setSearchValue] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   
-  // For Order tab specific filters
-  const [orderSearchValue, setOrderSearchValue] = useState("");
-  const [orderStatusFilter, setOrderStatusFilter] = useState("all");
+  // Get the type based on active tab
+  const getTypeForActiveTab = () => {
+    switch(activeTab) {
+      case "delivery": return "invoice";
+      case "order": return "order";
+      case "quotation": return "quotation";
+      default: return "invoice";
+    }
+  };
   
-  // Filter sales data based on selected category
+  // First filter by tab type
+  const dataFilteredByType = salesData.filter(sale => 
+    sale.type === getTypeForActiveTab()
+  );
+  
+  // Then filter by selected category
   const filteredSalesData = filterCategory === "all" 
-    ? [...salesData] 
-    : salesData.filter(sale => {
+    ? [...dataFilteredByType] 
+    : dataFilteredByType.filter(sale => {
         switch(filterCategory) {
           case "paid":
             return sale.status === "Paid";
@@ -72,27 +75,10 @@ const Sales = () => {
     return dateB.getTime() - dateA.getTime();
   });
   
-  // Filter and search for order data specifically
-  const orderData = salesData.filter(sale => {
-    const matchesSearch = orderSearchValue
-      ? sale.customer.toLowerCase().includes(orderSearchValue.toLowerCase()) ||
-        sale.number.toLowerCase().includes(orderSearchValue.toLowerCase())
-      : true;
-      
-    const matchesStatus = orderStatusFilter === "all" 
-      ? true 
-      : sale.status.toLowerCase().replace(" ", "_") === orderStatusFilter.toLowerCase();
-      
-    return matchesSearch && matchesStatus;
-  });
-  
   // Calculate pagination
   const totalPages = Math.ceil(sortedData.length / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
   const paginatedData = sortedData.slice(startIndex, startIndex + pageSize);
-  
-  const orderTotalPages = Math.ceil(orderData.length / pageSize);
-  const orderPaginatedData = orderData.slice(startIndex, startIndex + pageSize);
   
   // Handle page change
   const handlePageChange = (page: number) => {
@@ -121,7 +107,7 @@ const Sales = () => {
     navigate(`/edit-sales/${id}`);
   };
 
-  // Render empty table for Quotation tab
+  // Render empty table for empty tabs
   const renderEmptyTable = (message: string) => (
     <div className="rounded-md border">
       <Table>
@@ -149,82 +135,49 @@ const Sales = () => {
   
   // Render content based on active tab
   const renderTabContent = () => {
-    switch (activeTab) {
-      case "delivery":
-        return (
-          <>
-            {/* Only show filters for delivery tab */}
-            <SalesFilters 
-              filterCategory={filterCategory}
-              setFilterCategory={setFilterCategory}
-              searchValue={searchValue}
-              setSearchValue={setSearchValue}
-            />
-            <SalesTable 
-              filteredSalesData={paginatedData}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              pageSize={pageSize}
-              totalItems={sortedData.length}
-              onPageChange={handlePageChange}
-              onPageSizeChange={handlePageSizeChange}
-              showTopControls={false}
-              onDelete={handleDeleteSale}
-              onEdit={handleEditSale}
-            />
-          </>
-        );
-      case "order":
-        return (
-          <>
-            {/* Only show filters for delivery tab */}
-            <SalesFilters 
-              filterCategory={filterCategory}
-              setFilterCategory={setFilterCategory}
-              searchValue={searchValue}
-              setSearchValue={setSearchValue}
-            />
-            <SalesTable 
-              filteredSalesData={paginatedData}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              pageSize={pageSize}
-              totalItems={sortedData.length}
-              onPageChange={handlePageChange}
-              onPageSizeChange={handlePageSizeChange}
-              showTopControls={false}
-              onDelete={handleDeleteSale}
-              onEdit={handleEditSale}
-            />
-          </>
-        );
-      case "quotation":
-        return (
-          <>
-            <SalesFilters 
-              filterCategory={filterCategory}
-              setFilterCategory={setFilterCategory}
-              searchValue={searchValue}
-              setSearchValue={setSearchValue}
-            />
-            <SalesTable 
-              filteredSalesData={paginatedData}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              pageSize={pageSize}
-              totalItems={sortedData.length}
-              onPageChange={handlePageChange}
-              onPageSizeChange={handlePageSizeChange}
-              showTopControls={false}
-              onDelete={handleDeleteSale}
-              onEdit={handleEditSale}
-            />
-          </>
-        )
-      default:
-        return null;
+    // Determine message based on active tab
+    const emptyMessage = `No ${activeTab === "delivery" ? "sales invoices" : 
+                            activeTab === "order" ? "orders" : "quotations"} found.`;
+    
+    // Check if we have data for this tab type
+    if (sortedData.length === 0) {
+      return (
+        <>
+          <SalesFilters 
+            filterCategory={filterCategory}
+            setFilterCategory={setFilterCategory}
+            searchValue={searchValue}
+            setSearchValue={setSearchValue}
+          />
+          {renderEmptyTable(emptyMessage)}
+        </>
+      );
     }
+    
+    return (
+      <>
+        <SalesFilters 
+          filterCategory={filterCategory}
+          setFilterCategory={setFilterCategory}
+          searchValue={searchValue}
+          setSearchValue={setSearchValue}
+        />
+        <SalesTable 
+          filteredSalesData={paginatedData}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={sortedData.length}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+          showTopControls={false}
+          onDelete={handleDeleteSale}
+          onEdit={handleEditSale}
+        />
+      </>
+    );
   };
+  
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
@@ -250,10 +203,8 @@ const Sales = () => {
             {/* Render content based on active tab */}
             {renderTabContent()}
 
-            {/* Only show summary cards for delivery tab */}
-            {activeTab === "delivery" && (
-              <SalesSummaryCards salesData={salesData} />
-            )}
+            {/* Always show summary cards regardless of active tab */}
+            <SalesSummaryCards salesData={salesData} />
           </div>
         </div>
       </div>
