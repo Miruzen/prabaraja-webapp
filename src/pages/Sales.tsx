@@ -176,35 +176,55 @@ const Sales = () => {
         );
       case "order":
         return (
-          <SalesTable 
-            filteredSalesData={orderPaginatedData}
-            currentPage={currentPage}
-            totalPages={orderTotalPages}
-            pageSize={pageSize}
-            totalItems={orderData.length}
-            onPageChange={handlePageChange}
-            onPageSizeChange={handlePageSizeChange}
-            isOrderTab={true}
-            searchValue={orderSearchValue}
-            onSearchChange={setOrderSearchValue}
-            statusFilter={orderStatusFilter}
-            onStatusFilterChange={setOrderStatusFilter}
-            onDelete={handleDeleteSale}
-            onEdit={handleEditSale}
-          />
+          <>
+            {/* Only show filters for delivery tab */}
+            <SalesFilters 
+              filterCategory={filterCategory}
+              setFilterCategory={setFilterCategory}
+              searchValue={searchValue}
+              setSearchValue={setSearchValue}
+            />
+            <SalesTable 
+              filteredSalesData={paginatedData}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={sortedData.length}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+              showTopControls={false}
+              onDelete={handleDeleteSale}
+              onEdit={handleEditSale}
+            />
+          </>
         );
       case "quotation":
-        return renderEmptyTable("There haven't been any Quotations added to the table yet.");
+        return (
+          <>
+            <SalesFilters 
+              filterCategory={filterCategory}
+              setFilterCategory={setFilterCategory}
+              searchValue={searchValue}
+              setSearchValue={setSearchValue}
+            />
+            <SalesTable 
+              filteredSalesData={paginatedData}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={sortedData.length}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+              showTopControls={false}
+              onDelete={handleDeleteSale}
+              onEdit={handleEditSale}
+            />
+          </>
+        )
       default:
         return null;
     }
   };
-
-  // Handle creating a new sales item based on type
-  const handleCreateNew = (type: string) => {
-    navigate("/create-new-sales", { state: { type } });
-  };
-  
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
@@ -216,25 +236,6 @@ const Sales = () => {
               <h1 className="text-2xl font-semibold text-white">Sales</h1>
               <p className="text-white/80"> Manage your company sales transaction</p>
             </div>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button className="bg-white text-indigo-600 hover:bg-gray-100">
-                  <Plus className="mr-2 h-4 w-4" /> Create New
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-white">
-                <DropdownMenuItem onClick={() => handleCreateNew("delivery")} className="flex items-center cursor-pointer">
-                  <FileText className="mr-2 h-4 w-4 text-purple-500" /> Sales Invoice
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleCreateNew("order")} className="flex items-center cursor-pointer">
-                  <Truck className="mr-2 h-4 w-4 text-orange-500" /> Order & Delivery
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleCreateNew("quotation")} className="flex items-center cursor-pointer">
-                  <FileText className="mr-2 h-4 w-4 text-blue-500" /> Quotation
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
 
