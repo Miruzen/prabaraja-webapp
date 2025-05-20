@@ -89,7 +89,7 @@ export const SalesFilters = ({
         <div className="flex space-x-2 items-end">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button className="bg-white text-indigo-600 hover:bg-gray-100">
+              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
                 <Plus className="mr-2 h-4 w-4" /> Create New
               </Button>
             </DropdownMenuTrigger>
