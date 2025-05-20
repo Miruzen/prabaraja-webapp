@@ -118,14 +118,6 @@ export function OrdersTable({ orders, onDelete, onEdit }: OrdersTableProps) {
               />
             </div>
           </div>
-          
-          {/* Add New Button */}
-          <Button 
-            onClick={() => navigate("/create-new-purchase", { state: { type: "order" }})}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white"
-          >
-            <Plus className="h-4 w-4 mr-2" /> Add New
-          </Button>
         </div>
 
         <Table>
