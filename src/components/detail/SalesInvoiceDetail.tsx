@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,8 +10,20 @@ import { SalesData } from "@/data/salesData";
 
 const SalesInvoiceDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [invoice, setInvoice] = useState<SalesData | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Function to handle the back button click
+  const handleGoBack = () => {
+    // Check if we have a previous page in history
+    if (document.referrer && document.referrer.includes(window.location.hostname)) {
+      navigate(-1); // Go back to previous page in history
+    } else {
+      // Default fallback to sales page if no history
+      navigate("/sales");
+    }
+  };
 
   useEffect(() => {
     const fetchInvoiceData = () => {
@@ -38,11 +50,9 @@ const SalesInvoiceDetail = () => {
       <div className="flex h-screen bg-background">
         <Sidebar />
         <div className="flex-1 overflow-auto p-6">
-          <Link to="/sales" className="mb-6 inline-block">
-            <Button variant="outline" size="sm" className="mb-6">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Sales
-            </Button>
-          </Link>
+          <Button variant="outline" size="sm" className="mb-6" onClick={handleGoBack}>
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back
+          </Button>
           <Card>
             <CardContent className="p-6">
               <p className="text-center py-8">Sales Invoice not found.</p>
@@ -71,11 +81,9 @@ const SalesInvoiceDetail = () => {
       <div className="flex-1 overflow-auto">
         <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6">
           <div className="flex items-center">
-            <Link to="/sales" className="mr-4">
-              <Button variant="outline" size="icon" className="bg-white/80 hover:bg-white">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
+            <Button variant="outline" size="icon" className="bg-white/80 hover:bg-white mr-4" onClick={handleGoBack}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
             <div>
               <h1 className="text-2xl font-semibold text-white flex items-center">
                 <FileText className="mr-2 h-5 w-5" /> 

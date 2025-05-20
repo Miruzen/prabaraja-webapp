@@ -286,7 +286,8 @@ const CreateNewSales = () => {
       customerId: customerId,
       dueDate: formattedDueDate,
       status: documentStatus,
-      total: `Rp ${formatPrice(calculateTotal())}`
+      total: `Rp ${formatPrice(calculateTotal())}`,
+      type: type // Add the type field to fix the error
     };
 
     // Add additional data based on type

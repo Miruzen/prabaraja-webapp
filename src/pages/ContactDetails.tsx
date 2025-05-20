@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -118,12 +118,24 @@ const purchaseTransactions = [
 const ContactDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState("info");
   const [salesData, setSalesData] = useState<any[]>([]);
   const [purchasesData, setPurchasesData] = useState<any[]>([]);
   
   const contactId = parseInt(id || "0");
   const contact = contacts.find(c => c.id === contactId);
+
+  // Function to handle the back button click
+  const handleGoBack = () => {
+    // Check if we have a previous page in history
+    if (document.referrer && document.referrer.includes(window.location.hostname)) {
+      navigate(-1); // Go back to previous page in history
+    } else {
+      // Default fallback to contacts page if no history
+      navigate("/contacts");
+    }
+  };
 
   useEffect(() => {
     const legacySales = salesTransactions.filter(t => t.contactId === contactId);
@@ -154,9 +166,9 @@ const ContactDetails = () => {
       <div className="flex min-h-screen">
         <Sidebar />
         <main className="flex-1 p-6">
-          <Button variant="outline" onClick={() => navigate("/contacts")}>
+          <Button variant="outline" onClick={handleGoBack}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Contacts
+            Back
           </Button>
           <div className="mt-8 text-center">
             <h2 className="text-2xl font-bold">Contact not found</h2>
@@ -206,10 +218,10 @@ const ContactDetails = () => {
           <Button 
             variant="outline" 
             className="mb-4 bg-white" 
-            onClick={() => navigate("/contacts")}
+            onClick={handleGoBack}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Contacts
+            Back
           </Button>
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
             <div>
