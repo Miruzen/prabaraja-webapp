@@ -258,23 +258,28 @@ const CreateNewSales = () => {
     // Create the appropriate document based on type
     let documentTitle;
     let documentStatus;
+    let documentType: "invoice" | "order" | "quotation";
     
     switch(type) {
       case "delivery":
         documentTitle = `Sales Invoice #${invoiceNumber}`;
         documentStatus = status.charAt(0).toUpperCase() + status.slice(1);
+        documentType = "invoice"; // Map "delivery" to "invoice"
         break;
       case "order":
         documentTitle = `Order #${invoiceNumber}`;
         documentStatus = status.charAt(0).toUpperCase() + status.slice(1).replace("_", " ");
+        documentType = "order";
         break;
       case "quotation":
         documentTitle = `Quotation #${invoiceNumber}`;
         documentStatus = "Sent";
+        documentType = "quotation";
         break;
       default:
         documentTitle = `Sales Document #${invoiceNumber}`;
         documentStatus = "Created";
+        documentType = "invoice";
     }
     
     // Create the new document with properly formatted data
@@ -287,7 +292,7 @@ const CreateNewSales = () => {
       dueDate: formattedDueDate,
       status: documentStatus,
       total: `Rp ${formatPrice(calculateTotal())}`,
-      type: type // Add the type field to fix the error
+      type: documentType // Use the mapped type
     };
 
     // Add additional data based on type
