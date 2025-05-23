@@ -14,6 +14,7 @@ import {
   LogOut
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -36,19 +37,10 @@ const NavItem = ({ icon, label, href, isActive }: NavItemProps) => (
 
 export const Sidebar = () => {
   const currentPath = window.location.pathname;
-  const navigate = useNavigate();
+  const { signOut, user } = useAuth();
 
-  const handleLogout = () => {
-    // Clear all user-related data from localStorage
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
-    localStorage.removeItem('userEmail');
-    
-    // Don't remove username to persist it across sessions
-    // This is just for demo purposes - in a real app you'd likely clear all data
-
-    // Redirect to the Login Page
-    navigate('/login');
+  const handleLogout = async () => {
+    await signOut();
   };
 
   const navItems = [
@@ -67,6 +59,18 @@ export const Sidebar = () => {
 
   return (
     <div className="w-56 h-screen bg-sidebar-bg border-r border-sidebar-border flex flex-col">
+      {/* User info section */}
+      {user && (
+        <div className="p-4 border-b border-sidebar-border">
+          <div className="text-sm text-sidebar-text">
+            Welcome back!
+          </div>
+          <div className="text-sm font-medium text-sidebar-text truncate">
+            {user.user_metadata?.name || user.email}
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 py-4 space-y-1">
         {navItems.map((item) => (
           <NavItem

@@ -1,18 +1,63 @@
+
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 
 const RegisterPage = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { signUp, user } = useAuth();
 
-  const handleRegister = (e) => {
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
+
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Add registration logic here (e.g., API call)
-    console.log("Registering with:", name, email, password);
-    navigate("/login"); // Redirect to Login Page after registration
+    
+    if (!name || !email || !password || !confirmPassword) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters long");
+      return;
+    }
+
+    setIsLoading(true);
+
+    const { error } = await signUp(email, password, {
+      name: name,
+      role: 'user'
+    });
+
+    if (error) {
+      if (error.message === "User already registered") {
+        toast.error("An account with this email already exists. Please login instead.");
+      } else {
+        toast.error(error.message || "An error occurred during registration");
+      }
+    } else {
+      toast.success("Registration successful! Please check your email to verify your account.");
+      navigate("/login");
+    }
+
+    setIsLoading(false);
   };
 
   return (
@@ -31,6 +76,7 @@ const RegisterPage = () => {
               onChange={(e) => setName(e.target.value)}
               className="w-full p-2 border border-gray-300 rounded-lg"
               required
+              disabled={isLoading}
             />
           </div>
           <div>
@@ -44,6 +90,7 @@ const RegisterPage = () => {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full p-2 border border-gray-300 rounded-lg"
               required
+              disabled={isLoading}
             />
           </div>
           <div>
@@ -57,6 +104,7 @@ const RegisterPage = () => {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full p-2 border border-gray-300 rounded-lg"
               required
+              disabled={isLoading}
             />
           </div>
           <div>
@@ -70,13 +118,15 @@ const RegisterPage = () => {
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="w-full p-2 border border-gray-300 rounded-lg"
               required
+              disabled={isLoading}
             />
           </div>
           <button
             type="submit"
-            className="w-full bg-[#6366F1] text-white p-2 rounded-lg hover:bg-[#6366F1]/90"
+            className="w-full bg-[#6366F1] text-white p-2 rounded-lg hover:bg-[#6366F1]/90 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading}
           >
-            Register
+            {isLoading ? "Creating Account..." : "Register"}
           </button>
         </form>
         <div className="mt-4 text-center">

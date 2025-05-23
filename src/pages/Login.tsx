@@ -2,40 +2,48 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { signIn, user } = useAuth();
 
-  const handleLogin = (e) => {
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Simple validation
     if (!email || !password) {
       toast.error("Please enter both email and password");
       return;
     }
+
+    setIsLoading(true);
     
-    // Demo login logic (in a real app, this would validate against a backend)
-    if (email === "admin@gmail.com" && password === "admin") {
-      // Store user info in localStorage (in a real app, you would store a token)
-      localStorage.setItem("userEmail", email);
-      localStorage.setItem("username", "Admin User");
-      toast.success("Logged in as Admin");
-      navigate("/"); // Redirect to dashboard after login
-    } else if (email === "user@example.com" && password === "user") {
-      localStorage.setItem("userEmail", email);
-      localStorage.setItem("username", "Regular User");
-      toast.success("Logged in successfully");
-      navigate("/"); // Redirect to dashboard after login
+    const { error } = await signIn(email, password);
+    
+    if (error) {
+      if (error.message === "Invalid login credentials") {
+        toast.error("Invalid email or password. Please try again.");
+      } else if (error.message === "Email not confirmed") {
+        toast.error("Please check your email and confirm your account before logging in.");
+      } else {
+        toast.error(error.message || "An error occurred during login");
+      }
     } else {
-      // For demo purposes, allow any login
-      localStorage.setItem("userEmail", email);
-      localStorage.setItem("username", "User");
-      toast.success("Logged in successfully");
-      navigate("/"); // Redirect to dashboard after login
+      navigate("/");
     }
+    
+    setIsLoading(false);
   };
 
   return (
@@ -55,6 +63,7 @@ const LoginPage = () => {
               className="w-full p-2 border border-gray-300 rounded-lg"
               placeholder="email@example.com"
               required
+              disabled={isLoading}
             />
           </div>
           <div>
@@ -68,13 +77,15 @@ const LoginPage = () => {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full p-2 border border-gray-300 rounded-lg"
               required
+              disabled={isLoading}
             />
           </div>
           <button
             type="submit"
-            className="w-full bg-[#6366F1] text-white p-2 rounded-lg hover:bg-[#6366F1]/90"
+            className="w-full bg-[#6366F1] text-white p-2 rounded-lg hover:bg-[#6366F1]/90 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading}
           >
-            Login
+            {isLoading ? "Logging in..." : "Login"}
           </button>
         </form>
         <div className="mt-4 text-center">
@@ -86,14 +97,6 @@ const LoginPage = () => {
           <Link to="/forgot-password" className="text-sm text-[#6366F1] hover:underline">
             Forgot Password?
           </Link>
-        </div>
-        
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Demo Credentials:</h3>
-          <div className="text-xs text-gray-600 space-y-1">
-            <p><strong>Admin:</strong> admin@gmail.com / admin</p>
-            <p><strong>Regular User:</strong> user@example.com / user</p>
-          </div>
         </div>
       </div>
     </div>
