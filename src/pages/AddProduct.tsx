@@ -1,39 +1,71 @@
 
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { ArrowLeft } from "lucide-react";
-import { products, productCategories } from "@/data/productData";
+import { ArrowLeft, Loader2 } from "lucide-react";
+import { useProducts, useCreateProduct } from "@/hooks/useProducts";
+import { toast } from "sonner";
 
 const unitOptions = ["Unit", "pcs", "box", "set", "pack"];
 
-function generateNextProductCode() {
-  if (!products.length) return "PRD001";
-  const lastProduct = products[products.length - 1];
-  const codeNum = parseInt(lastProduct.code.replace("PRD", "")) + 1;
-  return `PRD${codeNum.toString().padStart(3, "0")}`;
-}
-
 const AddProduct = () => {
   const navigate = useNavigate();
-  const productCode = useMemo(() => generateNextProductCode(), []);
-  const [category, setCategory] = useState(productCategories[1] || "Electronics");
+  const { data: products = [] } = useProducts();
+  const createProductMutation = useCreateProduct();
+  
+  // Generate next product number based on existing products
+  const nextProductNumber = products.length > 0 
+    ? Math.max(...products.map(p => p.number)) + 1 
+    : 1;
+  
+  const productCode = `PRD${nextProductNumber.toString().padStart(3, "0")}`;
+
+  const [category, setCategory] = useState("Electronics");
   const [name, setName] = useState("");
   const [totalStock, setTotalStock] = useState("");
   const [minStock, setMinStock] = useState("");
   const [unit, setUnit] = useState(unitOptions[0]);
   const [buyPrice, setBuyPrice] = useState("");
+  const [sellPrice, setSellPrice] = useState("");
   const [status, setStatus] = useState("In Stock");
 
-  // For demonstration only. This would normally save to backend.
-  const handleSubmit = (e: React.FormEvent) => {
+  // Get unique categories from existing products
+  const existingCategories = Array.from(new Set(products.map(p => p.category))).filter(Boolean);
+  const productCategories = existingCategories.length > 0 
+    ? existingCategories 
+    : ["Electronics", "Office", "Furniture"];
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert("Product added! (Demo only)");
-    navigate("/products");
+    
+    if (!name || !totalStock || !minStock || !buyPrice) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    try {
+      await createProductMutation.mutateAsync({
+        number: nextProductNumber,
+        category,
+        name,
+        total_stock: parseInt(totalStock),
+        min_stock: parseInt(minStock),
+        unit,
+        buy_price: parseFloat(buyPrice),
+        sell_price: sellPrice ? parseFloat(sellPrice) : null,
+        status,
+      });
+
+      toast.success("Product added successfully!");
+      navigate("/products");
+    } catch (error) {
+      console.error("Error creating product:", error);
+      toast.error("Failed to add product. Please try again.");
+    }
   };
 
   return (
@@ -68,23 +100,23 @@ const AddProduct = () => {
                       <SelectValue placeholder="Select Category" />
                     </SelectTrigger>
                     <SelectContent>
-                      {productCategories.filter(cat => cat !== "All").map((cat) => (
+                      {productCategories.map((cat) => (
                         <SelectItem value={cat} key={cat}>{cat}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-1">Name</label>
+                  <label className="block text-sm font-semibold mb-1">Name *</label>
                   <Input value={name} onChange={(e) => setName(e.target.value)} required />
                 </div>
                 <div className="flex gap-2">
                   <div className="flex-1">
-                    <label className="block text-sm font-semibold mb-1">Total Stock</label>
+                    <label className="block text-sm font-semibold mb-1">Total Stock *</label>
                     <Input type="number" value={totalStock} min={0} onChange={(e) => setTotalStock(e.target.value)} required />
                   </div>
                   <div className="flex-1">
-                    <label className="block text-sm font-semibold mb-1">Min Stock</label>
+                    <label className="block text-sm font-semibold mb-1">Min Stock *</label>
                     <Input type="number" value={minStock} min={0} onChange={(e) => setMinStock(e.target.value)} required />
                   </div>
                 </div>
@@ -102,8 +134,12 @@ const AddProduct = () => {
                   </Select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-1">Buy Price</label>
-                  <Input type="number" value={buyPrice} min={0} onChange={(e) => setBuyPrice(e.target.value)} required />
+                  <label className="block text-sm font-semibold mb-1">Buy Price *</label>
+                  <Input type="number" value={buyPrice} min={0} step="0.01" onChange={(e) => setBuyPrice(e.target.value)} required />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-1">Sell Price</label>
+                  <Input type="number" value={sellPrice} min={0} step="0.01" onChange={(e) => setSellPrice(e.target.value)} />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold mb-1">Status</label>
@@ -118,10 +154,27 @@ const AddProduct = () => {
                   </Select>
                 </div>
                 <div className="flex justify-end gap-2 pt-4">
-                  <Button type="button" variant="secondary" onClick={() => navigate("/products")}>
+                  <Button 
+                    type="button" 
+                    variant="secondary" 
+                    onClick={() => navigate("/products")}
+                    disabled={createProductMutation.isPending}
+                  >
                     Cancel
                   </Button>
-                  <Button type="submit">Add Product</Button>
+                  <Button 
+                    type="submit" 
+                    disabled={createProductMutation.isPending}
+                  >
+                    {createProductMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Adding...
+                      </>
+                    ) : (
+                      "Add Product"
+                    )}
+                  </Button>
                 </div>
               </form>
             </CardContent>

@@ -1,6 +1,7 @@
+
 import React, { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
-import  ChevronDropdown  from "@/components/ChevronDropdown";
+import ChevronDropdown from "@/components/ChevronDropdown";
 import { Card, CardContent } from "@/components/ui/card";
 import { TabNavigation } from "@/components/products/TabNavigation";
 import { ProductFilters } from "@/components/products/ProductFilters";
@@ -8,8 +9,11 @@ import { ProductTable } from "@/components/products/ProductTable";
 import { WarehouseTable } from "@/components/products/WarehouseTable";
 import { WarehouseFilters } from "@/components/products/WarehouseFilters";
 import { ProductPagination } from "@/components/products/ProductPagination";
-import { products, warehouses, productCategories, warehouseLocations } from "@/data/productData";
-import { useDropdownOptions } from "@/components/products/DropdownOptions"; // Import the hook
+import { useDropdownOptions } from "@/components/products/DropdownOptions";
+import { useProducts } from "@/hooks/useProducts";
+import { useWarehouses } from "@/hooks/useWarehouses";
+import { useRealtime } from "@/hooks/useRealtime";
+import { Loader2 } from "lucide-react";
 
 const Products = () => {
   const [activeTab, setActiveTab] = useState("Products");
@@ -19,8 +23,39 @@ const Products = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  // Enable real-time updates
+  useRealtime();
+
+  // Fetch data from Supabase
+  const { data: productsData = [], isLoading: productsLoading, error: productsError } = useProducts();
+  const { data: warehousesData = [], isLoading: warehousesLoading, error: warehousesError } = useWarehouses();
+
   // Use the hook to get dropdown options
   const dropdownOptions = useDropdownOptions();
+
+  // Transform Supabase data to match UI expectations
+  const products = productsData.map(product => ({
+    code: `PRD${product.number.toString().padStart(3, '0')}`,
+    category: product.category,
+    name: product.name,
+    totalStock: product.total_stock,
+    minStock: product.min_stock,
+    unit: product.unit,
+    buyPrice: product.buy_price,
+    sellPrice: product.sell_price || 0,
+    status: product.status,
+  }));
+
+  const warehouses = warehousesData.map(warehouse => ({
+    code: `WH${warehouse.number.toString().padStart(3, '0')}`,
+    name: warehouse.name,
+    location: warehouse.location,
+    totalStock: warehouse.total_stock,
+  }));
+
+  // Get unique categories and locations for filters
+  const productCategories = ["All", ...Array.from(new Set(products.map(p => p.category)))];
+  const warehouseLocations = ["All", ...Array.from(new Set(warehouses.map(w => w.location)))];
 
   // Filter products and warehouses
   const filteredProducts = products.filter(
@@ -31,7 +66,8 @@ const Products = () => {
 
   const filteredWarehouses = warehouses.filter(
     (warehouse) =>
-      (selectedWarehouseLocation === "All" || warehouse.location === selectedWarehouseLocation)
+      (selectedWarehouseLocation === "All" || warehouse.location === selectedWarehouseLocation) &&
+      warehouse.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Pagination logic
@@ -39,6 +75,55 @@ const Products = () => {
   const startProductIndex = (currentPage - 1) * itemsPerPage;
   const endProductIndex = startProductIndex + itemsPerPage;
   const currentProducts = filteredProducts.slice(startProductIndex, endProductIndex);
+
+  // Loading state
+  if (productsLoading || warehousesLoading) {
+    return (
+      <div className="flex min-h-screen">
+        <Sidebar />
+        <div className="flex-1 overflow-auto">
+          <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
+            <h1 className="text-2xl font-semibold text-white">Products</h1>
+            <p className="text-white/80">Manage your company Products</p>
+          </div>
+          <div className="p-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                  <span className="ml-2">Loading products...</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (productsError || warehousesError) {
+    return (
+      <div className="flex min-h-screen">
+        <Sidebar />
+        <div className="flex-1 overflow-auto">
+          <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
+            <h1 className="text-2xl font-semibold text-white">Products</h1>
+            <p className="text-white/80">Manage your company Products</p>
+          </div>
+          <div className="p-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="text-center py-8 text-red-600">
+                  Error loading data: {(productsError || warehousesError)?.message}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen">
