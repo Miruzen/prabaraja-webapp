@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,8 +17,11 @@ import { AssetsTable } from "@/components/assets/AssetsTable";
 import { SoldAssetsTable } from "@/components/assets/SoldAssetsTable";
 import { SellAssetDialog } from "@/components/assets/SellAssetDialog";
 import { toast } from "sonner";
+import { useAssets, useCreateAsset, useUpdateAsset, useDeleteAsset, type Asset } from "@/hooks/useAssets";
+import { useRoleAccess } from "@/hooks/useRoleAccess";
+import { useRealtime } from "@/hooks/useRealtime";
 
-export interface Asset {
+export interface UIAsset {
   id: string;
   tag: string;
   type: "computer" | "furniture" | "vehicle" | "other";
@@ -57,48 +61,58 @@ const Assets = () => {
   const [itemsPerPage, setItemsPerPage] = useState("10");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isSellDialogOpen, setIsSellDialogOpen] = useState(false);
-  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+  const [selectedAsset, setSelectedAsset] = useState<UIAsset | null>(null);
   
-  // Sample admin detection - replace with your actual auth logic
-  const [isAdmin] = useState(localStorage.getItem('userEmail') === 'admin@gmail.com');
+  // Enable real-time updates
+  useRealtime();
   
-  const [assets, setAssets] = useState<Asset[]>([
-    {
-      id: "1",
-      tag: "AST-2023-001",
-      type: "computer",
-      name: "MacBook Pro",
-      model: "M2 16GB",
+  // Get role access permissions
+  const { canCreateData, canEditData, canDeleteData } = useRoleAccess();
+  
+  // Supabase hooks
+  const { data: supabaseAssets = [], isLoading, error } = useAssets();
+  const createAssetMutation = useCreateAsset();
+  const updateAssetMutation = useUpdateAsset();
+  const deleteAssetMutation = useDeleteAsset();
+
+  // Transform Supabase assets to UI format
+  const assets: UIAsset[] = supabaseAssets
+    .filter(asset => !asset.sale_date) // Only show unsold assets
+    .map(asset => ({
+      id: asset.id,
+      tag: `AST-${new Date(asset.purchase_date).getFullYear()}-${String(asset.asset_tag).padStart(3, '0')}`,
+      type: asset.asset_type as "computer" | "furniture" | "vehicle" | "other",
+      name: asset.asset_name,
+      model: asset.model || "",
       assignedTo: {
-        name: "John Doe",
-        department: "Engineering",
-        avatar: "",
+        name: asset.assigned_to,
+        department: asset.department,
       },
-      purchaseDate: "2023-05-15",
-      purchasePrice: 25000000,
-      currentValue: 20000000,
-      warrantyDeadline: "2025-05-15",
-    },
-  ]);
+      purchaseDate: asset.purchase_date,
+      purchasePrice: Number(asset.purchase_price),
+      currentValue: calculateCurrentValue(Number(asset.purchase_price), asset.purchase_date),
+      warrantyDeadline: asset.warranty_deadline || "",
+      manufacturer: asset.manufacturer,
+      serialNumber: asset.serial_number,
+    }));
 
-  const [soldAssets, setSoldAssets] = useState<SoldAsset[]>([]);
-
-  const handleAddAsset = (newAsset: Omit<Asset, "id" | "currentValue">) => {
-    const currentValue = calculateCurrentValue(
-      newAsset.purchasePrice, 
-      newAsset.purchaseDate
-    );
-    
-    const asset: Asset = {
-      ...newAsset, 
-      id: Math.random().toString(36).substr(2, 9),
-      currentValue,
-    };
-    
-    setAssets([...assets, asset]);
-    setIsAddDialogOpen(false);
-    toast.success("Asset added successfully");
-  };
+  // Get sold assets
+  const soldAssets: SoldAsset[] = supabaseAssets
+    .filter(asset => asset.sale_date) // Only show sold assets
+    .map(asset => ({
+      id: asset.id,
+      originalAssetId: asset.id,
+      assetTag: `AST-${new Date(asset.purchase_date).getFullYear()}-${String(asset.asset_tag).padStart(3, '0')}`,
+      assetName: asset.asset_name,
+      assetType: asset.asset_type,
+      dateSold: asset.sale_date || "",
+      soldTo: asset.sold_to || "",
+      salePrice: Number(asset.sale_price || 0),
+      boughtPrice: Number(asset.purchase_price),
+      profitLoss: Number(asset.sale_price || 0) - Number(asset.purchase_price),
+      saleReason: asset.reason_for_sale as "upgrade" | "obsolete" | "downsizing" | "other" | undefined,
+      notes: asset.notes,
+    }));
 
   const calculateCurrentValue = (price: number, purchaseDate: string) => {
     // Simplified straight-line depreciation (20% per year)
@@ -106,22 +120,80 @@ const Assets = () => {
     return Math.max(0, price * (1 - 0.2 * years));
   };
 
-  const handleDeleteAsset = (id: string) => {
-    setAssets(assets.filter(asset => asset.id !== id));
-    toast.success("Asset deleted successfully");
+  const handleAddAsset = async (newAsset: Omit<UIAsset, "id" | "currentValue">) => {
+    try {
+      // Generate next asset tag number
+      const currentYear = new Date().getFullYear();
+      const existingTags = supabaseAssets
+        .map(asset => asset.asset_tag)
+        .filter(tag => tag !== null);
+      const maxTag = existingTags.length > 0 ? Math.max(...existingTags) : 0;
+      const nextTagNumber = maxTag + 1;
+
+      const assetData = {
+        asset_tag: nextTagNumber,
+        asset_type: newAsset.type,
+        asset_name: newAsset.name,
+        model: newAsset.model,
+        assigned_to: newAsset.assignedTo.name,
+        department: newAsset.assignedTo.department,
+        manufacturer: newAsset.manufacturer,
+        serial_number: newAsset.serialNumber,
+        purchase_date: newAsset.purchaseDate,
+        purchase_price: newAsset.purchasePrice,
+        warranty_deadline: newAsset.warrantyDeadline,
+        status: 'Active',
+      };
+
+      await createAssetMutation.mutateAsync(assetData);
+      setIsAddDialogOpen(false);
+      toast.success("Asset added successfully");
+    } catch (error) {
+      console.error('Error adding asset:', error);
+      toast.error("Failed to add asset");
+    }
   };
 
-  const handleDeleteSoldAsset = (id: string) => {
-    setSoldAssets(soldAssets.filter(asset => asset.id !== id));
-    toast.success("Sold asset record deleted");
+  const handleDeleteAsset = async (id: string) => {
+    if (!canDeleteData) {
+      toast.error("You don't have permission to delete assets");
+      return;
+    }
+
+    try {
+      await deleteAssetMutation.mutateAsync(id);
+      toast.success("Asset deleted successfully");
+    } catch (error) {
+      console.error('Error deleting asset:', error);
+      toast.error("Failed to delete asset");
+    }
   };
 
-  const handleSellAsset = (asset: Asset) => {
+  const handleDeleteSoldAsset = async (id: string) => {
+    if (!canDeleteData) {
+      toast.error("You don't have permission to delete sold asset records");
+      return;
+    }
+
+    try {
+      await deleteAssetMutation.mutateAsync(id);
+      toast.success("Sold asset record deleted");
+    } catch (error) {
+      console.error('Error deleting sold asset:', error);
+      toast.error("Failed to delete sold asset record");
+    }
+  };
+
+  const handleSellAsset = (asset: UIAsset) => {
+    if (!canEditData) {
+      toast.error("You don't have permission to sell assets");
+      return;
+    }
     setSelectedAsset(asset);
     setIsSellDialogOpen(true);
   };
 
-  const handleConfirmSale = (soldAssetData: {
+  const handleConfirmSale = async (soldAssetData: {
     dateSold: string;
     soldTo: string;
     salePrice: number;
@@ -131,37 +203,76 @@ const Assets = () => {
   }) => {
     if (!selectedAsset) return;
 
-    const validReasons = ["upgrade", "obsolete", "downsizing", "other"] as const;
-const saleReason = validReasons.includes(soldAssetData.saleReason as any) 
-  ? soldAssetData.saleReason as typeof validReasons[number]
-  : undefined;
-  
+    try {
+      const validReasons = ["upgrade", "obsolete", "downsizing", "other"] as const;
+      const saleReason = validReasons.includes(soldAssetData.saleReason as any) 
+        ? soldAssetData.saleReason as typeof validReasons[number]
+        : undefined;
 
-    const newSoldAsset: SoldAsset = {
-      id: Math.random().toString(36).substr(2, 9),
-      originalAssetId: selectedAsset.id,
-      assetTag: selectedAsset.tag,
-      assetName: selectedAsset.name,
-      assetType: selectedAsset.type,
-      dateSold: soldAssetData.dateSold,
-      soldTo: soldAssetData.soldTo,
-      salePrice: soldAssetData.salePrice,
-      boughtPrice: selectedAsset.purchasePrice,
-      profitLoss: soldAssetData.salePrice - selectedAsset.purchasePrice,
-      saleReason: saleReason,
-      transactionNo: soldAssetData.transactionNo,
-      notes: soldAssetData.notes
-    };
+      const updateData = {
+        sale_date: soldAssetData.dateSold,
+        sold_to: soldAssetData.soldTo,
+        sale_price: soldAssetData.salePrice,
+        reason_for_sale: saleReason,
+        notes: soldAssetData.notes,
+        status: 'Sold',
+      };
 
-    // Remove from current assets
-    setAssets(assets.filter(a => a.id !== selectedAsset.id));
-    // Add to sold assets
-    setSoldAssets([...soldAssets, newSoldAsset]);
-    
-    setIsSellDialogOpen(false);
-    setSelectedAsset(null);
-    toast.success("Asset sold successfully");
+      await updateAssetMutation.mutateAsync({
+        id: selectedAsset.id,
+        updates: updateData
+      });
+
+      setIsSellDialogOpen(false);
+      setSelectedAsset(null);
+      toast.success("Asset sold successfully");
+    } catch (error) {
+      console.error('Error selling asset:', error);
+      toast.error("Failed to sell asset");
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-full">
+        <Sidebar />
+        <div className="flex-1 overflow-auto">
+          <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
+            <div className="max-w-7xl mx-auto">
+              <h1 className="text-2xl font-semibold text-white">Assets</h1>
+              <p className="text-white/80">Manage your company assets</p>
+            </div>
+          </div>
+          <div className="max-w-7xl mx-auto p-6">
+            <div className="flex items-center justify-center h-64">
+              <div className="text-lg">Loading assets...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-screen w-full">
+        <Sidebar />
+        <div className="flex-1 overflow-auto">
+          <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
+            <div className="max-w-7xl mx-auto">
+              <h1 className="text-2xl font-semibold text-white">Assets</h1>
+              <p className="text-white/80">Manage your company assets</p>
+            </div>
+          </div>
+          <div className="max-w-7xl mx-auto p-6">
+            <div className="flex items-center justify-center h-64">
+              <div className="text-lg text-red-600">Error loading assets: {error.message}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen w-full">
@@ -200,7 +311,7 @@ const saleReason = validReasons.includes(soldAssetData.saleReason as any)
                     <SelectItem value="15">15 items</SelectItem>
                   </SelectContent>
                 </Select>
-                {isAdmin && (
+                {canCreateData && (
                   <Button onClick={() => setIsAddDialogOpen(true)}>
                     <Plus className="mr-2 h-4 w-4" /> Add Asset
                   </Button>
@@ -222,7 +333,7 @@ const saleReason = validReasons.includes(soldAssetData.saleReason as any)
                   assets={assets}
                   onDeleteAsset={handleDeleteAsset}
                   onSellAsset={handleSellAsset}
-                  isAdmin={isAdmin}
+                  isAdmin={canEditData}
                 />
               </TabsContent>
 
@@ -232,7 +343,7 @@ const saleReason = validReasons.includes(soldAssetData.saleReason as any)
                   search={search}
                   soldAssets={soldAssets}
                   onDeleteSoldAsset={handleDeleteSoldAsset}
-                  isAdmin={isAdmin}
+                  isAdmin={canDeleteData}
                 />
               </TabsContent>
             </Tabs>
