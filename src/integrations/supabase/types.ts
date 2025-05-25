@@ -452,6 +452,69 @@ export type Database = {
         }
         Relationships: []
       }
+      order_deliveries: {
+        Row: {
+          created_at: string | null
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string | null
+          delivery_date: string | null
+          grand_total: number
+          id: string
+          items: Json
+          notes: string | null
+          number: number
+          order_date: string
+          payment_method: string | null
+          shipping_address: string | null
+          shipping_method: string | null
+          status: string
+          tracking_number: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          delivery_date?: string | null
+          grand_total: number
+          id?: string
+          items: Json
+          notes?: string | null
+          number: number
+          order_date: string
+          payment_method?: string | null
+          shipping_address?: string | null
+          shipping_method?: string | null
+          status: string
+          tracking_number?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          delivery_date?: string | null
+          grand_total?: number
+          id?: string
+          items?: Json
+          notes?: string | null
+          number?: number
+          order_date?: string
+          payment_method?: string | null
+          shipping_address?: string | null
+          shipping_method?: string | null
+          status?: string
+          tracking_number?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           created_at: string
@@ -572,6 +635,51 @@ export type Database = {
           name?: string | null
           role?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      quotations: {
+        Row: {
+          created_at: string | null
+          customer_name: string
+          id: string
+          items: Json
+          number: number
+          quotation_date: string
+          status: string
+          terms: string | null
+          total: number
+          updated_at: string | null
+          user_id: string | null
+          valid_until: string
+        }
+        Insert: {
+          created_at?: string | null
+          customer_name: string
+          id?: string
+          items: Json
+          number: number
+          quotation_date: string
+          status: string
+          terms?: string | null
+          total: number
+          updated_at?: string | null
+          user_id?: string | null
+          valid_until: string
+        }
+        Update: {
+          created_at?: string | null
+          customer_name?: string
+          id?: string
+          items?: Json
+          number?: number
+          quotation_date?: string
+          status?: string
+          terms?: string | null
+          total?: number
+          updated_at?: string | null
+          user_id?: string | null
+          valid_until?: string
         }
         Relationships: []
       }
