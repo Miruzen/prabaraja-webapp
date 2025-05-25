@@ -21,14 +21,14 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Asset } from "@/pages/Assets";
+import { UIAsset } from "@/pages/Assets";
 
 interface AssetsTableProps {
   itemsPerPage: number;
   search: string;
-  assets: Asset[];
+  assets: UIAsset[];
   onDeleteAsset: (id: string) => void;
-  onSellAsset: (asset: Asset) => void;
+  onSellAsset: (asset: UIAsset) => void;
   isAdmin: boolean;
 }
 
@@ -50,7 +50,7 @@ export const AssetsTable = ({
     }).format(amount);
   };
 
-  const getAssetIcon = (type: Asset["type"]) => {
+  const getAssetIcon = (type: UIAsset["type"]) => {
     switch (type) {
       case "computer": return <Laptop className="h-4 w-4" />;
       case "furniture": return <Armchair className="h-4 w-4" />;
