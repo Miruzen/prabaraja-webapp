@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,6 +74,13 @@ const Assets = () => {
   const updateAssetMutation = useUpdateAsset();
   const deleteAssetMutation = useDeleteAsset();
 
+  // Define calculateCurrentValue function before using it
+  const calculateCurrentValue = (price: number, purchaseDate: string) => {
+    // Simplified straight-line depreciation (20% per year)
+    const years = (new Date().getTime() - new Date(purchaseDate).getTime()) / (1000 * 60 * 60 * 24 * 365);
+    return Math.max(0, price * (1 - 0.2 * years));
+  };
+
   // Transform Supabase assets to UI format
   const assets: UIAsset[] = supabaseAssets
     .filter(asset => !asset.sale_date) // Only show unsold assets
@@ -113,12 +119,6 @@ const Assets = () => {
       saleReason: asset.reason_for_sale as "upgrade" | "obsolete" | "downsizing" | "other" | undefined,
       notes: asset.notes,
     }));
-
-  const calculateCurrentValue = (price: number, purchaseDate: string) => {
-    // Simplified straight-line depreciation (20% per year)
-    const years = (new Date().getTime() - new Date(purchaseDate).getTime()) / (1000 * 60 * 60 * 24 * 365);
-    return Math.max(0, price * (1 - 0.2 * years));
-  };
 
   const handleAddAsset = async (newAsset: Omit<UIAsset, "id" | "currentValue">) => {
     try {
