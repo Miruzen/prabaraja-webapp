@@ -42,15 +42,23 @@ export function PurchaseContent({ invoices }: PurchaseContentProps) {
     paidAmount: 0 // This would need to be tracked separately
   } as InvoicePurchase));
 
-  // Filter purchases based on search and status
+  // Filter purchases based on active tab, search and status
   const filteredPurchases = transformedPurchases.filter(purchase => {
+    // Tab filter - for now we only have invoices data, so show invoices for all tabs
+    const matchesTab = activeTab === "invoices" || 
+                      (activeTab === "shipments" && purchase.type === "shipment") ||
+                      (activeTab === "orders" && purchase.type === "order") ||
+                      (activeTab === "offers" && purchase.type === "offer") ||
+                      (activeTab === "requests" && purchase.type === "request") ||
+                      (activeTab === "approval" && purchase.status === "pending");
+    
     const matchesSearch = search === "" || 
       purchase.number.toLowerCase().includes(search.toLowerCase()) ||
       purchase.approver.toLowerCase().includes(search.toLowerCase());
     
     const matchesStatus = statusFilter === "all" || purchase.status === statusFilter;
     
-    return matchesSearch && matchesStatus;
+    return matchesTab && matchesSearch && matchesStatus;
   });
 
   // Calculate stats for StatsCards

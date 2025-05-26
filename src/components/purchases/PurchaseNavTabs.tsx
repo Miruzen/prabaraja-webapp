@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Truck } from "lucide-react";
+import { FileText, Truck, ShoppingCart, Tag, FileQuestion, CheckCircle } from "lucide-react";
 
 interface PurchaseNavTabsProps {
   activeTab: string;
@@ -10,12 +10,12 @@ interface PurchaseNavTabsProps {
 
 export const PurchaseNavTabs = ({ activeTab, setActiveTab }: PurchaseNavTabsProps) => {
   return (
-    <Tabs defaultValue={activeTab} className="w-full" onValueChange={setActiveTab}>
-      <TabsList className="w-full max-w-md border-b bg-transparent p-0">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <TabsList className="w-full max-w-4xl border-b bg-transparent p-0">
         <TabsTrigger 
-          value="invoice" 
+          value="invoices" 
           className={`flex items-center gap-2 rounded-none border-b-2 px-4 py-2 ${
-            activeTab === "invoice" ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-500"
+            activeTab === "invoices" ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-500"
           }`}
         >
           <FileText className="h-4 w-4" />
@@ -23,23 +23,53 @@ export const PurchaseNavTabs = ({ activeTab, setActiveTab }: PurchaseNavTabsProp
         </TabsTrigger>
         
         <TabsTrigger 
-          value="order" 
+          value="shipments" 
           className={`flex items-center gap-2 rounded-none border-b-2 px-4 py-2 ${
-            activeTab === "order" ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-500"
+            activeTab === "shipments" ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-500"
           }`}
         >
           <Truck className="h-4 w-4" />
-          Order & Delivery
+          Shipments
         </TabsTrigger>
         
         <TabsTrigger 
-          value="quotation" 
+          value="orders" 
           className={`flex items-center gap-2 rounded-none border-b-2 px-4 py-2 ${
-            activeTab === "quotation" ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-500"
+            activeTab === "orders" ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-500"
           }`}
         >
-          <FileText className="h-4 w-4" />
-          Quotation
+          <ShoppingCart className="h-4 w-4" />
+          Orders
+        </TabsTrigger>
+        
+        <TabsTrigger 
+          value="offers" 
+          className={`flex items-center gap-2 rounded-none border-b-2 px-4 py-2 ${
+            activeTab === "offers" ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-500"
+          }`}
+        >
+          <Tag className="h-4 w-4" />
+          Offers
+        </TabsTrigger>
+        
+        <TabsTrigger 
+          value="requests" 
+          className={`flex items-center gap-2 rounded-none border-b-2 px-4 py-2 ${
+            activeTab === "requests" ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-500"
+          }`}
+        >
+          <FileQuestion className="h-4 w-4" />
+          Requests
+        </TabsTrigger>
+        
+        <TabsTrigger 
+          value="approval" 
+          className={`flex items-center gap-2 rounded-none border-b-2 px-4 py-2 ${
+            activeTab === "approval" ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-500"
+          }`}
+        >
+          <CheckCircle className="h-4 w-4" />
+          Approval
         </TabsTrigger>
       </TabsList>
     </Tabs>
