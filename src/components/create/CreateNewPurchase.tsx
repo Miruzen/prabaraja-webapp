@@ -29,6 +29,8 @@ const CreateNewPurchase = () => {
 
   const handleSubmit = async (formData: any) => {
     try {
+      console.log('Submitting form data:', formData);
+      
       const baseData = {
         number: Date.now(), // Generate a unique number
         type: formData.type || purchaseType,
@@ -40,11 +42,13 @@ const CreateNewPurchase = () => {
         grand_total: formData.grandTotal || 0
       };
 
+      console.log('Base data:', baseData);
+
       switch (purchaseType) {
         case "invoice":
           await createInvoiceMutation.mutateAsync({
             ...baseData,
-            approver: formData.approver,
+            approver: formData.approver || "Unknown",
             tax_calculation_method: formData.taxCalculationMethod || false,
             ppn_percentage: formData.ppnPercentage,
             pph_percentage: formData.pphPercentage,
@@ -58,7 +62,7 @@ const CreateNewPurchase = () => {
           await createOfferMutation.mutateAsync({
             ...baseData,
             expiry_date: formData.expiryDate,
-            discount_terms: formData.discountTerms
+            discount_terms: formData.discountTerms || ""
           });
           break;
         case "order":
@@ -68,18 +72,23 @@ const CreateNewPurchase = () => {
           });
           break;
         case "request":
-          await createRequestMutation.mutateAsync({
+          console.log('Creating request with data:', {
             ...baseData,
             requested_by: formData.requestedBy,
             urgency: formData.urgency
+          });
+          await createRequestMutation.mutateAsync({
+            ...baseData,
+            requested_by: formData.requestedBy || "Unknown",
+            urgency: formData.urgency || "Medium"
           });
           break;
         case "shipment":
           await createShipmentMutation.mutateAsync({
             ...baseData,
-            tracking_number: formData.trackingNumber,
-            carrier: formData.carrier,
-            shipping_date: formData.shippingDate
+            tracking_number: formData.trackingNumber || "",
+            carrier: formData.carrier || "",
+            shipping_date: formData.shippingDate || formData.date
           });
           break;
       }
@@ -88,7 +97,7 @@ const CreateNewPurchase = () => {
       navigate("/purchases");
     } catch (error) {
       console.error('Error creating purchase:', error);
-      toast.error("Failed to create purchase");
+      toast.error("Failed to create purchase. Please check the console for details.");
     }
   };
 

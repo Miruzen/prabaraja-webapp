@@ -4,6 +4,9 @@ import { PurchaseType } from "@/types/purchase";
 import { PurchaseInformationForm } from "@/components/purchases/PurchaseInformationForm";
 import { PurchaseItemsForm } from "@/components/purchases/PurchaseItemsForm";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 
 interface CreatePurchaseFormProps {
@@ -32,10 +35,26 @@ export function CreatePurchaseForm({
     price: 0 
   }]);
 
+  // Request-specific fields
+  const [requestedBy, setRequestedBy] = useState("");
+  const [urgency, setUrgency] = useState<"High" | "Medium" | "Low">("Medium");
+
+  // Offer-specific fields
+  const [expiryDate, setExpiryDate] = useState(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+  const [discountTerms, setDiscountTerms] = useState("");
+
+  // Order-specific fields
+  const [orderDate, setOrderDate] = useState(new Date().toISOString().split('T')[0]);
+
+  // Shipment-specific fields
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [carrier, setCarrier] = useState("");
+  const [shippingDate, setShippingDate] = useState(new Date().toISOString().split('T')[0]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const formData = {
+    const baseFormData = {
       type: purchaseType,
       date,
       dueDate,
@@ -52,6 +71,40 @@ export function CreatePurchaseForm({
       pph: 0,
       grandTotal: items.reduce((total, item) => total + (item.quantity * item.price), 0)
     };
+
+    // Add type-specific fields based on purchaseType
+    let formData = { ...baseFormData };
+
+    switch (purchaseType) {
+      case "request":
+        formData = {
+          ...formData,
+          requestedBy: requestedBy || "Unknown",
+          urgency
+        };
+        break;
+      case "offer":
+        formData = {
+          ...formData,
+          expiryDate,
+          discountTerms
+        };
+        break;
+      case "order":
+        formData = {
+          ...formData,
+          orderDate
+        };
+        break;
+      case "shipment":
+        formData = {
+          ...formData,
+          trackingNumber,
+          carrier,
+          shippingDate
+        };
+        break;
+    }
     
     onSubmit?.(formData);
   };
@@ -74,6 +127,119 @@ export function CreatePurchaseForm({
         tags={tags}
         setTags={setTags}
       />
+
+      {/* Request-specific fields */}
+      {purchaseType === "request" && (
+        <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+          <h3 className="font-medium text-gray-900">Request Details</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="requestedBy">Requested By</Label>
+              <Input
+                id="requestedBy"
+                value={requestedBy}
+                onChange={(e) => setRequestedBy(e.target.value)}
+                placeholder="Enter requester name"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="urgency">Urgency Level</Label>
+              <Select value={urgency} onValueChange={(value: "High" | "Medium" | "Low") => setUrgency(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="High">High</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="Low">Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Offer-specific fields */}
+      {purchaseType === "offer" && (
+        <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+          <h3 className="font-medium text-gray-900">Offer Details</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="expiryDate">Expiry Date</Label>
+              <Input
+                id="expiryDate"
+                type="date"
+                value={expiryDate}
+                onChange={(e) => setExpiryDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="discountTerms">Discount Terms</Label>
+              <Input
+                id="discountTerms"
+                value={discountTerms}
+                onChange={(e) => setDiscountTerms(e.target.value)}
+                placeholder="Enter discount terms"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Order-specific fields */}
+      {purchaseType === "order" && (
+        <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+          <h3 className="font-medium text-gray-900">Order Details</h3>
+          <div className="space-y-2">
+            <Label htmlFor="orderDate">Order Date</Label>
+            <Input
+              id="orderDate"
+              type="date"
+              value={orderDate}
+              onChange={(e) => setOrderDate(e.target.value)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Shipment-specific fields */}
+      {purchaseType === "shipment" && (
+        <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+          <h3 className="font-medium text-gray-900">Shipment Details</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="trackingNumber">Tracking Number</Label>
+              <Input
+                id="trackingNumber"
+                value={trackingNumber}
+                onChange={(e) => setTrackingNumber(e.target.value)}
+                placeholder="Enter tracking number"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="carrier">Carrier</Label>
+              <Input
+                id="carrier"
+                value={carrier}
+                onChange={(e) => setCarrier(e.target.value)}
+                placeholder="Enter carrier name"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="shippingDate">Shipping Date</Label>
+              <Input
+                id="shippingDate"
+                type="date"
+                value={shippingDate}
+                onChange={(e) => setShippingDate(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
       
       <PurchaseItemsForm
         items={items}

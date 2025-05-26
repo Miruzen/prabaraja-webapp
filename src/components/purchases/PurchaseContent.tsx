@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -114,7 +113,8 @@ export function PurchaseContent() {
       amount: request.grand_total,
       itemCount: Array.isArray(request.items) ? request.items.length : 0,
       requestedBy: request.requested_by,
-      urgency: request.urgency as any
+      urgency: request.urgency as any,
+      dueDate: request.due_date ? new Date(request.due_date) : undefined
     }));
   };
 
@@ -144,6 +144,9 @@ export function PurchaseContent() {
     const requestPurchases = transformRequestsToP(requests);
     const shipmentPurchases = transformShipmentsToP(shipments);
 
+    console.log('All request purchases:', requestPurchases);
+    console.log('Pending requests:', requestPurchases.filter(r => r.status === "pending"));
+
     switch (activeTab) {
       case "invoices":
         return invoicePurchases;
@@ -156,7 +159,10 @@ export function PurchaseContent() {
       case "shipments":
         return shipmentPurchases;
       case "approval":
-        return requestPurchases.filter(r => r.status === "pending");
+        // Show ALL pending requests, not just from requests table
+        const allPendingRequests = requestPurchases.filter(r => r.status === "pending");
+        console.log('Approval tab - showing pending requests:', allPendingRequests);
+        return allPendingRequests;
       default:
         return [...invoicePurchases, ...offerPurchases, ...orderPurchases, ...requestPurchases, ...shipmentPurchases];
     }
@@ -192,6 +198,7 @@ export function PurchaseContent() {
     })
     .reduce((total, p) => total + p.amount, 0);
 
+  // Handle adding a new purchase
   const handleAddPurchase = async (data: any) => {
     try {
       const baseData = {
@@ -257,6 +264,7 @@ export function PurchaseContent() {
     }
   };
 
+  // Handle deleting a purchase
   const handleDeleteTransaction = async (id: string) => {
     try {
       await deleteInvoiceMutation.mutateAsync(id);
@@ -267,6 +275,7 @@ export function PurchaseContent() {
     }
   };
 
+  // Handle approving a purchase
   const handleApproveTransaction = async (id: string) => {
     try {
       await updateInvoiceMutation.mutateAsync({
@@ -280,6 +289,7 @@ export function PurchaseContent() {
     }
   };
 
+  // Handle rejecting a purchase
   const handleRejectTransaction = async (id: string) => {
     try {
       await updateInvoiceMutation.mutateAsync({
@@ -293,6 +303,7 @@ export function PurchaseContent() {
     }
   };
 
+  // Get the default purchase type based on the active tab
   const getDefaultPurchaseType = (): PurchaseType => {
     switch(activeTab) {
       case "invoices": return "invoice";
@@ -304,10 +315,12 @@ export function PurchaseContent() {
     }
   };
 
+  // Handle clicking the "Add Purchase" button
   const handleAddPurchaseClick = (type: PurchaseType) => {
     navigate(`/create-new-purchase?type=${type}`);
   };
 
+  // Render the component
   if (isLoading) {
     return (
       <div className="space-y-6">
