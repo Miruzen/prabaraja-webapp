@@ -19,48 +19,66 @@ export function CreatePurchaseForm({
   onSubmit,
   isLoading = false 
 }: CreatePurchaseFormProps) {
-  const [formData, setFormData] = useState({
-    type: purchaseType,
-    date: new Date().toISOString().split('T')[0],
-    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    status: "pending",
-    approver: "",
-    tags: [],
-    items: [],
-    taxCalculationMethod: false,
-    ppnPercentage: 11,
-    pphPercentage: 2,
-    pphType: "",
-    dpp: 0,
-    ppn: 0,
-    pph: 0,
-    grandTotal: 0
-  });
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [dueDate, setDueDate] = useState(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+  const [number, setNumber] = useState(`INV-${new Date().getFullYear()}${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`);
+  const [approver, setApprover] = useState("");
+  const [status, setStatus] = useState<"pending" | "completed" | "cancelled" | "Half-paid">("pending");
+  const [tags, setTags] = useState("");
+  const [items, setItems] = useState([{ 
+    id: Math.random().toString(36).substr(2, 9), 
+    name: '', 
+    quantity: 1, 
+    price: 0 
+  }]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const formData = {
+      type: purchaseType,
+      date,
+      dueDate,
+      status,
+      approver,
+      tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+      items,
+      taxCalculationMethod: false,
+      ppnPercentage: 11,
+      pphPercentage: 2,
+      pphType: "",
+      dpp: 0,
+      ppn: 0,
+      pph: 0,
+      grandTotal: items.reduce((total, item) => total + (item.quantity * item.price), 0)
+    };
+    
     onSubmit?.(formData);
-  };
-
-  const handleFormDataChange = (field: string, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <PurchaseInformationForm
-        formData={formData}
-        onFormDataChange={handleFormDataChange}
         purchaseType={purchaseType}
         setPurchaseType={setPurchaseType}
+        date={date}
+        setDate={setDate}
+        number={number}
+        setNumber={setNumber}
+        approver={approver}
+        setApprover={setApprover}
+        dueDate={dueDate}
+        setDueDate={setDueDate}
+        status={status}
+        setStatus={setStatus}
+        tags={tags}
+        setTags={setTags}
       />
       
       <PurchaseItemsForm
-        formData={formData}
-        onFormDataChange={handleFormDataChange}
+        items={items}
+        setItems={setItems}
+        purchaseType={purchaseType}
       />
 
       <div className="flex justify-end gap-4 pt-6 border-t">

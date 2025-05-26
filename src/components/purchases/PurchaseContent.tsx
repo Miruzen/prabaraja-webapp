@@ -53,6 +53,23 @@ export function PurchaseContent({ invoices }: PurchaseContentProps) {
     return matchesSearch && matchesStatus;
   });
 
+  // Calculate stats for StatsCards
+  const unpaidAmount = transformedPurchases
+    .filter(p => p.status === "pending" || p.status === "Half-paid")
+    .reduce((total, p) => total + p.amount, 0);
+
+  const overdueCount = transformedPurchases
+    .filter(p => p.status === "pending" && new Date(p.dueDate || 0) < new Date())
+    .length;
+
+  const last30DaysPayments = transformedPurchases
+    .filter(p => {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      return p.status === "completed" && new Date(p.date) >= thirtyDaysAgo;
+    })
+    .reduce((total, p) => total + p.amount, 0);
+
   const handleAddPurchase = async (data: any) => {
     try {
       const invoiceData = {
@@ -124,17 +141,25 @@ export function PurchaseContent({ invoices }: PurchaseContentProps) {
     }
   };
 
+  const handleAddPurchaseClick = (type: PurchaseType) => {
+    navigate(`/create-new-purchase?type=${type}`);
+  };
+
   return (
     <div className="space-y-6">
-      <StatsCards purchases={transformedPurchases} />
+      <StatsCards 
+        unpaidAmount={unpaidAmount}
+        overdueCount={overdueCount}
+        last30DaysPayments={last30DaysPayments}
+      />
       
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <PurchaseNavTabs activeTab={activeTab} onTabChange={setActiveTab} />
-        <PurchaseAddButton onClick={() => setIsDialogOpen(true)} />
+        <PurchaseNavTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+        <PurchaseAddButton onAddPurchase={handleAddPurchaseClick} />
       </div>
 
       <PurchaseFilters
-        search={search}
+        searchValue={search}
         onSearchChange={setSearch}
         statusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
