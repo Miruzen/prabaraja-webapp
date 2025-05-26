@@ -1,8 +1,7 @@
 
 import { useParams } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
-import { useEffect, useState } from "react";
-import { Purchase, PURCHASES_STORAGE_KEY } from "@/types/purchase";
+import { usePurchaseById } from "@/hooks/usePurchases";
 import { InvoiceHeader } from "@/components/invoice/InvoiceHeader";
 import { InvoiceSummary } from "@/components/invoice/InvoiceSummary";
 import { VendorInformation } from "@/components/invoice/VendorInformation";
@@ -12,68 +11,69 @@ import { AdditionalInformation } from "@/components/invoice/AdditionalInformatio
 
 const InvoiceDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const [invoice, setInvoice] = useState<Purchase | null>(null);
-  const [loading, setLoading] = useState(true);
+  
+  // Try to get the type from URL or default to invoice
+  const searchParams = new URLSearchParams(location.search);
+  const type = searchParams.get("type") || "invoice";
+  
+  const { data: purchase, isLoading, error } = usePurchaseById(id || "", type);
 
-  useEffect(() => {
-    const fetchInvoiceData = () => {  
-      try {
-        const storedPurchases = localStorage.getItem(PURCHASES_STORAGE_KEY);
-        if (storedPurchases) {
-          const parsedPurchases = JSON.parse(storedPurchases);
-          const foundInvoice = parsedPurchases.find((p: any) => p.id === id && p.type === "invoice");
-          
-          if (foundInvoice) {
-            // Convert date strings to Date objects
-            foundInvoice.date = new Date(foundInvoice.date);
-            foundInvoice.dueDate = foundInvoice.dueDate ? new Date(foundInvoice.dueDate) : null;
-            setInvoice(foundInvoice);
-          }
-        }
-      } catch (error) {
-        console.error("Error loading invoice data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchInvoiceData();
-  }, [id]);
-
-  if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
-  }
-
-  if (!invoice) {
+  if (isLoading) {
     return (
       <div className="flex h-screen bg-background">
         <Sidebar />
         <div className="flex-1 overflow-auto p-6">
-          <div className="bg-white rounded-md shadow p-6 text-center">
-            <h2 className="text-xl font-semibold mb-2">Invoice Not Found</h2>
-            <p className="text-gray-500">The invoice you're looking for doesn't exist or may have been deleted.</p>
+          <div className="flex justify-center items-center h-64">
+            <div className="text-lg">Loading...</div>
           </div>
         </div>
       </div>
     );
   }
 
-  const isPaid = invoice.status === "completed";
-  const isOverdue = invoice.status === "pending" && invoice.dueDate && new Date() > invoice.dueDate;
+  if (error || !purchase) {
+    return (
+      <div className="flex h-screen bg-background">
+        <Sidebar />
+        <div className="flex-1 overflow-auto p-6">
+          <div className="bg-white rounded-md shadow p-6 text-center">
+            <h2 className="text-xl font-semibold mb-2">Purchase Not Found</h2>
+            <p className="text-gray-500">The purchase you're looking for doesn't exist or may have been deleted.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Transform the purchase data to match the expected format
+  const transformedPurchase = {
+    id: purchase.id,
+    number: `${type.toUpperCase().substring(0, 3)}-${purchase.number}`,
+    date: new Date(purchase.date),
+    dueDate: purchase.due_date ? new Date(purchase.due_date) : null,
+    status: purchase.status,
+    approver: purchase.approver || '',
+    priority: purchase.urgency || 'Medium',
+    tags: purchase.tags || [],
+    items: purchase.items || []
+  };
+
+  const isPaid = transformedPurchase.status === "completed";
+  const isOverdue = transformedPurchase.status === "pending" && transformedPurchase.dueDate && new Date() > transformedPurchase.dueDate;
 
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
       <div className="flex-1 overflow-auto">
-        <InvoiceHeader number={invoice.number} date={invoice.date} />
+        <InvoiceHeader number={transformedPurchase.number} date={transformedPurchase.date} />
 
         <div className="p-6">
           <div className="grid grid-cols-1 gap-6">
             <InvoiceSummary 
-              number={invoice.number}
-              date={invoice.date}
-              dueDate={invoice.dueDate}
-              status={invoice.status}
+              number={transformedPurchase.number}
+              date={transformedPurchase.date}
+              dueDate={transformedPurchase.dueDate}
+              status={transformedPurchase.status}
               isOverdue={isOverdue}
               isPaid={isPaid}
             />
@@ -81,20 +81,20 @@ const InvoiceDetail = () => {
             <VendorInformation />
 
             <InvoiceItems 
-              items={invoice.items || []}
+              items={transformedPurchase.items}
               isPaid={isPaid}
             />
 
             <PaymentInformation 
               isPaid={isPaid}
               isOverdue={isOverdue}
-              date={invoice.date}
+              date={transformedPurchase.date}
             />
 
             <AdditionalInformation 
-              approver={invoice.approver}
-              priority={invoice.priority}
-              tags={invoice.tags}
+              approver={transformedPurchase.approver}
+              priority={transformedPurchase.priority}
+              tags={transformedPurchase.tags}
             />
           </div>
         </div>

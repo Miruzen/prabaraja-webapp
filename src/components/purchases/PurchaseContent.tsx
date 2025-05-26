@@ -2,75 +2,189 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Purchase, PurchaseType, InvoicePurchase } from "@/types/purchase";
+import { Purchase, PurchaseType, InvoicePurchase, OfferPurchase, OrderPurchase, RequestPurchase, ShipmentPurchase } from "@/types/purchase";
 import { PurchaseNavTabs } from "./PurchaseNavTabs";
 import { PurchaseFilters } from "./PurchaseFilters";
 import { PurchaseAddButton } from "./PurchaseAddButton";
 import { StatsCards } from "./StatsCards";
 import { TransactionsTable } from "./TransactionsTable";
 import { AddPurchaseDialog } from "@/components/AddPurchaseDialog";
-import { useCreateInvoice, useDeleteInvoice, useUpdateInvoice, Invoice } from "@/hooks/usePurchases";
+import { 
+  useInvoices, 
+  useOffers, 
+  useOrders, 
+  useRequests, 
+  useShipments,
+  useCreateInvoice,
+  useCreateOffer,
+  useCreateOrder,
+  useCreateRequest,
+  useCreateShipment,
+  useDeleteInvoice,
+  useUpdateInvoice
+} from "@/hooks/usePurchases";
 
-interface PurchaseContentProps {
-  invoices: Invoice[];
-}
-
-export function PurchaseContent({ invoices }: PurchaseContentProps) {
+export function PurchaseContent() {
   const [activeTab, setActiveTab] = useState<string>("invoices");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [search, setSearch] = useState("");
+  const [searchValue, setSearchValue] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const navigate = useNavigate();
 
+  // Fetch data from all tables
+  const { data: invoices = [], isLoading: invoicesLoading } = useInvoices();
+  const { data: offers = [], isLoading: offersLoading } = useOffers();
+  const { data: orders = [], isLoading: ordersLoading } = useOrders();
+  const { data: requests = [], isLoading: requestsLoading } = useRequests();
+  const { data: shipments = [], isLoading: shipmentsLoading } = useShipments();
+
+  // Mutations
   const createInvoiceMutation = useCreateInvoice();
+  const createOfferMutation = useCreateOffer();
+  const createOrderMutation = useCreateOrder();
+  const createRequestMutation = useCreateRequest();
+  const createShipmentMutation = useCreateShipment();
   const deleteInvoiceMutation = useDeleteInvoice();
   const updateInvoiceMutation = useUpdateInvoice();
 
-  // Transform Supabase invoices to Purchase format
-  const transformedPurchases: Purchase[] = invoices.map(invoice => ({
-    id: invoice.id,
-    date: new Date(invoice.date),
-    number: `INV-${invoice.number}`,
-    approver: invoice.approver,
-    status: invoice.status as any,
-    tags: invoice.tags || [],
-    type: "invoice" as const,
-    items: invoice.items as any[],
-    amount: invoice.grand_total,
-    itemCount: Array.isArray(invoice.items) ? invoice.items.length : 0,
-    dueDate: new Date(invoice.due_date),
-    paidAmount: 0 // This would need to be tracked separately
-  } as InvoicePurchase));
+  const isLoading = invoicesLoading || offersLoading || ordersLoading || requestsLoading || shipmentsLoading;
 
-  // Filter purchases based on active tab, search and status
-  const filteredPurchases = transformedPurchases.filter(purchase => {
-    // Tab filter - for now we only have invoices data, so show invoices for all tabs
-    const matchesTab = activeTab === "invoices" || 
-                      (activeTab === "shipments" && purchase.type === "shipment") ||
-                      (activeTab === "orders" && purchase.type === "order") ||
-                      (activeTab === "offers" && purchase.type === "offer") ||
-                      (activeTab === "requests" && purchase.type === "request") ||
-                      (activeTab === "approval" && purchase.status === "pending");
-    
-    const matchesSearch = search === "" || 
-      purchase.number.toLowerCase().includes(search.toLowerCase()) ||
-      purchase.approver.toLowerCase().includes(search.toLowerCase());
+  // Transform data to unified Purchase format
+  const transformInvoicesToPurchases = (invoices: any[]): InvoicePurchase[] => {
+    return invoices.map(invoice => ({
+      id: invoice.id,
+      date: new Date(invoice.date),
+      number: `INV-${invoice.number}`,
+      approver: invoice.approver,
+      status: invoice.status as any,
+      tags: invoice.tags || [],
+      type: "invoice" as const,
+      items: invoice.items as any[],
+      amount: invoice.grand_total,
+      itemCount: Array.isArray(invoice.items) ? invoice.items.length : 0,
+      dueDate: new Date(invoice.due_date),
+      paidAmount: 0
+    }));
+  };
+
+  const transformOffersToP = (offers: any[]): OfferPurchase[] => {
+    return offers.map(offer => ({
+      id: offer.id,
+      date: new Date(offer.date),
+      number: `OFR-${offer.number}`,
+      approver: '',
+      status: offer.status as any,
+      tags: offer.tags || [],
+      type: "offer" as const,
+      items: offer.items as any[],
+      amount: offer.grand_total,
+      itemCount: Array.isArray(offer.items) ? offer.items.length : 0,
+      expiryDate: offer.expiry_date ? new Date(offer.expiry_date) : new Date(),
+      discountTerms: offer.discount_terms || ''
+    }));
+  };
+
+  const transformOrdersToP = (orders: any[]): OrderPurchase[] => {
+    return orders.map(order => ({
+      id: order.id,
+      date: new Date(order.date),
+      number: `ORD-${order.number}`,
+      approver: '',
+      status: order.status as any,
+      tags: order.tags || [],
+      type: "order" as const,
+      items: order.items as any[],
+      amount: order.grand_total,
+      itemCount: Array.isArray(order.items) ? order.items.length : 0,
+      orderDate: new Date(order.orders_date),
+      discountTerms: ''
+    }));
+  };
+
+  const transformRequestsToP = (requests: any[]): RequestPurchase[] => {
+    return requests.map(request => ({
+      id: request.id,
+      date: request.date ? new Date(request.date) : new Date(),
+      number: `REQ-${request.number}`,
+      approver: '',
+      status: request.status as any,
+      tags: request.tags || [],
+      type: "request" as const,
+      items: request.items as any[],
+      amount: request.grand_total,
+      itemCount: Array.isArray(request.items) ? request.items.length : 0,
+      requestedBy: request.requested_by,
+      urgency: request.urgency as any
+    }));
+  };
+
+  const transformShipmentsToP = (shipments: any[]): ShipmentPurchase[] => {
+    return shipments.map(shipment => ({
+      id: shipment.id,
+      date: new Date(shipment.date),
+      number: `SH-${shipment.number}`,
+      approver: '',
+      status: shipment.status as any,
+      tags: shipment.tags || [],
+      type: "shipment" as const,
+      items: shipment.items as any[],
+      amount: shipment.grand_total,
+      itemCount: Array.isArray(shipment.items) ? shipment.items.length : 0,
+      trackingNumber: shipment.tracking_number,
+      carrier: shipment.carrier,
+      shippingDate: new Date(shipment.shipping_date)
+    }));
+  };
+
+  // Get all purchases for the active tab
+  const getAllPurchases = (): Purchase[] => {
+    const invoicePurchases = transformInvoicesToPurchases(invoices);
+    const offerPurchases = transformOffersToP(offers);
+    const orderPurchases = transformOrdersToP(orders);
+    const requestPurchases = transformRequestsToP(requests);
+    const shipmentPurchases = transformShipmentsToP(shipments);
+
+    switch (activeTab) {
+      case "invoices":
+        return invoicePurchases;
+      case "offers":
+        return offerPurchases;
+      case "orders":
+        return orderPurchases;
+      case "requests":
+        return requestPurchases;
+      case "shipments":
+        return shipmentPurchases;
+      case "approval":
+        return requestPurchases.filter(r => r.status === "pending");
+      default:
+        return [...invoicePurchases, ...offerPurchases, ...orderPurchases, ...requestPurchases, ...shipmentPurchases];
+    }
+  };
+
+  // Filter purchases based on search and status
+  const filteredPurchases = getAllPurchases().filter(purchase => {
+    const matchesSearch = searchValue === "" || 
+      purchase.number.toLowerCase().includes(searchValue.toLowerCase()) ||
+      purchase.approver.toLowerCase().includes(searchValue.toLowerCase());
     
     const matchesStatus = statusFilter === "all" || purchase.status === statusFilter;
     
-    return matchesTab && matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus;
   });
 
   // Calculate stats for StatsCards
-  const unpaidAmount = transformedPurchases
+  const allPurchases = [...transformInvoicesToPurchases(invoices), ...transformOffersToP(offers), ...transformOrdersToP(orders), ...transformRequestsToP(requests), ...transformShipmentsToP(shipments)];
+  
+  const unpaidAmount = allPurchases
     .filter(p => p.status === "pending" || p.status === "Half-paid")
     .reduce((total, p) => total + p.amount, 0);
 
-  const overdueCount = transformedPurchases
-    .filter(p => p.status === "pending" && new Date(p.dueDate || 0) < new Date())
+  const overdueCount = allPurchases
+    .filter(p => p.status === "pending" && p.dueDate && new Date(p.dueDate) < new Date())
     .length;
 
-  const last30DaysPayments = transformedPurchases
+  const last30DaysPayments = allPurchases
     .filter(p => {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -80,20 +194,61 @@ export function PurchaseContent({ invoices }: PurchaseContentProps) {
 
   const handleAddPurchase = async (data: any) => {
     try {
-      const invoiceData = {
+      const baseData = {
         number: parseInt(data.number.replace(/\D/g, '')),
         type: data.type,
         date: data.date,
         due_date: data.dueDate,
         status: data.status,
-        approver: data.approver,
         tags: data.tags,
-        items: [],
-        tax_calculation_method: false,
-        grand_total: 0
+        items: data.items || [],
+        grand_total: data.grandTotal || 0
       };
 
-      await createInvoiceMutation.mutateAsync(invoiceData);
+      switch (data.type) {
+        case "invoice":
+          await createInvoiceMutation.mutateAsync({
+            ...baseData,
+            approver: data.approver,
+            tax_calculation_method: false,
+            ppn_percentage: data.ppnPercentage,
+            pph_percentage: data.pphPercentage,
+            pph_type: data.pphType,
+            dpp: data.dpp,
+            ppn: data.ppn,
+            pph: data.pph
+          });
+          break;
+        case "offer":
+          await createOfferMutation.mutateAsync({
+            ...baseData,
+            expiry_date: data.expiryDate,
+            discount_terms: data.discountTerms
+          });
+          break;
+        case "order":
+          await createOrderMutation.mutateAsync({
+            ...baseData,
+            orders_date: data.orderDate || data.date
+          });
+          break;
+        case "request":
+          await createRequestMutation.mutateAsync({
+            ...baseData,
+            requested_by: data.requestedBy,
+            urgency: data.urgency
+          });
+          break;
+        case "shipment":
+          await createShipmentMutation.mutateAsync({
+            ...baseData,
+            tracking_number: data.trackingNumber,
+            carrier: data.carrier,
+            shipping_date: data.shippingDate
+          });
+          break;
+      }
+
       setIsDialogOpen(false);
       toast.success("Purchase created successfully");
     } catch (error) {
@@ -153,6 +308,16 @@ export function PurchaseContent({ invoices }: PurchaseContentProps) {
     navigate(`/create-new-purchase?type=${type}`);
   };
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg">Loading purchases...</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <StatsCards 
@@ -167,8 +332,8 @@ export function PurchaseContent({ invoices }: PurchaseContentProps) {
       </div>
 
       <PurchaseFilters
-        searchValue={search}
-        onSearchChange={setSearch}
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
         statusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
       />

@@ -6,7 +6,13 @@ import { Sidebar } from "@/components/Sidebar";
 import { PurchaseFormHeader } from "@/components/purchases/PurchaseFormHeader";
 import { CreatePurchaseForm } from "@/components/create/CreatePurchaseForm";
 import { PurchaseType } from "@/types/purchase";
-import { useCreateInvoice } from "@/hooks/usePurchases";
+import { 
+  useCreateInvoice,
+  useCreateOffer,
+  useCreateOrder,
+  useCreateRequest,
+  useCreateShipment
+} from "@/hooks/usePurchases";
 
 const CreateNewPurchase = () => {
   const location = useLocation();
@@ -16,29 +22,68 @@ const CreateNewPurchase = () => {
   const [purchaseType, setPurchaseType] = useState<PurchaseType>(typeFromUrl);
   
   const createInvoiceMutation = useCreateInvoice();
+  const createOfferMutation = useCreateOffer();
+  const createOrderMutation = useCreateOrder();
+  const createRequestMutation = useCreateRequest();
+  const createShipmentMutation = useCreateShipment();
 
   const handleSubmit = async (formData: any) => {
     try {
-      const invoiceData = {
+      const baseData = {
         number: Date.now(), // Generate a unique number
         type: formData.type || purchaseType,
         date: formData.date,
         due_date: formData.dueDate,
         status: formData.status || "pending",
-        approver: formData.approver,
         tags: formData.tags || [],
         items: formData.items || [],
-        tax_calculation_method: formData.taxCalculationMethod || false,
-        ppn_percentage: formData.ppnPercentage,
-        pph_percentage: formData.pphPercentage,
-        pph_type: formData.pphType,
-        dpp: formData.dpp,
-        ppn: formData.ppn,
-        pph: formData.pph,
         grand_total: formData.grandTotal || 0
       };
 
-      await createInvoiceMutation.mutateAsync(invoiceData);
+      switch (purchaseType) {
+        case "invoice":
+          await createInvoiceMutation.mutateAsync({
+            ...baseData,
+            approver: formData.approver,
+            tax_calculation_method: formData.taxCalculationMethod || false,
+            ppn_percentage: formData.ppnPercentage,
+            pph_percentage: formData.pphPercentage,
+            pph_type: formData.pphType,
+            dpp: formData.dpp,
+            ppn: formData.ppn,
+            pph: formData.pph
+          });
+          break;
+        case "offer":
+          await createOfferMutation.mutateAsync({
+            ...baseData,
+            expiry_date: formData.expiryDate,
+            discount_terms: formData.discountTerms
+          });
+          break;
+        case "order":
+          await createOrderMutation.mutateAsync({
+            ...baseData,
+            orders_date: formData.orderDate || formData.date
+          });
+          break;
+        case "request":
+          await createRequestMutation.mutateAsync({
+            ...baseData,
+            requested_by: formData.requestedBy,
+            urgency: formData.urgency
+          });
+          break;
+        case "shipment":
+          await createShipmentMutation.mutateAsync({
+            ...baseData,
+            tracking_number: formData.trackingNumber,
+            carrier: formData.carrier,
+            shipping_date: formData.shippingDate
+          });
+          break;
+      }
+
       toast.success("Purchase created successfully");
       navigate("/purchases");
     } catch (error) {
@@ -46,6 +91,10 @@ const CreateNewPurchase = () => {
       toast.error("Failed to create purchase");
     }
   };
+
+  const isLoading = createInvoiceMutation.isPending || createOfferMutation.isPending || 
+                   createOrderMutation.isPending || createRequestMutation.isPending || 
+                   createShipmentMutation.isPending;
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -58,7 +107,7 @@ const CreateNewPurchase = () => {
             purchaseType={purchaseType}
             setPurchaseType={setPurchaseType}
             onSubmit={handleSubmit}
-            isLoading={createInvoiceMutation.isPending}
+            isLoading={isLoading}
           />
         </div>
       </div>
