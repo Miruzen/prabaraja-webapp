@@ -45,17 +45,22 @@ const InvoiceDetail = () => {
     );
   }
 
+  // Helper function to safely get property with fallback
+  const getPurchaseProperty = (property: string, fallback: any = '') => {
+    return (purchase as any)[property] ?? fallback;
+  };
+
   // Transform the purchase data to match the expected format
   const transformedPurchase = {
     id: purchase.id,
-    number: `${type.toUpperCase().substring(0, 3)}-${purchase.number}`,
-    date: new Date(purchase.date),
-    dueDate: purchase.due_date ? new Date(purchase.due_date) : null,
-    status: purchase.status,
-    approver: purchase.approver || '',
-    priority: purchase.urgency || 'Medium',
-    tags: purchase.tags || [],
-    items: purchase.items || []
+    number: `${type.toUpperCase().substring(0, 3)}-${getPurchaseProperty('number', '0000')}`,
+    date: new Date(getPurchaseProperty('date', new Date())),
+    dueDate: getPurchaseProperty('due_date') ? new Date(getPurchaseProperty('due_date')) : null,
+    status: getPurchaseProperty('status', 'pending'),
+    approver: getPurchaseProperty('approver') || getPurchaseProperty('requested_by', ''),
+    priority: getPurchaseProperty('urgency', 'Medium'),
+    tags: getPurchaseProperty('tags', []),
+    items: getPurchaseProperty('items', [])
   };
 
   const isPaid = transformedPurchase.status === "completed";
