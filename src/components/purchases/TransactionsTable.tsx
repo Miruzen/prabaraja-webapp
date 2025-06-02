@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -24,6 +25,7 @@ interface TransactionsTableProps {
   onDeleteTransaction: (id: string) => void;
   onApproveTransaction?: (id: string) => void;
   onRejectTransaction?: (id: string) => void;
+  onReceivePayment?: (id: string) => void;
 }
 
 export function TransactionsTable({
@@ -32,6 +34,7 @@ export function TransactionsTable({
   onDeleteTransaction,
   onApproveTransaction = () => {},
   onRejectTransaction = () => {},
+  onReceivePayment = () => {},
 }: TransactionsTableProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
@@ -76,6 +79,7 @@ export function TransactionsTable({
             invoices={filteredTransactions.filter(isInvoice)}
             onDelete={handleDelete}
             onEdit={handleEdit}
+            onReceivePayment={onReceivePayment}
           />
         );
       case "shipments":

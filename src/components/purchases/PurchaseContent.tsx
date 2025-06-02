@@ -20,7 +20,15 @@ import {
   useCreateRequest,
   useCreateShipment,
   useDeleteInvoice,
-  useUpdateInvoice
+  useDeleteOffer,
+  useDeleteOrder,
+  useDeleteRequest,
+  useDeleteShipment,
+  useUpdateInvoice,
+  useUpdateOffer,
+  useUpdateOrder,
+  useUpdateRequest,
+  useUpdateShipment
 } from "@/hooks/usePurchases";
 
 export function PurchaseContent() {
@@ -37,14 +45,26 @@ export function PurchaseContent() {
   const { data: requests = [], isLoading: requestsLoading } = useRequests();
   const { data: shipments = [], isLoading: shipmentsLoading } = useShipments();
 
-  // Mutations
+  // Create mutations
   const createInvoiceMutation = useCreateInvoice();
   const createOfferMutation = useCreateOffer();
   const createOrderMutation = useCreateOrder();
   const createRequestMutation = useCreateRequest();
   const createShipmentMutation = useCreateShipment();
+
+  // Delete mutations
   const deleteInvoiceMutation = useDeleteInvoice();
+  const deleteOfferMutation = useDeleteOffer();
+  const deleteOrderMutation = useDeleteOrder();
+  const deleteRequestMutation = useDeleteRequest();
+  const deleteShipmentMutation = useDeleteShipment();
+
+  // Update mutations
   const updateInvoiceMutation = useUpdateInvoice();
+  const updateOfferMutation = useUpdateOffer();
+  const updateOrderMutation = useUpdateOrder();
+  const updateRequestMutation = useUpdateRequest();
+  const updateShipmentMutation = useUpdateShipment();
 
   const isLoading = invoicesLoading || offersLoading || ordersLoading || requestsLoading || shipmentsLoading;
 
@@ -264,10 +284,41 @@ export function PurchaseContent() {
     }
   };
 
-  // Handle deleting a purchase
+  // Fixed delete handler - now type-aware
   const handleDeleteTransaction = async (id: string) => {
     try {
-      await deleteInvoiceMutation.mutateAsync(id);
+      // Find the purchase to determine its type
+      const allPurchases = getAllPurchases();
+      const purchase = allPurchases.find(p => p.id === id);
+      
+      if (!purchase) {
+        toast.error("Purchase not found");
+        return;
+      }
+
+      console.log('Deleting purchase:', { id, type: purchase.type });
+
+      // Call the appropriate delete mutation based on type
+      switch (purchase.type) {
+        case "invoice":
+          await deleteInvoiceMutation.mutateAsync(id);
+          break;
+        case "offer":
+          await deleteOfferMutation.mutateAsync(id);
+          break;
+        case "order":
+          await deleteOrderMutation.mutateAsync(id);
+          break;
+        case "request":
+          await deleteRequestMutation.mutateAsync(id);
+          break;
+        case "shipment":
+          await deleteShipmentMutation.mutateAsync(id);
+          break;
+        default:
+          throw new Error(`Unknown purchase type: ${purchase.type}`);
+      }
+
       toast.success("Purchase deleted successfully");
     } catch (error) {
       console.error('Error deleting purchase:', error);
@@ -275,13 +326,56 @@ export function PurchaseContent() {
     }
   };
 
-  // Handle approving a purchase
+  // Fixed approve handler - now type-aware
   const handleApproveTransaction = async (id: string) => {
     try {
-      await updateInvoiceMutation.mutateAsync({
-        id,
-        updates: { status: "completed" }
-      });
+      // Find the purchase to determine its type
+      const allPurchases = getAllPurchases();
+      const purchase = allPurchases.find(p => p.id === id);
+      
+      if (!purchase) {
+        toast.error("Purchase not found");
+        return;
+      }
+
+      console.log('Approving purchase:', { id, type: purchase.type });
+
+      // Call the appropriate update mutation based on type
+      switch (purchase.type) {
+        case "invoice":
+          await updateInvoiceMutation.mutateAsync({
+            id,
+            updates: { status: "completed" }
+          });
+          break;
+        case "request":
+          await updateRequestMutation.mutateAsync({
+            id,
+            updates: { status: "completed" }
+          });
+          break;
+        case "offer":
+          await updateOfferMutation.mutateAsync({
+            id,
+            updates: { status: "completed" }
+          });
+          break;
+        case "order":
+          await updateOrderMutation.mutateAsync({
+            id,
+            updates: { status: "completed" }
+          });
+          break;
+        case "shipment":
+          await updateShipmentMutation.mutateAsync({
+            id,
+            updates: { status: "completed" }
+          });
+          break;
+        default:
+          throw new Error(`Unknown purchase type: ${purchase.type}`);
+      }
+
       toast.success("Purchase approved successfully");
     } catch (error) {
       console.error('Error approving purchase:', error);
@@ -289,17 +383,74 @@ export function PurchaseContent() {
     }
   };
 
-  // Handle rejecting a purchase
+  // Fixed reject handler - now type-aware
   const handleRejectTransaction = async (id: string) => {
     try {
-      await updateInvoiceMutation.mutateAsync({
-        id,
-        updates: { status: "cancelled" }
-      });
+      // Find the purchase to determine its type
+      const allPurchases = getAllPurchases();
+      const purchase = allPurchases.find(p => p.id === id);
+      
+      if (!purchase) {
+        toast.error("Purchase not found");
+        return;
+      }
+
+      console.log('Rejecting purchase:', { id, type: purchase.type });
+
+      // Call the appropriate update mutation based on type
+      switch (purchase.type) {
+        case "invoice":
+          await updateInvoiceMutation.mutateAsync({
+            id,
+            updates: { status: "cancelled" }
+          });
+          break;
+        case "request":
+          await updateRequestMutation.mutateAsync({
+            id,
+            updates: { status: "cancelled" }
+          });
+          break;
+        case "offer":
+          await updateOfferMutation.mutateAsync({
+            id,
+            updates: { status: "cancelled" }
+          });
+          break;
+        case "order":
+          await updateOrderMutation.mutateAsync({
+            id,
+            updates: { status: "cancelled" }
+          });
+          break;
+        case "shipment":
+          await updateShipmentMutation.mutateAsync({
+            id,
+            updates: { status: "cancelled" }
+          });
+          break;
+        default:
+          throw new Error(`Unknown purchase type: ${purchase.type}`);
+      }
+
       toast.success("Purchase rejected successfully");
     } catch (error) {
       console.error('Error rejecting purchase:', error);
       toast.error("Failed to reject purchase");
+    }
+  };
+
+  // New receive payment handler for invoices
+  const handleReceivePayment = async (id: string) => {
+    try {
+      await updateInvoiceMutation.mutateAsync({
+        id,
+        updates: { status: "completed" }
+      });
+      toast.success("Payment received successfully");
+    } catch (error) {
+      console.error('Error receiving payment:', error);
+      toast.error("Failed to process payment");
     }
   };
 
@@ -357,6 +508,7 @@ export function PurchaseContent() {
         onDeleteTransaction={handleDeleteTransaction}
         onApproveTransaction={handleApproveTransaction}
         onRejectTransaction={handleRejectTransaction}
+        onReceivePayment={handleReceivePayment}
       />
 
       <AddPurchaseDialog
