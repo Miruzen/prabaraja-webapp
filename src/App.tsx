@@ -35,7 +35,7 @@ import OrderDetail from "./components/detail/OrderDetail";
 import RequestDetail from "./components/detail/RequestDetail";
 import ShipmentDetail from "./components/detail/ShipmentDetail";
 import ExpenseDetail from "./components/detail/ExpenseDetail";
-import ReceivePaymentPage from "./pages/ReceivePaymentPage";
+import { ReceivePaymentPage }from "./pages/ReceivePaymentPage";
 
 const queryClient = new QueryClient();
 
