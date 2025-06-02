@@ -54,7 +54,8 @@ export function CreatePurchaseForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const baseFormData = {
+    // Create a flexible form data object that can accept any properties
+    const formData: Record<string, any> = {
       type: purchaseType,
       date,
       dueDate,
@@ -73,36 +74,22 @@ export function CreatePurchaseForm({
     };
 
     // Add type-specific fields based on purchaseType
-    let formData = { ...baseFormData };
-
     switch (purchaseType) {
       case "request":
-        formData = {
-          ...formData,
-          requestedBy: requestedBy || "Unknown",
-          urgency
-        };
+        formData.requestedBy = requestedBy || "Unknown";
+        formData.urgency = urgency;
         break;
       case "offer":
-        formData = {
-          ...formData,
-          expiryDate,
-          discountTerms
-        };
+        formData.expiryDate = expiryDate;
+        formData.discountTerms = discountTerms;
         break;
       case "order":
-        formData = {
-          ...formData,
-          orderDate
-        };
+        formData.orderDate = orderDate;
         break;
       case "shipment":
-        formData = {
-          ...formData,
-          trackingNumber,
-          carrier,
-          shippingDate
-        };
+        formData.trackingNumber = trackingNumber;
+        formData.carrier = carrier;
+        formData.shippingDate = shippingDate;
         break;
     }
     
