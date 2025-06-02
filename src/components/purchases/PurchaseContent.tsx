@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -285,7 +284,7 @@ export function PurchaseContent() {
     }
   };
 
-  // Fixed delete handler - now type-aware
+  // Fixed delete handler - now type-aware with proper type checking
   const handleDeleteTransaction = async (id: string) => {
     try {
       // Find the purchase to determine its type
@@ -297,10 +296,17 @@ export function PurchaseContent() {
         return;
       }
 
-      console.log('Deleting purchase:', { id, type: purchase.type });
+      // Ensure purchase has type property with proper type checking
+      const purchaseType = (purchase as Purchase).type;
+      if (!purchaseType) {
+        toast.error("Purchase type not found");
+        return;
+      }
+
+      console.log('Deleting purchase:', { id, type: purchaseType });
 
       // Call the appropriate delete mutation based on type
-      switch (purchase.type) {
+      switch (purchaseType) {
         case "invoice":
           await deleteInvoiceMutation.mutateAsync(id);
           break;
@@ -317,7 +323,7 @@ export function PurchaseContent() {
           await deleteShipmentMutation.mutateAsync(id);
           break;
         default:
-          throw new Error(`Unknown purchase type: ${purchase.type}`);
+          throw new Error(`Unknown purchase type: ${purchaseType}`);
       }
 
       toast.success("Purchase deleted successfully");
@@ -327,7 +333,7 @@ export function PurchaseContent() {
     }
   };
 
-  // Fixed approve handler - now type-aware
+  // Fixed approve handler - now type-aware with proper type checking
   const handleApproveTransaction = async (id: string) => {
     try {
       // Find the purchase to determine its type
@@ -339,10 +345,17 @@ export function PurchaseContent() {
         return;
       }
 
-      console.log('Approving purchase:', { id, type: purchase.type });
+      // Ensure purchase has type property with proper type checking
+      const purchaseType = (purchase as Purchase).type;
+      if (!purchaseType) {
+        toast.error("Purchase type not found");
+        return;
+      }
+
+      console.log('Approving purchase:', { id, type: purchaseType });
 
       // Call the appropriate update mutation based on type
-      switch (purchase.type) {
+      switch (purchaseType) {
         case "invoice":
           await updateInvoiceMutation.mutateAsync({
             id,
@@ -374,7 +387,7 @@ export function PurchaseContent() {
           });
           break;
         default:
-          throw new Error(`Unknown purchase type: ${purchase.type}`);
+          throw new Error(`Unknown purchase type: ${purchaseType}`);
       }
 
       toast.success("Purchase approved successfully");
@@ -384,7 +397,7 @@ export function PurchaseContent() {
     }
   };
 
-  // Fixed reject handler - now type-aware
+  // Fixed reject handler - now type-aware with proper type checking
   const handleRejectTransaction = async (id: string) => {
     try {
       // Find the purchase to determine its type
@@ -396,10 +409,17 @@ export function PurchaseContent() {
         return;
       }
 
-      console.log('Rejecting purchase:', { id, type: purchase.type });
+      // Ensure purchase has type property with proper type checking
+      const purchaseType = (purchase as Purchase).type;
+      if (!purchaseType) {
+        toast.error("Purchase type not found");
+        return;
+      }
+
+      console.log('Rejecting purchase:', { id, type: purchaseType });
 
       // Call the appropriate update mutation based on type
-      switch (purchase.type) {
+      switch (purchaseType) {
         case "invoice":
           await updateInvoiceMutation.mutateAsync({
             id,
@@ -431,7 +451,7 @@ export function PurchaseContent() {
           });
           break;
         default:
-          throw new Error(`Unknown purchase type: ${purchase.type}`);
+          throw new Error(`Unknown purchase type: ${purchaseType}`);
       }
 
       toast.success("Purchase rejected successfully");
