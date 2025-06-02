@@ -21,7 +21,11 @@ const EditPurchase = () => {
 
   useEffect(() => {
     if (purchaseData) {
-      setPurchaseType(purchaseData.type || typeFromUrl || "invoice");
+      const dataType = purchaseData.type || typeFromUrl || "invoice";
+      // Ensure the type is valid before setting
+      if (["invoice", "offer", "order", "request", "shipment"].includes(dataType)) {
+        setPurchaseType(dataType as PurchaseType);
+      }
     }
   }, [purchaseData, typeFromUrl]);
 
