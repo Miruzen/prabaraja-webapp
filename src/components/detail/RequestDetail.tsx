@@ -5,46 +5,32 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Download, Printer, Share2, FileQuestion, CheckSquare, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { Purchase, PURCHASES_STORAGE_KEY } from "@/types/purchase";
+import { usePurchaseById } from "@/hooks/usePurchases";
 import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
 
 const RequestDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const [request, setRequest] = useState<Purchase | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: request, isLoading, error } = usePurchaseById(id || "", "request");
 
-  useEffect(() => {
-    const fetchRequestData = () => {
-      try {
-        const storedPurchases = localStorage.getItem(PURCHASES_STORAGE_KEY);
-        if (storedPurchases) {
-          const parsedPurchases = JSON.parse(storedPurchases);
-          const foundRequest = parsedPurchases.find((p: any) => p.id === id && p.type === "request");
-          
-          if (foundRequest) {
-            // Convert date strings to Date objects
-            foundRequest.date = new Date(foundRequest.date);
-            foundRequest.dueDate = foundRequest.dueDate ? new Date(foundRequest.dueDate) : null;
-            setRequest(foundRequest);
-          }
-        }
-      } catch (error) {
-        console.error("Error loading request data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRequestData();
-  }, [id]);
-
-  if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  if (!id) {
+    return <div>Invalid request ID</div>;
   }
 
-  if (!request) {
+  if (isLoading) {
+    return (
+      <div className="flex h-screen bg-background">
+        <Sidebar />
+        <div className="flex-1 overflow-auto">
+          <div className="p-6 max-w-5xl mx-auto">
+            <div className="text-center">Loading request...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !request) {
     return (
       <div className="flex h-screen bg-background">
         <Sidebar />
@@ -65,9 +51,9 @@ const RequestDetail = () => {
   }
 
   const requestStages = [
-    { name: "Submitted", completed: true, date: format(request.date, 'PP') },
-    { name: "Under Review", completed: request.status !== "pending", date: format(new Date(request.date.getTime() + 86400000), 'PP') },
-    { name: "Approved", completed: request.status === "completed", date: request.status === "completed" ? format(new Date(request.date.getTime() + 172800000), 'PP') : "" },
+    { name: "Submitted", completed: true, date: format(new Date(request.date), 'PP') },
+    { name: "Under Review", completed: request.status !== "pending", date: format(new Date(new Date(request.date).getTime() + 86400000), 'PP') },
+    { name: "Approved", completed: request.status === "completed", date: request.status === "completed" ? format(new Date(new Date(request.date).getTime() + 172800000), 'PP') : "" },
     { name: "Fulfilled", completed: false, date: "" }
   ];
 
@@ -85,9 +71,9 @@ const RequestDetail = () => {
             <div>
               <h1 className="text-2xl font-semibold text-white flex items-center">
                 <FileQuestion className="mr-2 h-5 w-5" /> 
-                {request.number}
+                REQ-{request.number}
               </h1>
-              <p className="text-white/80 text-sm">Purchase Request submitted on {format(request.date, 'PP')}</p>
+              <p className="text-white/80 text-sm">Purchase Request submitted on {format(new Date(request.date), 'PP')}</p>
             </div>
           </div>
         </div>
@@ -123,15 +109,15 @@ const RequestDetail = () => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
                     <p className="text-sm text-gray-500">Request Number</p>
-                    <p className="font-medium">{request.number}</p>
+                    <p className="font-medium">REQ-{request.number}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Submission Date</p>
-                    <p className="font-medium">{format(request.date, 'PP')}</p>
+                    <p className="font-medium">{format(new Date(request.date), 'PP')}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Required By</p>
-                    <p className="font-medium">{request.dueDate ? format(request.dueDate, 'PP') : 'Not specified'}</p>
+                    <p className="font-medium">{request.due_date ? format(new Date(request.due_date), 'PP') : 'Not specified'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Status</p>
@@ -197,7 +183,7 @@ const RequestDetail = () => {
                     </thead>
                     <tbody>
                       {request.items && request.items.length > 0 ? (
-                        request.items.map((item, index) => (
+                        request.items.map((item: any, index: number) => (
                           <tr key={index} className="border-b">
                             <td className="py-3 px-4">{item.name}</td>
                             <td className="text-right py-3 px-4">{item.quantity}</td>
@@ -219,15 +205,11 @@ const RequestDetail = () => {
                 <div className="mt-4 space-y-2 border-t pt-4">
                   <div className="flex justify-between">
                     <span>Total Requested Items</span>
-                    <span>{request.itemCount}</span>
+                    <span>{request.items ? request.items.length : 0}</span>
                   </div>
                   <div className="flex justify-between font-bold">
                     <span>Estimated Total Cost</span>
-                    <span>
-                      {request.items && request.items.length > 0 
-                        ? formatCurrency(request.items.reduce((sum, item) => sum + (item.price * item.quantity), 0))
-                        : formatCurrency(0)}
-                    </span>
+                    <span>{formatCurrency(request.grand_total || 0)}</span>
                   </div>
                 </div>
               </CardContent>
@@ -241,30 +223,28 @@ const RequestDetail = () => {
                 <div className="space-y-4">
                   <div>
                     <p className="text-sm text-gray-500 mb-1">Requested By</p>
-                    <p>Mark Johnson (Engineering Department)</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Approved By</p>
-                    <p>{request.approver}</p>
+                    <p>{request.requested_by || 'Mark Johnson (Engineering Department)'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500 mb-1">Priority</p>
                     <span className={`px-2 py-1 rounded-full text-xs inline-block ${
-                      request.priority === 'High' ? 'bg-red-100 text-red-800' : 
-                      request.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' : 
+                      request.urgency === 'High' ? 'bg-red-100 text-red-800' : 
+                      request.urgency === 'Medium' ? 'bg-yellow-100 text-yellow-800' : 
                       'bg-green-100 text-green-800'
                     }`}>
-                      {request.priority}
+                      {request.urgency || 'Medium'}
                     </span>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500 mb-1">Tags</p>
                     <div className="flex flex-wrap gap-2">
-                      {request.tags.map((tag, index) => (
+                      {request.tags && request.tags.length > 0 ? request.tags.map((tag: string, index: number) => (
                         <span key={index} className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">
                           {tag}
                         </span>
-                      ))}
+                      )) : (
+                        <span className="text-gray-500 text-sm">No tags</span>
+                      )}
                     </div>
                   </div>
                   <div>

@@ -68,13 +68,13 @@ export function PurchaseContent() {
 
   const isLoading = invoicesLoading || offersLoading || ordersLoading || requestsLoading || shipmentsLoading;
 
-  // Transform data to unified Purchase format
+  // Transform data to unified Purchase format with proper field mapping
   const transformInvoicesToPurchases = (invoices: any[]): InvoicePurchase[] => {
     return invoices.map(invoice => ({
       id: invoice.id,
       date: new Date(invoice.date),
       number: `INV-${invoice.number}`,
-      approver: invoice.approver,
+      approver: invoice.approver || '',
       status: invoice.status as any,
       tags: invoice.tags || [],
       type: "invoice" as const,
@@ -132,7 +132,7 @@ export function PurchaseContent() {
       items: request.items as any[],
       amount: request.grand_total,
       itemCount: Array.isArray(request.items) ? request.items.length : 0,
-      requestedBy: request.requested_by,
+      requestedBy: request.requested_by || 'Unknown',
       urgency: request.urgency as any,
       dueDate: request.due_date ? new Date(request.due_date) : undefined
     }));
@@ -142,7 +142,7 @@ export function PurchaseContent() {
     return shipments.map(shipment => ({
       id: shipment.id,
       date: new Date(shipment.date),
-      number: `SH-${shipment.number}`,
+      number: `SHP-${shipment.number}`,
       approver: '',
       status: shipment.status as any,
       tags: shipment.tags || [],
@@ -150,8 +150,8 @@ export function PurchaseContent() {
       items: shipment.items as any[],
       amount: shipment.grand_total,
       itemCount: Array.isArray(shipment.items) ? shipment.items.length : 0,
-      trackingNumber: shipment.tracking_number,
-      carrier: shipment.carrier,
+      trackingNumber: shipment.tracking_number || '',
+      carrier: shipment.carrier || '',
       shippingDate: new Date(shipment.shipping_date)
     }));
   };

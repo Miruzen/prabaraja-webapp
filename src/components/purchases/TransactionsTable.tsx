@@ -30,7 +30,7 @@ interface TransactionsTableProps {
 
 export function TransactionsTable({
   transactions,
-  activeTab = "all",
+  activeTab = "invoices",
   onDeleteTransaction,
   onApproveTransaction = () => {},
   onRejectTransaction = () => {},
@@ -55,9 +55,20 @@ export function TransactionsTable({
       return isPendingRequest;
     }
     
-    // For other tabs, match the transaction type with the tab name
-    const matchesTab = activeTab === transaction.type + "s";
-    console.log('Tab filter - activeTab:', activeTab, 'transaction.type + "s":', transaction.type + "s", 'matches:', matchesTab);
+    // For other tabs, match the transaction type with the tab name (corrected logic)
+    // Tab names are plural (invoices, orders, etc.) but transaction types are singular
+    const tabToTypeMap: Record<string, string> = {
+      "invoices": "invoice",
+      "shipments": "shipment", 
+      "orders": "order",
+      "offers": "offer",
+      "requests": "request"
+    };
+    
+    const expectedType = tabToTypeMap[activeTab];
+    const matchesTab = transaction.type === expectedType;
+    
+    console.log('Tab filter - activeTab:', activeTab, 'expectedType:', expectedType, 'transaction.type:', transaction.type, 'matches:', matchesTab);
     return matchesTab;
   });
 
