@@ -1,39 +1,46 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Plus, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Expense } from "@/types/expense";
 import { ExpenseTable } from "@/components/expenses/ExpenseTable";
 import { ExpenseTabs } from "@/components/expenses/ExpenseTabs";
 import { ExpenseSummaryCards } from "@/components/expenses/ExpenseSummaryCards";
-import { getExpenses, deleteExpense, approveExpense } from "@/utils/expenseUtils";
+import { useExpenses, useDeleteExpense, useUpdateExpense } from "@/hooks/useExpenses";
+import { toast } from "sonner";
 
 const Expenses = () => {
   const navigate = useNavigate();
-  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [activeTab, setActiveTab] = useState<"expenses" | "approval">("expenses");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Load expenses from localStorage on component mount
-  useEffect(() => {
-    const loadExpenses = () => {
-      const loadedExpenses = getExpenses();
-      setExpenses(loadedExpenses);
-    };
-    
-    loadExpenses();
-  }, []);
+  // Use Supabase hooks for data management
+  const { data: expenses = [], isLoading, error } = useExpenses();
+  const deleteExpenseMutation = useDeleteExpense();
+  const updateExpenseMutation = useUpdateExpense();
 
-  const handleDeleteExpense = (id: string) => {
-    const updatedExpenses = deleteExpense(id);
-    setExpenses(updatedExpenses);
+  const handleDeleteExpense = async (id: string) => {
+    try {
+      await deleteExpenseMutation.mutateAsync(id);
+      toast.success("Expense deleted successfully");
+    } catch (error) {
+      console.error("Error deleting expense:", error);
+      toast.error("Failed to delete expense");
+    }
   };
 
-  const handleApproveExpense = (id: string) => {
-    const updatedExpenses = approveExpense(id);
-    setExpenses(updatedExpenses);
+  const handleApproveExpense = async (id: string) => {
+    try {
+      await updateExpenseMutation.mutateAsync({
+        id,
+        updates: { status: "Paid" }
+      });
+      toast.success("Expense approved successfully");
+    } catch (error) {
+      console.error("Error approving expense:", error);
+      toast.error("Failed to approve expense");
+    }
   };
 
   const navigateToCreateExpense = () => {
@@ -44,11 +51,50 @@ const Expenses = () => {
   const filteredExpenses = expenses.filter(expense => {
     const searchLower = searchQuery.toLowerCase();
     return (
-      expense.number.toLowerCase().includes(searchLower) ||
+      expense.number.toString().toLowerCase().includes(searchLower) ||
       expense.category.toLowerCase().includes(searchLower) ||
       expense.beneficiary.toLowerCase().includes(searchLower)
     );
   });
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen bg-background">
+        <Sidebar />
+        <div className="flex-1 overflow-auto">
+          <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
+            <h1 className="text-2xl font-semibold text-white">List of Expense</h1>
+            <p className="text-white/80">Manage your company expenses</p>
+          </div>
+          <div className="p-6">
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+              <p className="mt-2 text-gray-600">Loading expenses...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-screen bg-background">
+        <Sidebar />
+        <div className="flex-1 overflow-auto">
+          <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
+            <h1 className="text-2xl font-semibold text-white">List of Expense</h1>
+            <p className="text-white/80">Manage your company expenses</p>
+          </div>
+          <div className="p-6">
+            <div className="text-center py-8 text-red-600">
+              <p>Error loading expenses. Please try again.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-background">
@@ -56,7 +102,7 @@ const Expenses = () => {
       <div className="flex-1 overflow-auto">
         <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
           <h1 className="text-2xl font-semibold text-white">List of Expense</h1>
-          <p className="text-white/80"> Manage your company expenses</p>
+          <p className="text-white/80">Manage your company expenses</p>
         </div>
 
         <div className="p-6">

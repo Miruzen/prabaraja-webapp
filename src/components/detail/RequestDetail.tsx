@@ -1,29 +1,91 @@
 
-import { useParams } from "react-router-dom";
-import { Sidebar } from "@/components/Sidebar";
-import { Button } from "@/components/ui/button";
+import { useParams, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Download, Printer, Share2, FileQuestion, CheckSquare, Clock } from "lucide-react";
-import { Link } from "react-router-dom";
-import { usePurchaseById } from "@/hooks/usePurchases";
-import { formatCurrency } from "@/lib/utils";
-import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Calendar, User, AlertCircle, Package, DollarSign } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+
+interface RequestItem {
+  id: string;
+  name: string;
+  quantity: number;
+  unit_price: number;
+  total: number;
+}
+
+interface Request {
+  id: string;
+  user_id: string;
+  number: number;
+  date: string;
+  due_date: string;
+  requested_by: string;
+  urgency: string;
+  status: string;
+  items: RequestItem[];
+  grand_total: number;
+  tags?: string[];
+  created_at: string;
+  updated_at?: string;
+}
 
 const RequestDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const { data: request, isLoading, error } = usePurchaseById(id || "", "request");
+  const { user } = useAuth();
 
-  if (!id) {
-    return <div>Invalid request ID</div>;
-  }
+  const { data: request, isLoading, error } = useQuery({
+    queryKey: ['request', id],
+    queryFn: async () => {
+      if (!id) throw new Error('Request ID is required');
+      
+      const { data, error } = await supabase
+        .from('requests')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching request:', error);
+        throw error;
+      }
+
+      // Transform the Supabase data to match our Request interface
+      const transformedRequest: Request = {
+        id: data.id,
+        user_id: data.user_id,
+        number: data.number,
+        date: data.date || new Date().toISOString().split('T')[0],
+        due_date: data.due_date,
+        requested_by: data.requested_by,
+        urgency: data.urgency,
+        status: data.status,
+        items: Array.isArray(data.items) ? data.items as RequestItem[] : [],
+        grand_total: data.grand_total,
+        tags: data.tags || [],
+        created_at: data.created_at,
+        updated_at: data.updated_at || undefined,
+      };
+
+      return transformedRequest;
+    },
+    enabled: !!id && !!user,
+  });
 
   if (isLoading) {
     return (
       <div className="flex h-screen bg-background">
-        <Sidebar />
         <div className="flex-1 overflow-auto">
-          <div className="p-6 max-w-5xl mx-auto">
-            <div className="text-center">Loading request...</div>
+          <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
+            <h1 className="text-2xl font-semibold text-white">Request Details</h1>
+          </div>
+          <div className="p-6">
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+              <p className="mt-2 text-gray-600">Loading request details...</p>
+            </div>
           </div>
         </div>
       </div>
@@ -33,230 +95,211 @@ const RequestDetail = () => {
   if (error || !request) {
     return (
       <div className="flex h-screen bg-background">
-        <Sidebar />
-        <div className="flex-1 overflow-auto p-6">
-          <Link to="/purchases" className="mb-6 inline-block">
-            <Button variant="outline" size="sm" className="mb-6">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Purchases
-            </Button>
-          </Link>
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-center py-8">Request not found.</p>
-            </CardContent>
-          </Card>
+        <div className="flex-1 overflow-auto">
+          <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
+            <h1 className="text-2xl font-semibold text-white">Request Details</h1>
+          </div>
+          <div className="p-6">
+            <div className="text-center py-8">
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Request Not Found</h3>
+              <p className="text-gray-600 mb-4">
+                The request you're looking for doesn't exist or you don't have permission to view it.
+              </p>
+              <Link to="/purchases">
+                <Button variant="outline">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Purchases
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
-  const requestStages = [
-    { name: "Submitted", completed: true, date: format(new Date(request.date), 'PP') },
-    { name: "Under Review", completed: request.status !== "pending", date: format(new Date(new Date(request.date).getTime() + 86400000), 'PP') },
-    { name: "Approved", completed: request.status === "completed", date: request.status === "completed" ? format(new Date(new Date(request.date).getTime() + 172800000), 'PP') : "" },
-    { name: "Fulfilled", completed: false, date: "" }
-  ];
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'approved':
+        return 'bg-green-100 text-green-800';
+      case 'rejected':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getUrgencyColor = (urgency: string) => {
+    switch (urgency.toLowerCase()) {
+      case 'high':
+        return 'bg-red-100 text-red-800';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'low':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
 
   return (
     <div className="flex h-screen bg-background">
-      <Sidebar />
       <div className="flex-1 overflow-auto">
-        <div className="bg-gradient-to-r from-pink-500 to-purple-600 p-6">
-          <div className="flex items-center">
-            <Link to="/purchases" className="mr-4">
-              <Button variant="outline" size="icon" className="bg-white/80 hover:bg-white">
-                <ArrowLeft className="h-4 w-4" />
+        <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold text-white">Request Details</h1>
+              <p className="text-white/80">Request #{request.number}</p>
+            </div>
+            <Link to="/purchases">
+              <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Purchases
               </Button>
             </Link>
-            <div>
-              <h1 className="text-2xl font-semibold text-white flex items-center">
-                <FileQuestion className="mr-2 h-5 w-5" /> 
-                REQ-{request.number}
-              </h1>
-              <p className="text-white/80 text-sm">Purchase Request submitted on {format(new Date(request.date), 'PP')}</p>
-            </div>
           </div>
         </div>
 
-        <div className="p-6">
-          <div className="mb-6 flex justify-between items-center">
-            <div>
-              <h2 className="text-xl font-semibold">Request Details</h2>
-              <p className="text-gray-500">View and manage purchase request information</p>
-            </div>
-            <div className="flex space-x-2">
-              <Button variant="outline" className="flex items-center">
-                <Printer className="mr-2 h-4 w-4" />
-                Print
-              </Button>
-              <Button variant="outline" className="flex items-center">
-                <Download className="mr-2 h-4 w-4" />
-                Download
-              </Button>
-              <Button variant="outline" className="flex items-center">
-                <Share2 className="mr-2 h-4 w-4" />
-                Share
-              </Button>
-            </div>
+        <div className="p-6 space-y-6">
+          {/* Header Information */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Request Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <p className="text-sm text-gray-600">Request Date</p>
+                  <p className="font-medium">{request.date}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Due Date</p>
+                  <p className="font-medium">{request.due_date}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Status</p>
+                  <Badge className={getStatusColor(request.status)}>
+                    {request.status}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Request Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <p className="text-sm text-gray-600">Requested By</p>
+                  <p className="font-medium">{request.requested_by}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Urgency</p>
+                  <Badge className={getUrgencyColor(request.urgency)}>
+                    {request.urgency}
+                  </Badge>
+                </div>
+                {request.tags && request.tags.length > 0 && (
+                  <div>
+                    <p className="text-sm text-gray-600 mb-2">Tags</p>
+                    <div className="flex flex-wrap gap-1">
+                      {request.tags.map((tag, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Financial Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div>
+                  <p className="text-sm text-gray-600">Total Amount</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    Rp. {request.grand_total.toLocaleString("id-ID")}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
-          <div className="grid grid-cols-1 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Request Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Request Number</p>
-                    <p className="font-medium">REQ-{request.number}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Submission Date</p>
-                    <p className="font-medium">{format(new Date(request.date), 'PP')}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Required By</p>
-                    <p className="font-medium">{request.due_date ? format(new Date(request.due_date), 'PP') : 'Not specified'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Status</p>
-                    <span className={`px-2 py-1 rounded-full text-sm inline-block mt-1 ${
-                      request.status === 'completed' ? 'bg-green-100 text-green-800' : 
-                      request.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Request Progress</CardTitle>
-                <Clock className="h-5 w-5 text-gray-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="relative">
-                  <div className="absolute left-4 top-0 h-full w-px bg-gray-200"></div>
-                  <ul className="space-y-6">
-                    {requestStages.map((stage, index) => (
-                      <li key={index} className="relative pl-10">
-                        <div className={`absolute left-0 top-1.5 h-7 w-7 rounded-full border-2 flex items-center justify-center ${
-                          stage.completed 
-                            ? 'bg-indigo-100 border-indigo-500 text-indigo-500' 
-                            : 'bg-gray-100 border-gray-300 text-gray-400'
-                        }`}>
-                          {stage.completed && <CheckSquare className="h-4 w-4" />}
-                        </div>
-                        <div>
-                          <h4 className={`font-medium ${stage.completed ? 'text-gray-900' : 'text-gray-500'}`}>
-                            {stage.name}
-                          </h4>
-                          {stage.date && (
-                            <p className="text-sm text-gray-500">{stage.date}</p>
-                          )}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Requested Items</CardTitle>
-              </CardHeader>
-              <CardContent>
+          {/* Items Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                Request Items
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {request.items && request.items.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
                     <thead>
                       <tr className="border-b">
-                        <th className="text-left py-3 px-4">Item</th>
-                        <th className="text-right py-3 px-4">Quantity</th>
-                        <th className="text-right py-3 px-4">Est. Unit Cost</th>
-                        <th className="text-right py-3 px-4">Est. Total Cost</th>
+                        <th className="text-left p-3 font-medium text-gray-600">Item</th>
+                        <th className="text-right p-3 font-medium text-gray-600">Quantity</th>
+                        <th className="text-right p-3 font-medium text-gray-600">Unit Price</th>
+                        <th className="text-right p-3 font-medium text-gray-600">Total</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {request.items && request.items.length > 0 ? (
-                        request.items.map((item: any, index: number) => (
-                          <tr key={index} className="border-b">
-                            <td className="py-3 px-4">{item.name}</td>
-                            <td className="text-right py-3 px-4">{item.quantity}</td>
-                            <td className="text-right py-3 px-4">{formatCurrency(item.price)}</td>
-                            <td className="text-right py-3 px-4">{formatCurrency(item.price * item.quantity)}</td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={4} className="py-4 text-center text-gray-500">
-                            No items in this request
+                      {request.items.map((item, index) => (
+                        <tr key={index} className="border-b hover:bg-gray-50">
+                          <td className="p-3">
+                            <div>
+                              <p className="font-medium">{item.name}</p>
+                            </div>
+                          </td>
+                          <td className="text-right p-3">{item.quantity}</td>
+                          <td className="text-right p-3">
+                            Rp. {item.unit_price.toLocaleString("id-ID")}
+                          </td>
+                          <td className="text-right p-3 font-medium">
+                            Rp. {item.total.toLocaleString("id-ID")}
                           </td>
                         </tr>
-                      )}
+                      ))}
                     </tbody>
+                    <tfoot>
+                      <tr className="border-t-2 border-gray-300">
+                        <td colSpan={3} className="p-3 text-right font-medium">
+                          Grand Total:
+                        </td>
+                        <td className="text-right p-3 font-bold text-green-600">
+                          Rp. {request.grand_total.toLocaleString("id-ID")}
+                        </td>
+                      </tr>
+                    </tfoot>
                   </table>
                 </div>
-
-                <div className="mt-4 space-y-2 border-t pt-4">
-                  <div className="flex justify-between">
-                    <span>Total Requested Items</span>
-                    <span>{request.items ? request.items.length : 0}</span>
-                  </div>
-                  <div className="flex justify-between font-bold">
-                    <span>Estimated Total Cost</span>
-                    <span>{formatCurrency(request.grand_total || 0)}</span>
-                  </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No items found for this request.</p>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Additional Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Requested By</p>
-                    <p>{request.requested_by || 'Mark Johnson (Engineering Department)'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Priority</p>
-                    <span className={`px-2 py-1 rounded-full text-xs inline-block ${
-                      request.urgency === 'High' ? 'bg-red-100 text-red-800' : 
-                      request.urgency === 'Medium' ? 'bg-yellow-100 text-yellow-800' : 
-                      'bg-green-100 text-green-800'
-                    }`}>
-                      {request.urgency || 'Medium'}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Tags</p>
-                    <div className="flex flex-wrap gap-2">
-                      {request.tags && request.tags.length > 0 ? request.tags.map((tag: string, index: number) => (
-                        <span key={index} className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">
-                          {tag}
-                        </span>
-                      )) : (
-                        <span className="text-gray-500 text-sm">No tags</span>
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Justification</p>
-                    <p className="text-gray-700">
-                      These items are required for the upcoming project XYZ. Current inventory is depleted and we need these supplies to continue operations.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
@@ -6,11 +7,7 @@ import { ArrowLeft, ChevronDown, Plus, Trash2, Clock, CheckCircle } from "lucide
 import { Link, useNavigate } from "react-router-dom";
 import { 
   DEFAULT_EXPENSE_CATEGORIES,
-  EXPENSES_STORAGE_KEY, 
-  ExpenseItem, 
-  ExpenseStatus 
 } from "@/types/expense";
-import { saveExpenses, getExpenses } from "@/utils/expenseUtils";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -22,11 +19,23 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useCreateExpense } from "@/hooks/useExpenses";
 
 const CATEGORIES_STORAGE_KEY = "expense_categories";
 
+interface ExpenseItem {
+  id: string;
+  name: string;
+  quantity: number;
+  amount: number;
+}
+
+type ExpenseStatus = "Paid" | "Require Approval";
+
 const CreateExpense = () => {
   const navigate = useNavigate();
+  const createExpenseMutation = useCreateExpense();
+  
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [category, setCategory] = useState<string>(DEFAULT_EXPENSE_CATEGORIES[0]);
   const [beneficiary, setBeneficiary] = useState<string>("");
@@ -64,7 +73,7 @@ const CreateExpense = () => {
     return items.reduce((sum, item) => sum + (item.quantity * item.amount), 0);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!date || !category || !beneficiary) {
@@ -78,24 +87,25 @@ const CreateExpense = () => {
     }
 
     const totalAmount = calculateTotal();
-    const formattedTotal = `Rp. ${totalAmount.toLocaleString("id-ID")},00`;
     
     const newExpense = {
-      id: uuidv4(),
       date: date,
-      number: `Expense #${Math.floor(10000 + Math.random() * 90000)}`,
+      number: Math.floor(10000 + Math.random() * 90000),
       category,
       beneficiary,
       status,
       items,
-      total: formattedTotal
+      grand_total: totalAmount
     };
 
-    const existingExpenses = getExpenses();
-    saveExpenses([...existingExpenses, newExpense]);
-    
-    toast.success("Expense created successfully");
-    navigate("/expenses");
+    try {
+      await createExpenseMutation.mutateAsync(newExpense);
+      toast.success("Expense created successfully");
+      navigate("/expenses");
+    } catch (error) {
+      console.error("Error creating expense:", error);
+      toast.error("Failed to create expense");
+    }
   };
 
   const handleAddCategory = () => {
@@ -153,29 +163,29 @@ const CreateExpense = () => {
                         {categories.map((cat) => (
                           <option key={cat} value={cat}>{cat}</option>
                         ))}
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <option value="" className="text-gray-500 italic">
-                              + Add New Category
-                            </option>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Add New Category</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                              <Input
-                                value={newCategory}
-                                onChange={(e) => setNewCategory(e.target.value)}
-                                placeholder="Enter category name"
-                              />
-                              <Button onClick={handleAddCategory} className="gap-2">
-                                <Plus className="h-4 w-4" /> Add Category
-                              </Button>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
                       </select>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button type="button" variant="outline" size="sm">
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Add New Category</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4 py-4">
+                            <Input
+                              value={newCategory}
+                              onChange={(e) => setNewCategory(e.target.value)}
+                              placeholder="Enter category name"
+                            />
+                            <Button onClick={handleAddCategory} className="gap-2">
+                              <Plus className="h-4 w-4" /> Add Category
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   </div>
                   <div>
@@ -288,7 +298,7 @@ const CreateExpense = () => {
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium">Total:</span>
                     <span className="text-xl font-bold">
-                      Rp. {calculateTotal().toLocaleString("id-ID")},00
+                      Rp. {calculateTotal().toLocaleString("id-ID")}
                     </span>
                   </div>
                 </div>
@@ -302,8 +312,12 @@ const CreateExpense = () => {
                   >
                     Cancel
                   </Button>
-                  <Button type="submit" className="bg-indigo-600 text-white">
-                    Save Expense
+                  <Button 
+                    type="submit" 
+                    className="bg-indigo-600 text-white"
+                    disabled={createExpenseMutation.isPending}
+                  >
+                    {createExpenseMutation.isPending ? "Saving..." : "Save Expense"}
                   </Button>
                 </div>
               </form>

@@ -14,8 +14,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Expense, ExpenseStatus } from "@/types/expense";
 import { Link } from "react-router-dom";
+import { Expense } from "@/hooks/useExpenses";
 
 interface ExpenseTableProps {
   expenses: Expense[];
@@ -34,6 +34,10 @@ export const ExpenseTable = ({
     (tableType === "expenses" && expense.status === "Paid") ||
     (tableType === "approval" && expense.status === "Require Approval")
   );
+
+  const formatCurrency = (amount: number) => {
+    return `Rp. ${amount.toLocaleString("id-ID")}`;
+  };
 
   return (
     <Table>
@@ -75,7 +79,7 @@ export const ExpenseTable = ({
                   {expense.status}
                 </span>
               </TableCell>
-              <TableCell>{expense.total}</TableCell>
+              <TableCell>{formatCurrency(expense.grand_total)}</TableCell>
               <TableCell>
                 {tableType === "approval" && onApproveExpense ? (
                   <ActionDropdown 
