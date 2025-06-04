@@ -156,7 +156,7 @@ export function PurchaseContent() {
     }));
   };
 
-  // Get all purchases for the active tab
+  // Get all purchases for the active tab - FIXED LOGIC
   const getAllPurchases = (): Purchase[] => {
     const invoicePurchases = transformInvoicesToPurchases(invoices);
     const offerPurchases = transformOffersToP(offers);
@@ -164,28 +164,27 @@ export function PurchaseContent() {
     const requestPurchases = transformRequestsToP(requests);
     const shipmentPurchases = transformShipmentsToP(shipments);
 
-    console.log('All request purchases:', requestPurchases);
-    console.log('Pending requests:', requestPurchases.filter(r => r.status === "pending"));
+    console.log('PurchaseContent - getAllPurchases called for activeTab:', activeTab);
+    console.log('Data counts:', {
+      invoices: invoicePurchases.length,
+      offers: offerPurchases.length,
+      orders: orderPurchases.length,
+      requests: requestPurchases.length,
+      shipments: shipmentPurchases.length
+    });
 
-    switch (activeTab) {
-      case "invoices":
-        return invoicePurchases;
-      case "offers":
-        return offerPurchases;
-      case "orders":
-        return orderPurchases;
-      case "requests":
-        return requestPurchases;
-      case "shipments":
-        return shipmentPurchases;
-      case "approval":
-        // Show ALL pending requests, not just from requests table
-        const allPendingRequests = requestPurchases.filter(r => r.status === "pending");
-        console.log('Approval tab - showing pending requests:', allPendingRequests);
-        return allPendingRequests;
-      default:
-        return [...invoicePurchases, ...offerPurchases, ...orderPurchases, ...requestPurchases, ...shipmentPurchases];
-    }
+    // Return all purchases for the TransactionsTable to filter appropriately
+    const allPurchases = [...invoicePurchases, ...offerPurchases, ...orderPurchases, ...requestPurchases, ...shipmentPurchases];
+    
+    console.log('PurchaseContent - total purchases:', allPurchases.length);
+    console.log('PurchaseContent - purchase types distribution:', 
+      allPurchases.reduce((acc, p) => {
+        acc[p.type] = (acc[p.type] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>)
+    );
+
+    return allPurchases;
   };
 
   // Filter purchases based on search and status
@@ -198,6 +197,8 @@ export function PurchaseContent() {
     
     return matchesSearch && matchesStatus;
   });
+
+  console.log('PurchaseContent - filteredPurchases count:', filteredPurchases.length);
 
   // Calculate stats for StatsCards
   const allPurchases = [...transformInvoicesToPurchases(invoices), ...transformOffersToP(offers), ...transformOrdersToP(orders), ...transformRequestsToP(requests), ...transformShipmentsToP(shipments)];

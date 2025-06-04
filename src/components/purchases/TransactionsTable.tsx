@@ -40,13 +40,28 @@ export function TransactionsTable({
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  // Filter transactions based on active tab
+  console.log('TransactionsTable - activeTab:', activeTab);
+  console.log('TransactionsTable - transactions received:', transactions.length);
+  console.log('TransactionsTable - transaction types:', transactions.map(t => t.type));
+
+  // Filter transactions based on active tab with corrected logic
   const filteredTransactions = transactions.filter(transaction => {
+    console.log('Filtering transaction:', { id: transaction.id, type: transaction.type, status: transaction.status });
+    
     if (activeTab === "approval") {
-      return isRequest(transaction) && transaction.status === "pending";
+      // For approval tab, show only pending requests
+      const isPendingRequest = isRequest(transaction) && transaction.status === "pending";
+      console.log('Approval filter - isPendingRequest:', isPendingRequest);
+      return isPendingRequest;
     }
-    return activeTab === transaction.type + "s";
+    
+    // For other tabs, match the transaction type with the tab name
+    const matchesTab = activeTab === transaction.type + "s";
+    console.log('Tab filter - activeTab:', activeTab, 'transaction.type + "s":', transaction.type + "s", 'matches:', matchesTab);
+    return matchesTab;
   });
+
+  console.log('TransactionsTable - filtered transactions:', filteredTransactions.length);
 
   // Common action handlers
   const handleEdit = (id: string) => navigate(`/edit-purchase/${id}`);
@@ -72,45 +87,58 @@ export function TransactionsTable({
 
   // Render appropriate table based on activeTab
   const renderTable = () => {
+    console.log('Rendering table for activeTab:', activeTab);
+    console.log('Available transactions for this tab:', filteredTransactions.length);
+
     switch(activeTab) {
       case "invoices":
+        const invoices = filteredTransactions.filter(isInvoice);
+        console.log('Invoices to render:', invoices.length);
         return (
           <InvoicesTable
-            invoices={filteredTransactions.filter(isInvoice)}
+            invoices={invoices}
             onDelete={handleDelete}
             onEdit={handleEdit}
             onReceivePayment={onReceivePayment}
           />
         );
       case "shipments":
+        const shipments = filteredTransactions.filter(isShipment);
+        console.log('Shipments to render:', shipments.length);
         return (
           <ShipmentsTable
-            shipments={filteredTransactions.filter(isShipment)}
+            shipments={shipments}
             onDelete={handleDelete}
             onEdit={handleEdit}
           />
         );
       case "orders":
+        const orders = filteredTransactions.filter(isOrder);
+        console.log('Orders to render:', orders.length);
         return (
           <OrdersTable
-            orders={filteredTransactions.filter(isOrder)}
+            orders={orders}
             onDelete={handleDelete}
             onEdit={handleEdit}
           />
         );
       case "offers":
+        const offers = filteredTransactions.filter(isOffer);
+        console.log('Offers to render:', offers.length);
         return (
           <OffersTable
-            offers={filteredTransactions.filter(isOffer)}
+            offers={offers}
             onDelete={handleDelete}
             onEdit={handleEdit}
           />
         );
       case "requests":
       case "approval":
+        const requests = filteredTransactions.filter(isRequest);
+        console.log('Requests to render:', requests.length);
         return (
           <RequestsTable
-            requests={filteredTransactions.filter(isRequest)}
+            requests={requests}
             onDelete={handleDelete}
             onEdit={handleEdit}
             onApprove={activeTab === "approval" ? onApproveTransaction : undefined}
@@ -118,9 +146,11 @@ export function TransactionsTable({
           />
         );
       default:
+        console.log('Unknown tab, showing default message');
         return (
           <div className="border rounded-lg p-8 text-center">
             <p className="text-gray-500 mb-4">No table view available for this tab</p>
+            <p className="text-sm text-gray-400">Active tab: {activeTab}</p>
           </div>
         );
     }
