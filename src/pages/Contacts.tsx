@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, User, UserPlus, Users, Building2 } from "lucide-react";
+import { Search, User, UserPlus, Users, Building2, Trash2, Edit } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -28,46 +28,19 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { salesData } from "@/data/salesData";
-
-// Static vendor/employee contacts
-const fixedContacts = [
-  {
-    id: 2,
-    category: "Vendor",
-    name: "CV Sukses Makmur",
-    number: "VEN-001",
-    email: "info@suksesmakmur.com",
-    address: "Jl. Gatot Subroto No. 45, Bandung",
-  },
-  {
-    id: 3,
-    category: "Employee",
-    name: "Budi Santoso",
-    number: "EMP-001",
-    email: "budi.s@company.com",
-    address: "Jl. Melati No. 67, Surabaya",
-  },
-];
-
-// Generate unique Customers from salesData
-function getSalesCustomers() {
-  // Map to store uniqueness by customer name
-  const map = new Map<string, any>();
-  for (const sale of salesData) {
-    if (!map.has(sale.customer)) {
-      map.set(sale.customer, {
-        id: sale.customerId || Math.floor(Math.random() * 10000) + 100, // fallback
-        category: "Customer",
-        name: sale.customer,
-        number: `CUST-${(sale.customerId || 1).toString().padStart(3, "0")}`,
-        email: `contact+${sale.customer.replace(/\s/g, "").toLowerCase()}@company.com`,
-        address: "Unknown Address",
-      });
-    }
-  }
-  return Array.from(map.values());
-}
+import { useContacts, useDeleteContact } from "@/hooks/useContacts";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const getCategoryColor = (category: string) => {
   switch (category) {
@@ -104,20 +77,27 @@ const Contacts = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE_OPTIONS[1]);
 
-  // Contacts = all (unique) customers from sales + the static vendor/employee contacts.
-  const allContacts = [
-    ...getSalesCustomers(),
-    ...fixedContacts,
-  ];
+  const { data: contacts = [], isLoading, error } = useContacts();
+  const deleteContactMutation = useDeleteContact();
 
-  const handleContactClick = (contactId: number) => {
-    navigate(`/contact-details/${contactId}`);
+  const handleContactClick = (contactId: string) => {
+    navigate(`/contact/${contactId}`);
   };
 
-  const filteredContacts = allContacts.filter(contact => {
+  const handleDeleteContact = async (contactId: string, contactName: string) => {
+    try {
+      await deleteContactMutation.mutateAsync(contactId);
+      toast.success(`Contact "${contactName}" deleted successfully`);
+    } catch (error) {
+      console.error('Error deleting contact:', error);
+      toast.error('Failed to delete contact');
+    }
+  };
+
+  const filteredContacts = contacts.filter(contact => {
     const matchesSearch = contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       contact.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      contact.number.toLowerCase().includes(searchQuery.toLowerCase());
+      contact.number.toString().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === "all" || contact.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -126,13 +106,52 @@ const Contacts = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedContacts = filteredContacts.slice(startIndex, startIndex + itemsPerPage);
 
+  if (isLoading) {
+    return (
+      <div className="flex h-screen">
+        <Sidebar />
+        <main className="flex-1 overflow-auto">
+          <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
+            <h1 className="text-2xl font-semibold text-white mb-4">Contacts</h1>
+            <p className="text-white/80">View your company Contacts</p>
+          </div>
+          <div className="p-6 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+              <p className="mt-2 text-gray-600">Loading contacts...</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-screen">
+        <Sidebar />
+        <main className="flex-1 overflow-auto">
+          <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
+            <h1 className="text-2xl font-semibold text-white mb-4">Contacts</h1>
+            <p className="text-white/80">View your company Contacts</p>
+          </div>
+          <div className="p-6 flex items-center justify-center">
+            <div className="text-center text-red-600">
+              <p>Error loading contacts: {error.message}</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen">
       <Sidebar />
       <main className="flex-1 overflow-auto">
         <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
           <h1 className="text-2xl font-semibold text-white mb-4">Contacts</h1>
-          <p className="text-white/80"> View your company Contacts</p>
+          <p className="text-white/80">View your company Contacts</p>
         </div>
         
         <div className="p-6">
@@ -218,64 +237,117 @@ const Contacts = () => {
                   <TableHead>Name</TableHead>
                   <TableHead>Number</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
                   <TableHead>Address</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedContacts.map((contact) => (
-                  <TableRow key={contact.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        {getCategoryIcon(contact.category)}
-                        {contact.category}
-                      </div>
+                {paginatedContacts.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                      {contacts.length === 0 ? "No contacts found. Create your first contact!" : "No contacts match your search criteria."}
                     </TableCell>
-                    <TableCell>
-                      <Button 
-                        variant="link" 
-                        className="p-0 h-auto font-normal text-blue-600 hover:text-blue-800 hover:underline"
-                        onClick={() => handleContactClick(contact.id)}
-                      >
-                        {contact.name}
-                      </Button>
-                    </TableCell>
-                    <TableCell>{contact.number}</TableCell>
-                    <TableCell>{contact.email}</TableCell>
-                    <TableCell className="max-w-[200px] truncate">{contact.address}</TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  paginatedContacts.map((contact) => (
+                    <TableRow key={contact.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          {getCategoryIcon(contact.category)}
+                          {contact.category}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Button 
+                          variant="link" 
+                          className="p-0 h-auto font-normal text-blue-600 hover:text-blue-800 hover:underline"
+                          onClick={() => handleContactClick(contact.id)}
+                        >
+                          {contact.name}
+                        </Button>
+                      </TableCell>
+                      <TableCell>{contact.number}</TableCell>
+                      <TableCell>{contact.email}</TableCell>
+                      <TableCell>{contact.phone}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">{contact.address}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/contact/${contact.id}/edit`)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Edit size={14} />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 size={14} />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Contact</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete "{contact.name}"? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteContact(contact.id, contact.name)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
 
-          <div className="mt-4 flex justify-end">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious 
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                  />
-                </PaginationItem>
-                {Array.from({ length: totalPages }, (_, i) => (
-                  <PaginationItem key={i + 1}>
-                    <PaginationLink
-                      onClick={() => setCurrentPage(i + 1)}
-                      isActive={currentPage === i + 1}
-                    >
-                      {i + 1}
-                    </PaginationLink>
+          {totalPages > 1 && (
+            <div className="mt-4 flex justify-end">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                    />
                   </PaginationItem>
-                ))}
-                <PaginationItem>
-                  <PaginationNext 
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
+                  {Array.from({ length: totalPages }, (_, i) => (
+                    <PaginationItem key={i + 1}>
+                      <PaginationLink
+                        onClick={() => setCurrentPage(i + 1)}
+                        isActive={currentPage === i + 1}
+                      >
+                        {i + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </div>
       </main>
     </div>
@@ -283,4 +355,3 @@ const Contacts = () => {
 };
 
 export default Contacts;
-

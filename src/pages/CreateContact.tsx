@@ -24,41 +24,14 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { User, Users, Building2, Save, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-
-// This would come from your API/database in a real app
-const contacts = [
-  {
-    id: 1,
-    category: "Customer",
-    name: "PT Maju Jaya",
-    number: "CUST-001",
-    email: "contact@majujaya.com",
-    address: "Jl. Sudirman No. 123, Jakarta",
-  },
-  {
-    id: 2,
-    category: "Vendor",
-    name: "CV Sukses Makmur",
-    number: "VEN-001",
-    email: "info@suksesmakmur.com",
-    address: "Jl. Gatot Subroto No. 45, Bandung",
-  },
-  {
-    id: 3,
-    category: "Employee",
-    name: "Budi Santoso",
-    number: "EMP-001",
-    email: "budi.s@company.com",
-    address: "Jl. Melati No. 67, Surabaya",
-  },
-];
+import { useContacts, useCreateContact } from "@/hooks/useContacts";
 
 const contactSchema = z.object({
-  category: z.string({
+  category: z.enum(["Customer", "Vendor", "Employee"], {
     required_error: "Please select a category",
   }),
   name: z.string().min(1, "Name is required"),
-  number: z.string().min(1, "ID is required"),
+  number: z.number().min(1, "Number is required"),
   email: z.string().email("Invalid email format"),
   phone: z.string().min(1, "Phone number is required"),
   address: z.string().min(1, "Address is required"),
@@ -68,68 +41,59 @@ type ContactFormValues = z.infer<typeof contactSchema>;
 
 const CreateContact = () => {
   const navigate = useNavigate();
+  const { data: contacts = [] } = useContacts();
+  const createContactMutation = useCreateContact();
+  
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactSchema),
     defaultValues: {
-      category: "",
+      category: undefined,
       name: "",
-      number: "",
+      number: 0,
       email: "",
       phone: "",
       address: "",
     },
-    mode: "onChange", // Enable validation on change for better UX
+    mode: "onChange",
   });
   
-  // Function to generate the next contact ID based on category
-  const generateNextId = (category: string) => {
-    if (!category) return "";
+  // Function to generate the next contact number based on category
+  const generateNextNumber = (category: string) => {
+    if (!category) return 1;
     
-    const prefix = category === "Customer" ? "CUST-" : 
-                  category === "Vendor" ? "VEN-" : 
-                  category === "Employee" ? "EMP-" : "";
-    
-    // Find the highest ID number for the selected category
+    // Find the highest number for the selected category
     const categoryContacts = contacts.filter(c => c.category === category);
     
     if (categoryContacts.length === 0) {
-      return `${prefix}001`; // First contact of this category
+      return 1; // First contact of this category
     }
     
-    // Extract numbers from IDs and find the highest one
-    const idNumbers = categoryContacts.map(contact => {
-      const match = contact.number.match(/\d+/);
-      return match ? parseInt(match[0], 10) : 0;
-    });
-    
-    const highestId = Math.max(...idNumbers);
-    const nextId = highestId + 1;
-    
-    // Format with leading zeros (e.g., 001, 010, 100)
-    return `${prefix}${nextId.toString().padStart(3, '0')}`;
+    // Find the highest number
+    const highestNumber = Math.max(...categoryContacts.map(contact => contact.number));
+    return highestNumber + 1;
   };
 
-  // Update ID when category changes
+  // Update number when category changes
   useEffect(() => {
     const category = form.watch("category");
     if (category) {
-      const nextId = generateNextId(category);
-      form.setValue("number", nextId);
+      const nextNumber = generateNextNumber(category);
+      form.setValue("number", nextNumber);
     }
-  }, [form.watch("category")]);
+  }, [form.watch("category"), contacts]);
   
   // Check if all fields are filled
   const isFormComplete = form.formState.isValid;
 
-  const onSubmit = (data: ContactFormValues) => {
-    // In a real app, this would save to a database
-    console.log("Contact data:", data);
-    
-    // Show success message
-    toast.success("Contact created successfully");
-    
-    // Navigate back to contacts page
-    navigate("/contacts");
+  const onSubmit = async (data: ContactFormValues) => {
+    try {
+      await createContactMutation.mutateAsync(data);
+      toast.success("Contact created successfully");
+      navigate("/contacts");
+    } catch (error) {
+      console.error("Error creating contact:", error);
+      toast.error("Failed to create contact");
+    }
   };
 
   const getCategoryIcon = (category: string) => {
@@ -224,11 +188,13 @@ const CreateContact = () => {
                   name="number"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>ID</FormLabel>
+                      <FormLabel>Number</FormLabel>
                       <FormControl>
                         <Input 
-                          placeholder={form.getValues("category") ? generateNextId(form.getValues("category")) : "ID will be generated"} 
-                          {...field} 
+                          type="number"
+                          placeholder="Contact number"
+                          value={field.value || ''}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
                           readOnly 
                           className="bg-gray-100 cursor-not-allowed"
                         />
@@ -283,10 +249,10 @@ const CreateContact = () => {
                 <Button 
                   type="submit" 
                   className="w-full mt-6" 
-                  disabled={!isFormComplete}
+                  disabled={!isFormComplete || createContactMutation.isPending}
                 >
                   <Save className="mr-2 h-4 w-4" />
-                  Create Contact
+                  {createContactMutation.isPending ? "Creating..." : "Create Contact"}
                 </Button>
               </form>
             </Form>
