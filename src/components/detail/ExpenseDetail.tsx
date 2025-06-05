@@ -1,40 +1,90 @@
 
-import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { ArrowLeft, Download, FileText, Printer, Share2 } from "lucide-react";
-import { Expense } from "@/types/expense";
-import { getExpenses } from "@/utils/expenseUtils";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+
+interface ExpenseItem {
+  id: string;
+  name: string;
+  quantity: number;
+  amount: number;
+}
+
+interface ExpenseData {
+  id: string;
+  user_id: string;
+  number: number;
+  date: string;
+  category: string;
+  beneficiary: string;
+  status: 'Paid' | 'Require Approval';
+  items: ExpenseItem[];
+  grand_total: number;
+  created_at: string;
+  updated_at?: string;
+}
 
 const ExpenseDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const [expense, setExpense] = useState<Expense | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
-  useEffect(() => {
-    if (id) {
-      const expenses = getExpenses();
-      const foundExpense = expenses.find(exp => exp.id === id);
-      setExpense(foundExpense || null);
-      setLoading(false);
-    }
-  }, [id]);
+  const { data: expense, isLoading, error } = useQuery({
+    queryKey: ['expense', id],
+    queryFn: async () => {
+      if (!id) throw new Error('Expense ID is required');
+      
+      const { data, error } = await supabase
+        .from('expenses')
+        .select('*')
+        .eq('id', id)
+        .single();
 
-  if (loading) {
+      if (error) {
+        console.error('Error fetching expense:', error);
+        throw error;
+      }
+
+      // Transform the Supabase data to match our interface
+      const transformedExpense: ExpenseData = {
+        id: data.id,
+        user_id: data.user_id,
+        number: data.number,
+        date: data.date,
+        category: data.category,
+        beneficiary: data.beneficiary,
+        status: data.status as 'Paid' | 'Require Approval',
+        items: Array.isArray(data.items) ? (data.items as unknown as ExpenseItem[]) : [],
+        grand_total: data.grand_total,
+        created_at: data.created_at,
+        updated_at: data.updated_at || undefined,
+      };
+
+      return transformedExpense;
+    },
+    enabled: !!id && !!user,
+  });
+
+  if (isLoading) {
     return (
       <div className="flex h-screen bg-background">
         <Sidebar />
         <div className="flex-1 p-6 flex items-center justify-center">
-          <p>Loading expense details...</p>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading expense details...</p>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (!expense) {
+  if (error || !expense) {
     return (
       <div className="flex h-screen bg-background">
         <Sidebar />
@@ -49,6 +99,10 @@ const ExpenseDetail = () => {
       </div>
     );
   }
+
+  const formatCurrency = (amount: number) => {
+    return `Rp. ${amount.toLocaleString("id-ID")}`;
+  };
 
   return (
     <div className="flex h-screen bg-background">
@@ -136,7 +190,7 @@ const ExpenseDetail = () => {
                   <div className="p-6 bg-gray-50 rounded-lg border">
                     <div className="text-right">
                       <p className="text-gray-500 mb-1">Total Amount</p>
-                      <p className="text-3xl font-bold text-gray-900">{expense.total}</p>
+                      <p className="text-3xl font-bold text-gray-900">{formatCurrency(expense.grand_total)}</p>
                     </div>
                   </div>
                 </div>
@@ -157,22 +211,30 @@ const ExpenseDetail = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {expense.items.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>{item.name}</TableCell>
-                      <TableCell className="text-right">{item.quantity}</TableCell>
-                      <TableCell className="text-right">
-                        Rp. {item.amount.toLocaleString("id-ID")},00
-                      </TableCell>
-                      <TableCell className="text-right">
-                        Rp. {(item.quantity * item.amount).toLocaleString("id-ID")},00
+                  {expense.items && expense.items.length > 0 ? (
+                    expense.items.map((item, index) => (
+                      <TableRow key={item.id || index}>
+                        <TableCell>{item.name}</TableCell>
+                        <TableCell className="text-right">{item.quantity}</TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(item.amount)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(item.quantity * item.amount)}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-6 text-gray-500">
+                        No items found for this expense.
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                   <TableRow>
                     <TableCell colSpan={3} className="text-right font-semibold">Total:</TableCell>
                     <TableCell className="text-right font-bold">
-                      {expense.total}
+                      {formatCurrency(expense.grand_total)}
                     </TableCell>
                   </TableRow>
                 </TableBody>
