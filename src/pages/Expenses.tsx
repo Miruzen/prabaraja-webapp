@@ -9,6 +9,7 @@ import { ExpenseTabs } from "@/components/expenses/ExpenseTabs";
 import { ExpenseSummaryCards } from "@/components/expenses/ExpenseSummaryCards";
 import { useExpenses, useDeleteExpense, useUpdateExpense } from "@/hooks/useExpenses";
 import { toast } from "sonner";
+import type { Expense as TypesExpense } from "@/types/expense";
 
 const Expenses = () => {
   const navigate = useNavigate();
@@ -47,8 +48,25 @@ const Expenses = () => {
     navigate("/create-expense");
   };
 
+  // Transform expenses from Supabase format to frontend format
+  const transformedExpenses: TypesExpense[] = expenses.map(expense => ({
+    id: expense.id,
+    date: expense.date,
+    number: expense.number.toString(),
+    category: expense.category,
+    beneficiary: expense.beneficiary,
+    status: expense.status as "Paid" | "Require Approval",
+    items: Array.isArray(expense.items) ? expense.items.map((item: any) => ({
+      id: item.id || "",
+      name: item.name || "",
+      quantity: item.quantity || 0,
+      amount: item.amount || item.total || 0
+    })) : [],
+    total: expense.grand_total.toString()
+  }));
+
   // Filter expenses based on search query
-  const filteredExpenses = expenses.filter(expense => {
+  const filteredExpenses = transformedExpenses.filter(expense => {
     const searchLower = searchQuery.toLowerCase();
     return (
       expense.number.toString().toLowerCase().includes(searchLower) ||

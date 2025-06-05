@@ -1,4 +1,3 @@
-
 import { useParams, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -52,7 +51,7 @@ const RequestDetail = () => {
         throw error;
       }
 
-      // Transform the Supabase data to match our Request interface
+      // Safely transform the Supabase data to match our Request interface
       const transformedRequest: Request = {
         id: data.id,
         user_id: data.user_id,
@@ -62,7 +61,7 @@ const RequestDetail = () => {
         requested_by: data.requested_by,
         urgency: data.urgency,
         status: data.status,
-        items: Array.isArray(data.items) ? data.items as RequestItem[] : [],
+        items: Array.isArray(data.items) ? (data.items as unknown as RequestItem[]) : [],
         grand_total: data.grand_total,
         tags: data.tags || [],
         created_at: data.created_at,
