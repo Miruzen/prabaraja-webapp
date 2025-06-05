@@ -25,7 +25,7 @@ import Contacts from "./pages/Contacts";
 import CreateContact from "./pages/CreateContact";
 import ContactDetails from "./pages/ContactDetails";
 import Settings from "./pages/Settings";
-import ReceivePaymentPage from "./pages/ReceivePaymentPage";
+import { ReceivePaymentPage } from "./pages/ReceivePaymentPage";
 import NotFound from "./pages/NotFound";
 import CreateExpense from "./components/create/CreateExpense";
 import CreateNewPurchase from "./components/create/CreateNewPurchase";
