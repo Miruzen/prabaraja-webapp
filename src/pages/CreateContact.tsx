@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
@@ -87,7 +86,17 @@ const CreateContact = () => {
 
   const onSubmit = async (data: ContactFormValues) => {
     try {
-      await createContactMutation.mutateAsync(data);
+      // Ensure all required fields are present
+      const contactData = {
+        category: data.category,
+        name: data.name,
+        number: data.number,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+      };
+      
+      await createContactMutation.mutateAsync(contactData);
       toast.success("Contact created successfully");
       navigate("/contacts");
     } catch (error) {
