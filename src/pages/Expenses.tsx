@@ -164,7 +164,7 @@ const Expenses = () => {
             </div>
 
             {/* Summary Cards */}
-            <ExpenseSummaryCards expenses={expenses} />
+            <ExpenseSummaryCards expenses={transformedExpenses} />
           </div>
         </div>
       </div>
