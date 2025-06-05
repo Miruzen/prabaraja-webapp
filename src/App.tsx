@@ -70,6 +70,7 @@ function App() {
               <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
               <Route path="/create-contact" element={<ProtectedRoute><CreateContact /></ProtectedRoute>} />
               <Route path="/contact/:id" element={<ProtectedRoute><ContactDetails /></ProtectedRoute>} />
+              <Route path="/contact/:id/edit" element={<ProtectedRoute><CreateContact /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               <Route path="/receive-payment" element={<ProtectedRoute><ReceivePaymentPage /></ProtectedRoute>} />
               

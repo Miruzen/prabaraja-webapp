@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,45 +19,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Mail, Phone, MapPin, DollarSign, Wallet } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, DollarSign, Wallet, Edit } from "lucide-react";
 import { formatPriceWithSeparator } from "@/utils/salesUtils";
-import { getSalesInvoiceById } from "@/utils/invoiceUtils";
-import { salesData } from "@/data/salesData";
+import { useContacts } from "@/hooks/useContacts";
+import { Contact } from "@/hooks/useContacts";
 
-const contacts = [
-  {
-    id: 1,
-    category: "Customer",
-    name: "PT Maju Jaya",
-    number: "CUST-001",
-    email: "contact@majujaya.com",
-    phone: "+62 812 3456 7890",
-    address: "Jl. Sudirman No. 123, Jakarta",
-  },
-  {
-    id: 2,
-    category: "Vendor",
-    name: "CV Sukses Makmur",
-    number: "VEN-001",
-    email: "info@suksesmakmur.com",
-    phone: "+62 812 9876 5432",
-    address: "Jl. Gatot Subroto No. 45, Bandung",
-  },
-  {
-    id: 3,
-    category: "Employee",
-    name: "Budi Santoso",
-    number: "EMP-001",
-    email: "budi.s@company.com",
-    phone: "+62 812 1122 3344",
-    address: "Jl. Melati No. 67, Surabaya",
-  },
-];
-
+// Mock transaction data - this would ideally come from a sales/purchases hook
 const salesTransactions = [
   { 
     id: "S001", 
-    contactId: 1, 
+    contactId: "1", 
     date: "2023-07-12", 
     invoiceNumber: "INV-2023-001", 
     amount: 5000000, 
@@ -66,34 +38,12 @@ const salesTransactions = [
       { id: 2, name: "Computer Equipment", quantity: 1, price: 2500000, total: 2500000 },
     ]
   },
-  { 
-    id: "S002", 
-    contactId: 1, 
-    date: "2023-08-15", 
-    invoiceNumber: "INV-2023-015", 
-    amount: 7500000, 
-    status: "Paid",
-    items: [
-      { id: 1, name: "Software License", quantity: 5, price: 1500000, total: 7500000 },
-    ]
-  },
-  { 
-    id: "S003", 
-    contactId: 2, 
-    date: "2023-07-20", 
-    invoiceNumber: "INV-2023-008", 
-    amount: 3500000, 
-    status: "Paid",
-    items: [
-      { id: 1, name: "Raw Materials", quantity: 100, price: 35000, total: 3500000 },
-    ]
-  },
 ];
 
 const purchaseTransactions = [
   { 
     id: "P001", 
-    contactId: 2, 
+    contactId: "2", 
     date: "2023-06-10", 
     invoiceNumber: "PO-2023-001", 
     amount: 4500000, 
@@ -102,64 +52,76 @@ const purchaseTransactions = [
       { id: 1, name: "Industrial Equipment", quantity: 1, price: 4500000, total: 4500000 },
     ]
   },
-  { 
-    id: "P002", 
-    contactId: 2, 
-    date: "2023-07-05", 
-    invoiceNumber: "PO-2023-012", 
-    amount: 2200000, 
-    status: "Paid",
-    items: [
-      { id: 1, name: "Office Furniture", quantity: 5, price: 440000, total: 2200000 },
-    ]
-  },
 ];
 
 const ContactDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
   const [activeTab, setActiveTab] = useState("info");
   const [salesData, setSalesData] = useState<any[]>([]);
   const [purchasesData, setPurchasesData] = useState<any[]>([]);
   
-  const contactId = parseInt(id || "0");
-  const contact = contacts.find(c => c.id === contactId);
+  const { data: contacts = [], isLoading, error } = useContacts();
+  
+  // Find the contact by ID from the real backend data
+  const contact = contacts.find((c: Contact) => c.id === id);
 
   // Function to handle the back button click
   const handleGoBack = () => {
-    // Check if we have a previous page in history
     if (document.referrer && document.referrer.includes(window.location.hostname)) {
-      navigate(-1); // Go back to previous page in history
+      navigate(-1);
     } else {
-      // Default fallback to contacts page if no history
       navigate("/contacts");
     }
   };
 
   useEffect(() => {
-    const legacySales = salesTransactions.filter(t => t.contactId === contactId);
-    
-    const mainSales = salesData.filter(s => s.customerId === contactId).map(sale => {
-      const numericTotal = parseFloat(sale.total.replace("Rp ", "").replace(".", "").replace(",", "."));
-      return {
-        id: sale.id,
-        contactId: sale.customerId,
-        date: sale.date,
-        invoiceNumber: sale.number,
-        amount: numericTotal || 0,
-        status: sale.status,
-        items: []
-      };
-    });
-    
-    const combinedSales = [...legacySales, ...mainSales];
-    
-    const purchases = purchaseTransactions.filter(t => t.contactId === contactId);
-    
-    setSalesData(combinedSales);
-    setPurchasesData(purchases);
-  }, [contactId]);
+    if (contact) {
+      // Filter transactions by contact ID (using string comparison for mock data)
+      const contactIdString = contact.id;
+      
+      const legacySales = salesTransactions.filter(t => t.contactId === contactIdString);
+      const purchases = purchaseTransactions.filter(t => t.contactId === contactIdString);
+      
+      setSalesData(legacySales);
+      setPurchasesData(purchases);
+    }
+  }, [contact]);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen">
+        <Sidebar />
+        <main className="flex-1 p-6">
+          <Button variant="outline" onClick={handleGoBack}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+          <div className="mt-8 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+            <p className="mt-2 text-gray-600">Loading contact details...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen">
+        <Sidebar />
+        <main className="flex-1 p-6">
+          <Button variant="outline" onClick={handleGoBack}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+          <div className="mt-8 text-center text-red-600">
+            <p>Error loading contact: {error.message}</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
   
   if (!contact) {
     return (
@@ -226,8 +188,15 @@ const ContactDetails = () => {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
             <div>
               <h1 className="text-2xl font-semibold text-white mb-1">{contact.name}</h1>
-              <p className="text-white/80">{contact.number} • {contact.category}</p>
+              <p className="text-white/80">#{contact.number} • {contact.category}</p>
             </div>
+            <Button 
+              onClick={() => navigate(`/contact/${contact.id}/edit`)}
+              className="bg-white text-purple-600 hover:bg-gray-100"
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              Edit Contact
+            </Button>
           </div>
         </div>
         
@@ -331,7 +300,7 @@ const ContactDetails = () => {
                         </TableHeader>
                         <TableBody>
                           {salesData.flatMap(sale => 
-                            sale.items && sale.items.length > 0 ? sale.items.map(item => (
+                            sale.items && sale.items.length > 0 ? sale.items.map((item: any) => (
                               <TableRow key={`${sale.id}-${item.id}`}>
                                 <TableCell>
                                   <Button 
@@ -400,7 +369,7 @@ const ContactDetails = () => {
                         </TableHeader>
                         <TableBody>
                           {purchasesData.flatMap(purchase => 
-                            purchase.items.map(item => (
+                            purchase.items.map((item: any) => (
                               <TableRow key={`${purchase.id}-${item.id}`}>
                                 <TableCell>
                                   <Button 
