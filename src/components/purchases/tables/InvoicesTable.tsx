@@ -96,7 +96,7 @@ export function InvoicesTable({
                   <TableCell>{format(invoice.date, "dd/MM/yyyy")}</TableCell>
                   <TableCell>
                     <Link
-                      to={`/invoices/${invoice.id}`}
+                      to={`/invoice/${invoice.id}?type=invoice`}
                       className="text-indigo-600 hover:underline"
                     >
                       {invoice.number}
