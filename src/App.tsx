@@ -76,7 +76,7 @@ function App() {
               
               {/* Create routes */}
               <Route path="/create-expense" element={<ProtectedRoute><CreateExpense /></ProtectedRoute>} />
-              <Route path="/create-purchase" element={<ProtectedRoute><CreateNewPurchase /></ProtectedRoute>} />
+              <Route path="/create-new-purchase" element={<ProtectedRoute><CreateNewPurchase /></ProtectedRoute>} />
               <Route path="/create-sales" element={<ProtectedRoute><CreateNewSales /></ProtectedRoute>} />
               
               {/* Detail routes */}
