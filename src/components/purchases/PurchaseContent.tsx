@@ -23,7 +23,12 @@ import {
   useDeleteShipment,
   useDeleteOrder,
   useDeleteOffer,
-  useDeleteRequest
+  useDeleteRequest,
+  Invoice,
+  Shipment,
+  Order,
+  Offer,
+  Request
 } from "@/hooks/usePurchases";
 import { toast } from "sonner";
 
@@ -32,6 +37,8 @@ export function PurchaseContent() {
   const [activeTab, setActiveTab] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedType, setSelectedType] = useState<PurchaseType>("invoice");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchValue, setSearchValue] = useState("");
 
   // Query hooks
   const { data: invoices = [], refetch: refetchInvoices } = useInvoices();
@@ -87,12 +94,65 @@ export function PurchaseContent() {
     }
   };
 
+  // Transform database types to component-compatible formats
+  const transformedInvoices = invoices.map((invoice: Invoice) => ({
+    ...invoice,
+    date: new Date(invoice.date),
+    dueDate: new Date(invoice.due_date),
+    amount: invoice.grand_total,
+    itemCount: Array.isArray(invoice.items) ? invoice.items.length : 0,
+    paidAmount: 0 // Default value since it's not in the database type
+  }));
+
+  const transformedShipments = shipments.map((shipment: Shipment) => ({
+    ...shipment,
+    date: new Date(shipment.date),
+    dueDate: new Date(shipment.due_date),
+    shippingDate: new Date(shipment.shipping_date),
+    trackingNumber: shipment.tracking_number,
+    amount: shipment.grand_total,
+    itemCount: Array.isArray(shipment.items) ? shipment.items.length : 0,
+    approver: "System" // Default value since it's not in the database type
+  }));
+
+  const transformedOrders = orders.map((order: Order) => ({
+    ...order,
+    date: new Date(order.date),
+    dueDate: new Date(order.due_date),
+    orderDate: new Date(order.orders_date),
+    amount: order.grand_total,
+    itemCount: Array.isArray(order.items) ? order.items.length : 0,
+    approver: "System", // Default value since it's not in the database type
+    discountTerms: "" // Default value since it's not in the database type
+  }));
+
+  const transformedOffers = offers.map((offer: Offer) => ({
+    ...offer,
+    date: new Date(offer.date),
+    dueDate: new Date(offer.due_date),
+    expiryDate: offer.expiry_date ? new Date(offer.expiry_date) : new Date(),
+    discountTerms: offer.discount_terms || "",
+    amount: offer.grand_total,
+    itemCount: Array.isArray(offer.items) ? offer.items.length : 0,
+    approver: "System" // Default value since it's not in the database type
+  }));
+
+  const transformedRequests = requests.map((request: Request) => ({
+    ...request,
+    date: new Date(request.date || new Date()),
+    dueDate: new Date(request.due_date),
+    requestedBy: request.requested_by,
+    amount: request.grand_total,
+    itemCount: Array.isArray(request.items) ? request.items.length : 0,
+    approver: "System" // Default value since it's not in the database type
+  }));
+
   const renderTable = () => {
     switch (activeTab) {
       case "invoices":
         return (
           <InvoicesTable 
-            invoices={invoices} 
+            invoices={transformedInvoices} 
             onDelete={(id) => handleDelete(id, "invoice")}
             onEdit={(id) => handleEdit(id, "invoice")}
           />
@@ -100,7 +160,7 @@ export function PurchaseContent() {
       case "shipments":
         return (
           <ShipmentsTable 
-            shipments={shipments} 
+            shipments={transformedShipments} 
             onDelete={(id) => handleDelete(id, "shipment")}
             onEdit={(id) => handleEdit(id, "shipment")}
           />
@@ -108,7 +168,7 @@ export function PurchaseContent() {
       case "orders":
         return (
           <OrdersTable 
-            orders={orders} 
+            orders={transformedOrders} 
             onDelete={(id) => handleDelete(id, "order")}
             onEdit={(id) => handleEdit(id, "order")}
           />
@@ -116,7 +176,7 @@ export function PurchaseContent() {
       case "offers":
         return (
           <OffersTable 
-            offers={offers} 
+            offers={transformedOffers} 
             onDelete={(id) => handleDelete(id, "offer")}
             onEdit={(id) => handleEdit(id, "offer")}
           />
@@ -124,13 +184,19 @@ export function PurchaseContent() {
       case "requests":
         return (
           <RequestsTable 
-            requests={requests} 
+            requests={transformedRequests} 
             onDelete={(id) => handleDelete(id, "request")}
             onEdit={(id) => handleEdit(id, "request")}
           />
         );
       default:
-        return <TransactionsTable />;
+        return (
+          <TransactionsTable 
+            transactions={[]}
+            activeTab={activeTab}
+            onDeleteTransaction={() => {}}
+          />
+        );
     }
   };
 
@@ -141,9 +207,18 @@ export function PurchaseContent() {
         <PurchaseAddButton onAddPurchase={handleAddPurchase} />
       </div>
 
-      <StatsCards />
+      <StatsCards 
+        unpaidAmount={0}
+        overdueCount={0}
+        last30DaysPayments={0}
+      />
       <PurchaseNavTabs activeTab={activeTab} onTabChange={setActiveTab} />
-      <PurchaseFilters />
+      <PurchaseFilters 
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
+      />
       {renderTable()}
 
       <AddPurchaseDialog
