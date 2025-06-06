@@ -3,7 +3,6 @@ import { useState } from "react";
 import { PurchaseType } from "@/types/purchase";
 import { PurchaseInformationForm } from "@/components/purchases/PurchaseInformationForm";
 import { PurchaseItemsForm } from "@/components/purchases/PurchaseItemsForm";
-import { ContactSelector } from "@/components/purchases/ContactSelector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,7 +28,6 @@ export function CreatePurchaseForm({
   const [approver, setApprover] = useState("");
   const [status, setStatus] = useState<"pending" | "completed" | "cancelled" | "Half-paid">("pending");
   const [tags, setTags] = useState("");
-  const [selectedContact, setSelectedContact] = useState("");
   const [items, setItems] = useState([{ 
     id: Math.random().toString(36).substr(2, 9), 
     name: '', 
@@ -63,7 +61,6 @@ export function CreatePurchaseForm({
       dueDate,
       status,
       approver,
-      selectedContact,
       tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
       items,
       taxCalculationMethod: false,
@@ -117,19 +114,6 @@ export function CreatePurchaseForm({
         tags={tags}
         setTags={setTags}
       />
-
-      {/* Contact Selection */}
-      <div className="bg-white p-6 rounded-lg shadow-sm">
-        <h2 className="text-lg font-medium mb-4">Contact Information</h2>
-        <div className="space-y-2">
-          <Label htmlFor="contact">Contact</Label>
-          <ContactSelector
-            value={selectedContact}
-            onValueChange={setSelectedContact}
-            placeholder="Select a contact..."
-          />
-        </div>
-      </div>
 
       {/* Request-specific fields */}
       {purchaseType === "request" && (

@@ -1,231 +1,543 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { Purchase, PurchaseType, InvoicePurchase, OfferPurchase, OrderPurchase, RequestPurchase, ShipmentPurchase } from "@/types/purchase";
 import { PurchaseNavTabs } from "./PurchaseNavTabs";
 import { PurchaseFilters } from "./PurchaseFilters";
-import { TransactionsTable } from "./TransactionsTable";
-import { InvoicesTable } from "./tables/InvoicesTable";
-import { ShipmentsTable } from "./tables/ShipmentsTable";
-import { OrdersTable } from "./tables/OrdersTable";
-import { OffersTable } from "./tables/OffersTable";
-import { RequestsTable } from "./tables/RequestsTable";
-import { StatsCards } from "./StatsCards";
 import { PurchaseAddButton } from "./PurchaseAddButton";
-import { AddPurchaseDialog } from "../AddPurchaseDialog";
-import { PurchaseType } from "@/types/purchase";
+import { StatsCards } from "./StatsCards";
+import { TransactionsTable } from "./TransactionsTable";
+import { AddPurchaseDialog } from "@/components/AddPurchaseDialog";
 import { 
   useInvoices, 
-  useShipments, 
-  useOrders, 
   useOffers, 
-  useRequests,
+  useOrders, 
+  useRequests, 
+  useShipments,
+  useCreateInvoice,
+  useCreateOffer,
+  useCreateOrder,
+  useCreateRequest,
+  useCreateShipment,
   useDeleteInvoice,
-  useDeleteShipment,
-  useDeleteOrder,
   useDeleteOffer,
+  useDeleteOrder,
   useDeleteRequest,
-  Invoice,
-  Shipment,
-  Order,
-  Offer,
-  Request
+  useDeleteShipment,
+  useUpdateInvoice,
+  useUpdateOffer,
+  useUpdateOrder,
+  useUpdateRequest,
+  useUpdateShipment
 } from "@/hooks/usePurchases";
-import { toast } from "sonner";
 
 export function PurchaseContent() {
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("all");
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedType, setSelectedType] = useState<PurchaseType>("invoice");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [activeTab, setActiveTab] = useState<string>("invoices");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const navigate = useNavigate();
 
-  // Query hooks
-  const { data: invoices = [], refetch: refetchInvoices } = useInvoices();
-  const { data: shipments = [], refetch: refetchShipments } = useShipments();
-  const { data: orders = [], refetch: refetchOrders } = useOrders();
-  const { data: offers = [], refetch: refetchOffers } = useOffers();
-  const { data: requests = [], refetch: refetchRequests } = useRequests();
+  // Fetch data from all tables
+  const { data: invoices = [], isLoading: invoicesLoading } = useInvoices();
+  const { data: offers = [], isLoading: offersLoading } = useOffers();
+  const { data: orders = [], isLoading: ordersLoading } = useOrders();
+  const { data: requests = [], isLoading: requestsLoading } = useRequests();
+  const { data: shipments = [], isLoading: shipmentsLoading } = useShipments();
 
-  // Delete mutation hooks
+  // Create mutations
+  const createInvoiceMutation = useCreateInvoice();
+  const createOfferMutation = useCreateOffer();
+  const createOrderMutation = useCreateOrder();
+  const createRequestMutation = useCreateRequest();
+  const createShipmentMutation = useCreateShipment();
+
+  // Delete mutations
   const deleteInvoiceMutation = useDeleteInvoice();
-  const deleteShipmentMutation = useDeleteShipment();
-  const deleteOrderMutation = useDeleteOrder();
   const deleteOfferMutation = useDeleteOffer();
+  const deleteOrderMutation = useDeleteOrder();
   const deleteRequestMutation = useDeleteRequest();
+  const deleteShipmentMutation = useDeleteShipment();
 
-  const handleAddPurchase = (type: PurchaseType) => {
-    // Navigate directly to create-new-purchase with the type parameter
-    navigate(`/create-new-purchase?type=${type}`);
+  // Update mutations
+  const updateInvoiceMutation = useUpdateInvoice();
+  const updateOfferMutation = useUpdateOffer();
+  const updateOrderMutation = useUpdateOrder();
+  const updateRequestMutation = useUpdateRequest();
+  const updateShipmentMutation = useUpdateShipment();
+
+  const isLoading = invoicesLoading || offersLoading || ordersLoading || requestsLoading || shipmentsLoading;
+
+  // Transform data to unified Purchase format with proper field mapping
+  const transformInvoicesToPurchases = (invoices: any[]): InvoicePurchase[] => {
+    return invoices.map(invoice => ({
+      id: invoice.id,
+      date: new Date(invoice.date),
+      number: `INV-${invoice.number}`,
+      approver: invoice.approver || '',
+      status: invoice.status as any,
+      tags: invoice.tags || [],
+      type: "invoice" as const,
+      items: invoice.items as any[],
+      amount: invoice.grand_total,
+      itemCount: Array.isArray(invoice.items) ? invoice.items.length : 0,
+      dueDate: new Date(invoice.due_date),
+      paidAmount: 0
+    }));
   };
 
-  const handleEdit = (id: string, type: PurchaseType) => {
-    navigate(`/create-new-purchase?id=${id}&type=${type}`);
+  const transformOffersToP = (offers: any[]): OfferPurchase[] => {
+    return offers.map(offer => ({
+      id: offer.id,
+      date: new Date(offer.date),
+      number: `OFR-${offer.number}`,
+      approver: '',
+      status: offer.status as any,
+      tags: offer.tags || [],
+      type: "offer" as const,
+      items: offer.items as any[],
+      amount: offer.grand_total,
+      itemCount: Array.isArray(offer.items) ? offer.items.length : 0,
+      expiryDate: offer.expiry_date ? new Date(offer.expiry_date) : new Date(),
+      discountTerms: offer.discount_terms || ''
+    }));
   };
 
-  const handleDelete = async (id: string, type: PurchaseType) => {
+  const transformOrdersToP = (orders: any[]): OrderPurchase[] => {
+    return orders.map(order => ({
+      id: order.id,
+      date: new Date(order.date),
+      number: `ORD-${order.number}`,
+      approver: '',
+      status: order.status as any,
+      tags: order.tags || [],
+      type: "order" as const,
+      items: order.items as any[],
+      amount: order.grand_total,
+      itemCount: Array.isArray(order.items) ? order.items.length : 0,
+      orderDate: new Date(order.orders_date),
+      discountTerms: ''
+    }));
+  };
+
+  const transformRequestsToP = (requests: any[]): RequestPurchase[] => {
+    return requests.map(request => ({
+      id: request.id,
+      date: request.date ? new Date(request.date) : new Date(),
+      number: `REQ-${request.number}`,
+      approver: '',
+      status: request.status as any,
+      tags: request.tags || [],
+      type: "request" as const,
+      items: request.items as any[],
+      amount: request.grand_total,
+      itemCount: Array.isArray(request.items) ? request.items.length : 0,
+      requestedBy: request.requested_by || 'Unknown',
+      urgency: request.urgency as any,
+      dueDate: request.due_date ? new Date(request.due_date) : undefined
+    }));
+  };
+
+  const transformShipmentsToP = (shipments: any[]): ShipmentPurchase[] => {
+    return shipments.map(shipment => ({
+      id: shipment.id,
+      date: new Date(shipment.date),
+      number: `SHP-${shipment.number}`,
+      approver: '',
+      status: shipment.status as any,
+      tags: shipment.tags || [],
+      type: "shipment" as const,
+      items: shipment.items as any[],
+      amount: shipment.grand_total,
+      itemCount: Array.isArray(shipment.items) ? shipment.items.length : 0,
+      trackingNumber: shipment.tracking_number || '',
+      carrier: shipment.carrier || '',
+      shippingDate: new Date(shipment.shipping_date)
+    }));
+  };
+
+  // Get all purchases for the active tab - FIXED LOGIC
+  const getAllPurchases = (): Purchase[] => {
+    const invoicePurchases = transformInvoicesToPurchases(invoices);
+    const offerPurchases = transformOffersToP(offers);
+    const orderPurchases = transformOrdersToP(orders);
+    const requestPurchases = transformRequestsToP(requests);
+    const shipmentPurchases = transformShipmentsToP(shipments);
+
+    console.log('PurchaseContent - getAllPurchases called for activeTab:', activeTab);
+    console.log('Data counts:', {
+      invoices: invoicePurchases.length,
+      offers: offerPurchases.length,
+      orders: orderPurchases.length,
+      requests: requestPurchases.length,
+      shipments: shipmentPurchases.length
+    });
+
+    // Return all purchases for the TransactionsTable to filter appropriately
+    const allPurchases = [...invoicePurchases, ...offerPurchases, ...orderPurchases, ...requestPurchases, ...shipmentPurchases];
+    
+    console.log('PurchaseContent - total purchases:', allPurchases.length);
+    console.log('PurchaseContent - purchase types distribution:', 
+      allPurchases.reduce((acc, p) => {
+        acc[p.type] = (acc[p.type] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>)
+    );
+
+    return allPurchases;
+  };
+
+  // Filter purchases based on search and status
+  const filteredPurchases = getAllPurchases().filter(purchase => {
+    const matchesSearch = searchValue === "" || 
+      purchase.number.toLowerCase().includes(searchValue.toLowerCase()) ||
+      purchase.approver.toLowerCase().includes(searchValue.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || purchase.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  console.log('PurchaseContent - filteredPurchases count:', filteredPurchases.length);
+
+  // Calculate stats for StatsCards
+  const allPurchases = [...transformInvoicesToPurchases(invoices), ...transformOffersToP(offers), ...transformOrdersToP(orders), ...transformRequestsToP(requests), ...transformShipmentsToP(shipments)];
+  
+  const unpaidAmount = allPurchases
+    .filter(p => p.status === "pending" || p.status === "Half-paid")
+    .reduce((total, p) => total + p.amount, 0);
+
+  const overdueCount = allPurchases
+    .filter(p => p.status === "pending" && p.dueDate && new Date(p.dueDate) < new Date())
+    .length;
+
+  const last30DaysPayments = allPurchases
+    .filter(p => {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      return p.status === "completed" && new Date(p.date) >= thirtyDaysAgo;
+    })
+    .reduce((total, p) => total + p.amount, 0);
+
+  // Handle adding a new purchase
+  const handleAddPurchase = async (data: any) => {
     try {
-      switch (type) {
+      const baseData = {
+        number: parseInt(data.number.replace(/\D/g, '')),
+        type: data.type,
+        date: data.date,
+        due_date: data.dueDate,
+        status: data.status,
+        tags: data.tags,
+        items: data.items || [],
+        grand_total: data.grandTotal || 0
+      };
+
+      switch (data.type) {
         case "invoice":
-          await deleteInvoiceMutation.mutateAsync(id);
-          refetchInvoices();
+          await createInvoiceMutation.mutateAsync({
+            ...baseData,
+            approver: data.approver,
+            tax_calculation_method: false,
+            ppn_percentage: data.ppnPercentage,
+            pph_percentage: data.pphPercentage,
+            pph_type: data.pphType,
+            dpp: data.dpp,
+            ppn: data.ppn,
+            pph: data.pph
+          });
           break;
-        case "shipment":
-          await deleteShipmentMutation.mutateAsync(id);
-          refetchShipments();
+        case "offer":
+          await createOfferMutation.mutateAsync({
+            ...baseData,
+            expiry_date: data.expiryDate,
+            discount_terms: data.discountTerms
+          });
           break;
         case "order":
-          await deleteOrderMutation.mutateAsync(id);
-          refetchOrders();
+          await createOrderMutation.mutateAsync({
+            ...baseData,
+            orders_date: data.orderDate || data.date
+          });
+          break;
+        case "request":
+          await createRequestMutation.mutateAsync({
+            ...baseData,
+            requested_by: data.requestedBy,
+            urgency: data.urgency
+          });
+          break;
+        case "shipment":
+          await createShipmentMutation.mutateAsync({
+            ...baseData,
+            tracking_number: data.trackingNumber,
+            carrier: data.carrier,
+            shipping_date: data.shippingDate
+          });
+          break;
+      }
+
+      setIsDialogOpen(false);
+      toast.success("Purchase created successfully");
+    } catch (error) {
+      console.error('Error creating purchase:', error);
+      toast.error("Failed to create purchase");
+    }
+  };
+
+  // Fixed delete handler - now type-aware with proper type checking
+  const handleDeleteTransaction = async (id: string) => {
+    try {
+      // Find the purchase to determine its type
+      const allPurchases = getAllPurchases();
+      const purchase = allPurchases.find(p => p.id === id);
+      
+      if (!purchase) {
+        toast.error("Purchase not found");
+        return;
+      }
+
+      // Ensure purchase has type property with proper type checking
+      const purchaseType = (purchase as Purchase).type;
+      if (!purchaseType) {
+        toast.error("Purchase type not found");
+        return;
+      }
+
+      console.log('Deleting purchase:', { id, type: purchaseType });
+
+      // Call the appropriate delete mutation based on type
+      switch (purchaseType) {
+        case "invoice":
+          await deleteInvoiceMutation.mutateAsync(id);
           break;
         case "offer":
           await deleteOfferMutation.mutateAsync(id);
-          refetchOffers();
+          break;
+        case "order":
+          await deleteOrderMutation.mutateAsync(id);
           break;
         case "request":
           await deleteRequestMutation.mutateAsync(id);
-          refetchRequests();
           break;
+        case "shipment":
+          await deleteShipmentMutation.mutateAsync(id);
+          break;
+        default:
+          throw new Error(`Unknown purchase type: ${purchaseType}`);
       }
-      toast.success(`${type} deleted successfully`);
+
+      toast.success("Purchase deleted successfully");
     } catch (error) {
-      console.error(`Error deleting ${type}:`, error);
-      toast.error(`Failed to delete ${type}`);
+      console.error('Error deleting purchase:', error);
+      toast.error("Failed to delete purchase");
     }
   };
 
-  // Transform database types to component-compatible formats
-  const transformedInvoices = invoices.map((invoice: Invoice) => ({
-    ...invoice,
-    date: new Date(invoice.date),
-    dueDate: new Date(invoice.due_date),
-    amount: invoice.grand_total,
-    itemCount: Array.isArray(invoice.items) ? invoice.items.length : 0,
-    paidAmount: 0 // Default value since it's not in the database type
-  }));
+  // Fixed approve handler - now type-aware with proper type checking
+  const handleApproveTransaction = async (id: string) => {
+    try {
+      // Find the purchase to determine its type
+      const allPurchases = getAllPurchases();
+      const purchase = allPurchases.find(p => p.id === id);
+      
+      if (!purchase) {
+        toast.error("Purchase not found");
+        return;
+      }
 
-  const transformedShipments = shipments.map((shipment: Shipment) => ({
-    ...shipment,
-    date: new Date(shipment.date),
-    dueDate: new Date(shipment.due_date),
-    shippingDate: new Date(shipment.shipping_date),
-    trackingNumber: shipment.tracking_number,
-    amount: shipment.grand_total,
-    itemCount: Array.isArray(shipment.items) ? shipment.items.length : 0,
-    approver: "System" // Default value since it's not in the database type
-  }));
+      // Ensure purchase has type property with proper type checking
+      const purchaseType = (purchase as Purchase).type;
+      if (!purchaseType) {
+        toast.error("Purchase type not found");
+        return;
+      }
 
-  const transformedOrders = orders.map((order: Order) => ({
-    ...order,
-    date: new Date(order.date),
-    dueDate: new Date(order.due_date),
-    orderDate: new Date(order.orders_date),
-    amount: order.grand_total,
-    itemCount: Array.isArray(order.items) ? order.items.length : 0,
-    approver: "System", // Default value since it's not in the database type
-    discountTerms: "" // Default value since it's not in the database type
-  }));
+      console.log('Approving purchase:', { id, type: purchaseType });
 
-  const transformedOffers = offers.map((offer: Offer) => ({
-    ...offer,
-    date: new Date(offer.date),
-    dueDate: new Date(offer.due_date),
-    expiryDate: offer.expiry_date ? new Date(offer.expiry_date) : new Date(),
-    discountTerms: offer.discount_terms || "",
-    amount: offer.grand_total,
-    itemCount: Array.isArray(offer.items) ? offer.items.length : 0,
-    approver: "System" // Default value since it's not in the database type
-  }));
+      // Call the appropriate update mutation based on type
+      switch (purchaseType) {
+        case "invoice":
+          await updateInvoiceMutation.mutateAsync({
+            id,
+            updates: { status: "completed" }
+          });
+          break;
+        case "request":
+          await updateRequestMutation.mutateAsync({
+            id,
+            updates: { status: "completed" }
+          });
+          break;
+        case "offer":
+          await updateOfferMutation.mutateAsync({
+            id,
+            updates: { status: "completed" }
+          });
+          break;
+        case "order":
+          await updateOrderMutation.mutateAsync({
+            id,
+            updates: { status: "completed" }
+          });
+          break;
+        case "shipment":
+          await updateShipmentMutation.mutateAsync({
+            id,
+            updates: { status: "completed" }
+          });
+          break;
+        default:
+          throw new Error(`Unknown purchase type: ${purchaseType}`);
+      }
 
-  const transformedRequests = requests.map((request: Request) => ({
-    ...request,
-    date: new Date(request.date || new Date()),
-    dueDate: new Date(request.due_date),
-    requestedBy: request.requested_by,
-    amount: request.grand_total,
-    itemCount: Array.isArray(request.items) ? request.items.length : 0,
-    approver: "System" // Default value since it's not in the database type
-  }));
-
-  const renderTable = () => {
-    switch (activeTab) {
-      case "invoices":
-        return (
-          <InvoicesTable 
-            invoices={transformedInvoices} 
-            onDelete={(id) => handleDelete(id, "invoice")}
-            onEdit={(id) => handleEdit(id, "invoice")}
-          />
-        );
-      case "shipments":
-        return (
-          <ShipmentsTable 
-            shipments={transformedShipments} 
-            onDelete={(id) => handleDelete(id, "shipment")}
-            onEdit={(id) => handleEdit(id, "shipment")}
-          />
-        );
-      case "orders":
-        return (
-          <OrdersTable 
-            orders={transformedOrders} 
-            onDelete={(id) => handleDelete(id, "order")}
-            onEdit={(id) => handleEdit(id, "order")}
-          />
-        );
-      case "offers":
-        return (
-          <OffersTable 
-            offers={transformedOffers} 
-            onDelete={(id) => handleDelete(id, "offer")}
-            onEdit={(id) => handleEdit(id, "offer")}
-          />
-        );
-      case "requests":
-        return (
-          <RequestsTable 
-            requests={transformedRequests} 
-            onDelete={(id) => handleDelete(id, "request")}
-            onEdit={(id) => handleEdit(id, "request")}
-          />
-        );
-      default:
-        return (
-          <TransactionsTable 
-            transactions={[]}
-            activeTab={activeTab}
-            onDeleteTransaction={() => {}}
-          />
-        );
+      toast.success("Purchase approved successfully");
+    } catch (error) {
+      console.error('Error approving purchase:', error);
+      toast.error("Failed to approve purchase");
     }
   };
+
+  // Fixed reject handler - now type-aware with proper type checking
+  const handleRejectTransaction = async (id: string) => {
+    try {
+      // Find the purchase to determine its type
+      const allPurchases = getAllPurchases();
+      const purchase = allPurchases.find(p => p.id === id);
+      
+      if (!purchase) {
+        toast.error("Purchase not found");
+        return;
+      }
+
+      // Ensure purchase has type property with proper type checking
+      const purchaseType = (purchase as Purchase).type;
+      if (!purchaseType) {
+        toast.error("Purchase type not found");
+        return;
+      }
+
+      console.log('Rejecting purchase:', { id, type: purchaseType });
+
+      // Call the appropriate update mutation based on type
+      switch (purchaseType) {
+        case "invoice":
+          await updateInvoiceMutation.mutateAsync({
+            id,
+            updates: { status: "cancelled" }
+          });
+          break;
+        case "request":
+          await updateRequestMutation.mutateAsync({
+            id,
+            updates: { status: "cancelled" }
+          });
+          break;
+        case "offer":
+          await updateOfferMutation.mutateAsync({
+            id,
+            updates: { status: "cancelled" }
+          });
+          break;
+        case "order":
+          await updateOrderMutation.mutateAsync({
+            id,
+            updates: { status: "cancelled" }
+          });
+          break;
+        case "shipment":
+          await updateShipmentMutation.mutateAsync({
+            id,
+            updates: { status: "cancelled" }
+          });
+          break;
+        default:
+          throw new Error(`Unknown purchase type: ${purchaseType}`);
+      }
+
+      toast.success("Purchase rejected successfully");
+    } catch (error) {
+      console.error('Error rejecting purchase:', error);
+      toast.error("Failed to reject purchase");
+    }
+  };
+
+  // New receive payment handler for invoices
+  const handleReceivePayment = async (id: string) => {
+    try {
+      await updateInvoiceMutation.mutateAsync({
+        id,
+        updates: { status: "completed" }
+      });
+      toast.success("Payment received successfully");
+    } catch (error) {
+      console.error('Error receiving payment:', error);
+      toast.error("Failed to process payment");
+    }
+  };
+
+  // Get the default purchase type based on the active tab
+  const getDefaultPurchaseType = (): PurchaseType => {
+    switch(activeTab) {
+      case "invoices": return "invoice";
+      case "shipments": return "shipment";
+      case "orders": return "order";
+      case "offers": return "offer";
+      case "requests": return "request";
+      default: return "invoice";
+    }
+  };
+
+  // Handle clicking the "Add Purchase" button
+  const handleAddPurchaseClick = (type: PurchaseType) => {
+    navigate(`/create-new-purchase?type=${type}`);
+  };
+
+  // Render the component
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg">Loading purchases...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold">Purchases</h1>
-        <PurchaseAddButton onAddPurchase={handleAddPurchase} />
+      <StatsCards 
+        unpaidAmount={unpaidAmount}
+        overdueCount={overdueCount}
+        last30DaysPayments={last30DaysPayments}
+      />
+      
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <PurchaseNavTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+        <PurchaseAddButton onAddPurchase={handleAddPurchaseClick} />
       </div>
 
-      <StatsCards 
-        unpaidAmount={0}
-        overdueCount={0}
-        last30DaysPayments={0}
-      />
-      <PurchaseNavTabs activeTab={activeTab} onTabChange={setActiveTab} />
-      <PurchaseFilters 
-        statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
+      <PurchaseFilters
         searchValue={searchValue}
         onSearchChange={setSearchValue}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
       />
-      {renderTable()}
+
+      <TransactionsTable
+        transactions={filteredPurchases}
+        activeTab={activeTab}
+        onDeleteTransaction={handleDeleteTransaction}
+        onApproveTransaction={handleApproveTransaction}
+        onRejectTransaction={handleRejectTransaction}
+        onReceivePayment={handleReceivePayment}
+      />
 
       <AddPurchaseDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onSubmit={() => {}}
-        defaultType={selectedType}
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onSubmit={handleAddPurchase}
+        defaultType={getDefaultPurchaseType()}
       />
     </div>
   );
