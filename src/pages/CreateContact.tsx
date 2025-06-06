@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +24,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { User, Users, Building2, Save, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { useContacts, useCreateContact } from "@/hooks/useContacts";
+import { useContacts, useCreateContact, useUpdateContact } from "@/hooks/useContacts";
 
 const contactSchema = z.object({
   category: z.enum(["Customer", "Vendor", "Employee"], {
@@ -40,8 +41,12 @@ type ContactFormValues = z.infer<typeof contactSchema>;
 
 const CreateContact = () => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const isEditing = !!id;
+  
   const { data: contacts = [] } = useContacts();
   const createContactMutation = useCreateContact();
+  const updateContactMutation = useUpdateContact();
   
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactSchema),
@@ -55,6 +60,23 @@ const CreateContact = () => {
     },
     mode: "onChange",
   });
+  
+  // Find the contact to edit if we're in edit mode
+  const contactToEdit = isEditing ? contacts.find(c => c.id === id) : null;
+  
+  // Pre-fill form when editing
+  useEffect(() => {
+    if (isEditing && contactToEdit) {
+      form.reset({
+        category: contactToEdit.category,
+        name: contactToEdit.name,
+        number: contactToEdit.number,
+        email: contactToEdit.email,
+        phone: contactToEdit.phone,
+        address: contactToEdit.address,
+      });
+    }
+  }, [contactToEdit, isEditing, form]);
   
   // Function to generate the next contact number based on category
   const generateNextNumber = (category: string) => {
@@ -72,36 +94,55 @@ const CreateContact = () => {
     return highestNumber + 1;
   };
 
-  // Update number when category changes
+  // Update number when category changes (only for new contacts)
   useEffect(() => {
-    const category = form.watch("category");
-    if (category) {
-      const nextNumber = generateNextNumber(category);
-      form.setValue("number", nextNumber);
+    if (!isEditing) {
+      const category = form.watch("category");
+      if (category) {
+        const nextNumber = generateNextNumber(category);
+        form.setValue("number", nextNumber);
+      }
     }
-  }, [form.watch("category"), contacts]);
+  }, [form.watch("category"), contacts, isEditing]);
   
   // Check if all fields are filled
   const isFormComplete = form.formState.isValid;
 
   const onSubmit = async (data: ContactFormValues) => {
     try {
-      // Ensure all required fields are present
-      const contactData = {
-        category: data.category,
-        name: data.name,
-        number: data.number,
-        email: data.email,
-        phone: data.phone,
-        address: data.address,
-      };
+      if (isEditing && contactToEdit) {
+        // Update existing contact
+        await updateContactMutation.mutateAsync({
+          id: contactToEdit.id,
+          updates: {
+            category: data.category,
+            name: data.name,
+            number: data.number,
+            email: data.email,
+            phone: data.phone,
+            address: data.address,
+          }
+        });
+        toast.success("Contact updated successfully");
+      } else {
+        // Create new contact
+        const contactData = {
+          category: data.category,
+          name: data.name,
+          number: data.number,
+          email: data.email,
+          phone: data.phone,
+          address: data.address,
+        };
+        
+        await createContactMutation.mutateAsync(contactData);
+        toast.success("Contact created successfully");
+      }
       
-      await createContactMutation.mutateAsync(contactData);
-      toast.success("Contact created successfully");
       navigate("/contacts");
     } catch (error) {
-      console.error("Error creating contact:", error);
-      toast.error("Failed to create contact");
+      console.error(`Error ${isEditing ? 'updating' : 'creating'} contact:`, error);
+      toast.error(`Failed to ${isEditing ? 'update' : 'create'} contact`);
     }
   };
 
@@ -118,13 +159,41 @@ const CreateContact = () => {
     }
   };
 
+  // Show loading state when editing and contact data hasn't loaded yet
+  if (isEditing && !contactToEdit && contacts.length > 0) {
+    return (
+      <div className="flex min-h-screen">
+        <Sidebar />
+        <main className="flex-1">
+          <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
+            <h1 className="text-2xl font-semibold text-white mb-4">Edit Contact</h1>
+            <p className="text-white/80">Contact not found</p>
+          </div>
+          <div className="p-6 max-w-3xl mx-auto">
+            <Button variant="outline" onClick={() => navigate("/contacts")}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Contacts
+            </Button>
+            <div className="mt-8 text-center">
+              <p className="text-red-600">Contact not found or you don't have permission to edit it.</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen">
       <Sidebar />
       <main className="flex-1">
         <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
-          <h1 className="text-2xl font-semibold text-white mb-4">Create New Contact</h1>
-          <p className="text-white/80">Add a new contact to your network</p>
+          <h1 className="text-2xl font-semibold text-white mb-4">
+            {isEditing ? "Edit Contact" : "Create New Contact"}
+          </h1>
+          <p className="text-white/80">
+            {isEditing ? "Update contact information" : "Add a new contact to your network"}
+          </p>
         </div>
         
         <div className="p-6 max-w-3xl mx-auto">
@@ -146,7 +215,7 @@ const CreateContact = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Category</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a category" />
@@ -204,8 +273,8 @@ const CreateContact = () => {
                           placeholder="Contact number"
                           value={field.value || ''}
                           onChange={(e) => field.onChange(Number(e.target.value))}
-                          readOnly 
-                          className="bg-gray-100 cursor-not-allowed"
+                          readOnly={isEditing}
+                          className={isEditing ? "bg-gray-100 cursor-not-allowed" : ""}
                         />
                       </FormControl>
                       <FormMessage />
@@ -258,10 +327,13 @@ const CreateContact = () => {
                 <Button 
                   type="submit" 
                   className="w-full mt-6" 
-                  disabled={!isFormComplete || createContactMutation.isPending}
+                  disabled={!isFormComplete || createContactMutation.isPending || updateContactMutation.isPending}
                 >
                   <Save className="mr-2 h-4 w-4" />
-                  {createContactMutation.isPending ? "Creating..." : "Create Contact"}
+                  {isEditing 
+                    ? (updateContactMutation.isPending ? "Updating..." : "Update Contact")
+                    : (createContactMutation.isPending ? "Creating..." : "Create Contact")
+                  }
                 </Button>
               </form>
             </Form>
