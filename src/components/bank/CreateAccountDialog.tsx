@@ -48,13 +48,24 @@ export function CreateAccountDialog({ onSubmit }: CreateAccountDialogProps) {
     startBalance: 0
   });
 
+  const generateAccountCode = () => {
+    const timestamp = Date.now().toString().slice(-6);
+    return `1-${timestamp}`;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.startBalance < 0) {
       alert("Start Balance must be a positive number.");
       return;
     }
-    onSubmit(formData);
+    
+    const finalFormData = {
+      ...formData,
+      accountCode: formData.accountCode || generateAccountCode()
+    };
+    
+    onSubmit(finalFormData);
     setOpen(false);
     setFormData({
       accountName: "",
@@ -89,12 +100,12 @@ export function CreateAccountDialog({ onSubmit }: CreateAccountDialogProps) {
             />
           </div>
           <div className="grid w-full items-center gap-2">
-            <Label htmlFor="accountCode">Account Code</Label>
+            <Label htmlFor="accountCode">Account Code (Optional)</Label>
             <Input
               id="accountCode"
               value={formData.accountCode}
               onChange={(e) => setFormData({ ...formData, accountCode: e.target.value })}
-              required
+              placeholder="Auto-generated if empty"
             />
           </div>
           <div className="grid w-full items-center gap-2">
@@ -148,7 +159,7 @@ export function CreateAccountDialog({ onSubmit }: CreateAccountDialogProps) {
               value={formData.startBalance}
               onChange={(e) => setFormData({ ...formData, startBalance: Number(e.target.value) })}
               required
-              min={0} // Ensure positive numbers
+              min={0}
             />
           </div>
           <div className="flex justify-end space-x-4 pt-4">

@@ -10,6 +10,7 @@ const CashnBank = () => {
   const [showArchived, setShowArchived] = useState(false);
   const {
     accounts,
+    loading,
     handleCreateAccount,
     handleArchiveAccount,
     handleUnarchiveAccount,
@@ -20,6 +21,25 @@ const CashnBank = () => {
     calculateTotal,
     getAccountTransactions
   } = useAccountOperations();
+
+  if (loading) {
+    return (
+      <div className="flex h-screen bg-background">
+        <Sidebar />
+        <div className="flex-1 overflow-auto">
+          <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
+            <h1 className="text-2xl font-semibold text-white">Cash & Bank</h1>
+            <p className="text-white/80">Manage your company Bank accounts</p>
+          </div>
+          <div className="p-6">
+            <div className="flex justify-center items-center h-64">
+              <div className="text-lg">Loading accounts...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-background">
