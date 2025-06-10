@@ -1,5 +1,5 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,11 +48,6 @@ export function CreateAccountDialog({ onSubmit }: CreateAccountDialogProps) {
     startBalance: 0
   });
 
-  const generateAccountCode = () => {
-    const timestamp = Date.now().toString().slice(-6);
-    return `1-${timestamp}`;
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.startBalance < 0) {
@@ -60,12 +55,7 @@ export function CreateAccountDialog({ onSubmit }: CreateAccountDialogProps) {
       return;
     }
     
-    const finalFormData = {
-      ...formData,
-      accountCode: formData.accountCode || generateAccountCode()
-    };
-    
-    onSubmit(finalFormData);
+    onSubmit(formData);
     setOpen(false);
     setFormData({
       accountName: "",
@@ -88,6 +78,9 @@ export function CreateAccountDialog({ onSubmit }: CreateAccountDialogProps) {
       <DialogContent className="sm:max-w-50">
         <DialogHeader>
           <DialogTitle>Create New Account</DialogTitle>
+          <DialogDescription>
+            Add a new bank account to your Cash & Bank management system.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-4">
           <div className="grid w-full items-center gap-2">

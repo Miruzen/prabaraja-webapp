@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
@@ -210,6 +209,43 @@ export function useAccountOperations() {
     }
   }, [user?.id]);
 
+  const generateUniqueAccountCode = async () => {
+    if (!user?.id) return null;
+    
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    while (attempts < maxAttempts) {
+      const timestamp = Date.now().toString().slice(-6);
+      const randomSuffix = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      const accountCode = `1${timestamp}${randomSuffix}`;
+      
+      console.log('🔍 Cash & Bank Debug - Checking account code availability:', accountCode);
+      
+      // Check if this account code already exists
+      const { data: existingAccount, error } = await supabase
+        .from('cashbank')
+        .select('number')
+        .eq('number', parseInt(accountCode))
+        .eq('user_id', user.id)
+        .single();
+      
+      if (error && error.code === 'PGRST116') {
+        // No existing account found, this code is available
+        console.log('✅ Cash & Bank Debug - Account code available:', accountCode);
+        return accountCode;
+      } else if (error) {
+        console.error('❌ Cash & Bank Debug - Error checking account code:', error);
+        throw error;
+      }
+      
+      console.log('⚠️ Cash & Bank Debug - Account code already exists, trying again');
+      attempts++;
+    }
+    
+    throw new Error('Unable to generate unique account code after multiple attempts');
+  };
+
   const handleCreateAccount = async (formData: any) => {
     if (!user?.id) {
       toast.error('User not authenticated');
@@ -217,11 +253,40 @@ export function useAccountOperations() {
     }
 
     try {
+      console.log('🔍 Cash & Bank Debug - Creating account with data:', formData);
+      
+      let accountCode = formData.accountCode;
+      if (!accountCode) {
+        accountCode = await generateUniqueAccountCode();
+        if (!accountCode) {
+          toast.error('Failed to generate unique account code');
+          return;
+        }
+      } else {
+        // Check if custom account code already exists
+        const { data: existingAccount, error: checkError } = await supabase
+          .from('cashbank')
+          .select('number')
+          .eq('number', parseInt(accountCode))
+          .eq('user_id', user.id)
+          .single();
+        
+        if (checkError && checkError.code !== 'PGRST116') {
+          console.error('❌ Cash & Bank Debug - Error checking custom account code:', checkError);
+          throw checkError;
+        }
+        
+        if (existingAccount) {
+          toast.error('Account code already exists. Please choose a different code.');
+          return;
+        }
+      }
+
       const { error } = await supabase
         .from('cashbank')
         .insert({
           user_id: user.id,
-          number: parseInt(formData.accountCode),
+          number: parseInt(accountCode),
           account_name: formData.accountName,
           account_type: formData.bankType,
           bank_name: formData.bankName,
@@ -230,12 +295,16 @@ export function useAccountOperations() {
           status: 'Active'
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Cash & Bank Debug - Insert error:', error);
+        throw error;
+      }
 
+      console.log('✅ Cash & Bank Debug - Account created successfully');
       toast.success("Account created successfully");
       fetchAccounts();
     } catch (error) {
-      console.error('Error creating account:', error);
+      console.error('❌ Cash & Bank Debug - Error creating account:', error);
       toast.error('Failed to create account');
     }
   };
