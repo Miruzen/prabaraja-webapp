@@ -33,34 +33,75 @@ export function useAccountOperations() {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
+  // Debug: Log user context
+  useEffect(() => {
+    console.log('🔍 Cash & Bank Debug - User context:', {
+      userId: user?.id,
+      userEmail: user?.email,
+      userExists: !!user
+    });
+  }, [user]);
+
   // Fetch accounts from database
   const fetchAccounts = async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      console.log('❌ Cash & Bank Debug - No user ID found, skipping fetch');
+      setLoading(false);
+      return;
+    }
+    
+    console.log('🔍 Cash & Bank Debug - Starting fetchAccounts for user:', user.id);
     
     try {
+      console.log('🔍 Cash & Bank Debug - Executing Supabase query...');
       const { data, error } = await supabase
         .from('cashbank')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      console.log('🔍 Cash & Bank Debug - Supabase response:', {
+        data: data,
+        dataLength: data?.length || 0,
+        error: error,
+        userId: user.id
+      });
 
-      const formattedAccounts = data?.map(account => ({
-        code: account.number.toString(),
-        name: account.account_name,
-        balance: account.balance >= 0 
-          ? `Rp ${account.balance.toLocaleString('id-ID')}` 
-          : `(Rp ${Math.abs(account.balance).toLocaleString('id-ID')})`,
-        bankName: account.bank_name,
-        bankType: account.account_type,
-        accountNumber: account.bank_number,
-        archived: account.status === 'Archived'
-      })) || [];
+      if (error) {
+        console.error('❌ Cash & Bank Debug - Supabase error:', error);
+        throw error;
+      }
+
+      const formattedAccounts = data?.map(account => {
+        console.log('🔍 Cash & Bank Debug - Processing account:', {
+          id: account.id,
+          number: account.number,
+          name: account.account_name,
+          balance: account.balance,
+          userId: account.user_id
+        });
+
+        return {
+          code: account.number.toString(),
+          name: account.account_name,
+          balance: account.balance >= 0 
+            ? `Rp ${account.balance.toLocaleString('id-ID')}` 
+            : `(Rp ${Math.abs(account.balance).toLocaleString('id-ID')})`,
+          bankName: account.bank_name,
+          bankType: account.account_type,
+          accountNumber: account.bank_number,
+          archived: account.status === 'Archived'
+        };
+      }) || [];
+
+      console.log('🔍 Cash & Bank Debug - Formatted accounts:', {
+        count: formattedAccounts.length,
+        accounts: formattedAccounts
+      });
 
       setAccounts(formattedAccounts);
     } catch (error) {
-      console.error('Error fetching accounts:', error);
+      console.error('❌ Cash & Bank Debug - Error in fetchAccounts:', error);
       toast.error('Failed to fetch accounts');
     } finally {
       setLoading(false);
@@ -69,7 +110,12 @@ export function useAccountOperations() {
 
   // Fetch transactions from database
   const fetchTransactions = async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      console.log('❌ Cash & Bank Debug - No user ID found for transactions');
+      return;
+    }
+    
+    console.log('🔍 Cash & Bank Debug - Starting fetchTransactions for user:', user.id);
     
     try {
       // Fetch transfer transactions
@@ -83,6 +129,13 @@ export function useAccountOperations() {
         .from('bank_receive_transactions')
         .select('*')
         .eq('user_id', user.id);
+
+      console.log('🔍 Cash & Bank Debug - Transaction queries result:', {
+        transfers: transfers?.length || 0,
+        receives: receives?.length || 0,
+        transferError: transferError,
+        receiveError: receiveError
+      });
 
       if (transferError) throw transferError;
       if (receiveError) throw receiveError;
@@ -127,17 +180,33 @@ export function useAccountOperations() {
         });
       });
 
+      console.log('🔍 Cash & Bank Debug - Final transactions:', {
+        totalCount: formattedTransactions.length,
+        transfers: transfers?.length || 0,
+        receives: receives?.length || 0
+      });
+
       setTransactions(formattedTransactions);
     } catch (error) {
-      console.error('Error fetching transactions:', error);
+      console.error('❌ Cash & Bank Debug - Error fetching transactions:', error);
       toast.error('Failed to fetch transactions');
     }
   };
 
   useEffect(() => {
+    console.log('🔍 Cash & Bank Debug - useEffect triggered with user:', {
+      userId: user?.id,
+      isAuthenticated: !!user
+    });
+    
     if (user?.id) {
       fetchAccounts();
       fetchTransactions();
+    } else {
+      console.log('⚠️ Cash & Bank Debug - No authenticated user, clearing data');
+      setAccounts([]);
+      setTransactions([]);
+      setLoading(false);
     }
   }, [user?.id]);
 
