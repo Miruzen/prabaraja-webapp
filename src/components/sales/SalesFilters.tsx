@@ -36,7 +36,7 @@ export const SalesFilters = ({
   const navigate = useNavigate();
 
   const handleCreateNew = (type: string) => {
-    navigate("/create-new-sales", { state: { type } });
+    navigate("/create-sales", { state: { type } });
   };
 
   return (
