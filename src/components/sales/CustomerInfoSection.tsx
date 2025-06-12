@@ -1,10 +1,12 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import ChevronDropdown from "@/components/ChevronDropdown";
-import { Check, ChevronDown, Search, Phone, Mail, Home } from "lucide-react";
+import { Check, ChevronDown, Search, Phone, Mail, Home, Plus, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useContacts } from "@/hooks/useContacts";
 
 interface CustomerInfoSectionProps {
   customerName: string;
@@ -33,16 +35,6 @@ interface CustomerInfoSectionProps {
   setNotes?: (notes: string) => void;
 }
 
-// Mock data for customer search
-const customerOptions = [
-  "John Doe",
-  "Jane Smith",
-  "Acme Corp",
-  "Tech Solutions",
-  "Global Industries",
-  "Local Shop",
-];
-
 const CustomerInfoSection = ({
   customerName,
   setCustomerName,
@@ -69,13 +61,45 @@ const CustomerInfoSection = ({
   notes,
   setNotes
 }: CustomerInfoSectionProps) => {
+  const navigate = useNavigate();
+  const { data: contacts = [], isLoading } = useContacts();
   const [searchTerm, setSearchTerm] = useState("");
   const [showCustomerPopover, setShowCustomerPopover] = useState(false);
   
-  // Filter customers based on search term
-  const filteredCustomers = customerOptions.filter(customer =>
-    customer.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filter contacts to only show customers and apply search filter
+  const customerContacts = contacts.filter(contact => 
+    contact.category === 'Customer' && 
+    contact.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  
+  // Handle customer selection
+  const handleCustomerSelect = (contact: any) => {
+    setCustomerName(contact.name);
+    setSearchTerm(contact.name);
+    
+    // Auto-fill customer details for Order & Delivery type
+    if (type === "order" && setCustomerPhone && setCustomerEmail && setCustomerAddress) {
+      setCustomerPhone(contact.phone || "");
+      setCustomerEmail(contact.email || "");
+      setCustomerAddress(contact.address || "");
+    }
+    
+    setShowCustomerPopover(false);
+  };
+  
+  // Handle input change
+  const handleCustomerInputChange = (value: string) => {
+    setCustomerName(value);
+    setSearchTerm(value);
+    if (!showCustomerPopover) {
+      setShowCustomerPopover(true);
+    }
+  };
+  
+  // Navigate to create contact page
+  const handleAddNewContact = () => {
+    navigate("/create-contact");
+  };
   
   // Status options based on document type
   const getStatusOptions = () => {
@@ -157,57 +181,72 @@ const CustomerInfoSection = ({
           <label htmlFor="customer" className="text-sm font-medium">
             Customer
           </label>
-          <Popover open={showCustomerPopover} onOpenChange={setShowCustomerPopover}>
-            <PopoverTrigger asChild>
-              <div className="flex items-center border rounded-md overflow-hidden">
-                <input
-                  id="customer"
-                  className="flex-1 p-2 outline-none"
-                  placeholder="Select customer"
-                  value={customerName}
-                  onChange={(e) => {
-                    setCustomerName(e.target.value);
-                    setSearchTerm(e.target.value);
-                    if (!showCustomerPopover) setShowCustomerPopover(true);
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="h-10 px-2"
-                  onClick={() => setShowCustomerPopover(!showCustomerPopover)}
-                >
-                  <Search className="h-4 w-4" />
-                </Button>
-              </div>
-            </PopoverTrigger>
-            <PopoverContent className="p-2 w-[300px] bg-white" align="start">
-              <div className="space-y-1">
-                {filteredCustomers.length > 0 ? (
-                  filteredCustomers.map((customer) => (
-                    <Button
-                      key={customer}
-                      variant="ghost"
-                      className="w-full justify-start"
-                      onClick={() => {
-                        setCustomerName(customer);
-                        setShowCustomerPopover(false);
-                      }}
-                    >
-                      {customer === customerName && (
-                        <Check className="mr-2 h-4 w-4" />
-                      )}
-                      {customer}
-                    </Button>
-                  ))
-                ) : (
-                  <p className="text-center text-sm text-gray-500 py-2">
-                    No customers found
-                  </p>
-                )}
-              </div>
-            </PopoverContent>
-          </Popover>
+          <div className="space-y-2">
+            <Popover open={showCustomerPopover} onOpenChange={setShowCustomerPopover}>
+              <PopoverTrigger asChild>
+                <div className="flex items-center border rounded-md overflow-hidden">
+                  <input
+                    id="customer"
+                    className="flex-1 p-2 outline-none"
+                    placeholder="Search for customer..."
+                    value={customerName}
+                    onChange={(e) => handleCustomerInputChange(e.target.value)}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-10 px-2"
+                    onClick={() => setShowCustomerPopover(!showCustomerPopover)}
+                  >
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </div>
+              </PopoverTrigger>
+              <PopoverContent className="p-2 w-[300px] bg-white" align="start">
+                <div className="space-y-1">
+                  {isLoading ? (
+                    <p className="text-center text-sm text-gray-500 py-2">
+                      Loading customers...
+                    </p>
+                  ) : customerContacts.length > 0 ? (
+                    customerContacts.map((contact) => (
+                      <Button
+                        key={contact.id}
+                        variant="ghost"
+                        className="w-full justify-start text-left"
+                        onClick={() => handleCustomerSelect(contact)}
+                      >
+                        <div className="flex items-center w-full">
+                          {contact.name === customerName && (
+                            <Check className="mr-2 h-4 w-4 text-green-500" />
+                          )}
+                          <div className="flex-1">
+                            <div className="font-medium">{contact.name}</div>
+                            <div className="text-xs text-gray-500">{contact.email}</div>
+                          </div>
+                        </div>
+                      </Button>
+                    ))
+                  ) : (
+                    <p className="text-center text-sm text-gray-500 py-2">
+                      No customers found
+                    </p>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+            
+            {/* Add New Contact Button */}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={handleAddNewContact}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add New Contact
+            </Button>
+          </div>
         </div>
 
         {/* Document number */}
