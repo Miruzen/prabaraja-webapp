@@ -6,10 +6,11 @@ import { SalesNavTabs } from "@/components/sales/SalesNavTabs";
 import { SalesFilters } from "@/components/sales/SalesFilters";
 import { SalesTable } from "@/components/sales/SalesTable";
 import { SalesSummaryCards } from "@/components/sales/SalesSummaryCards";
-import { salesData } from "@/data/salesData";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { toast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
+import { useSalesInvoices, useOrderDeliveries, useQuotations } from "@/hooks/useSalesData";
+import { transformSalesInvoiceData, transformOrderDeliveryData, transformQuotationData } from "@/utils/salesDataUtils";
 
 type FilterCategory = "all" | "unpaid" | "paid" | "late" | "awaiting";
 
@@ -21,34 +22,56 @@ const Sales = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   
-  // Get the type based on active tab
-  const getTypeForActiveTab = () => {
+  // Fetch data from Supabase based on active tab
+  const { data: salesInvoices = [], isLoading: loadingSalesInvoices } = useSalesInvoices();
+  const { data: orderDeliveries = [], isLoading: loadingOrderDeliveries } = useOrderDeliveries();
+  const { data: quotations = [], isLoading: loadingQuotations } = useQuotations();
+  
+  // Get data based on active tab
+  const getCurrentTabData = () => {
     switch(activeTab) {
-      case "delivery": return "invoice";
-      case "order": return "order";
-      case "quotation": return "quotation";
-      default: return "invoice";
+      case "delivery":
+        return {
+          data: transformSalesInvoiceData(salesInvoices),
+          isLoading: loadingSalesInvoices,
+          emptyMessage: "No sales invoices found."
+        };
+      case "order":
+        return {
+          data: transformOrderDeliveryData(orderDeliveries),
+          isLoading: loadingOrderDeliveries,
+          emptyMessage: "No orders found."
+        };
+      case "quotation":
+        return {
+          data: transformQuotationData(quotations),
+          isLoading: loadingQuotations,
+          emptyMessage: "No quotations found."
+        };
+      default:
+        return {
+          data: [],
+          isLoading: false,
+          emptyMessage: "No data found."
+        };
     }
   };
   
-  // First filter by tab type
-  const dataFilteredByType = salesData.filter(sale => 
-    sale.type === getTypeForActiveTab()
-  );
+  const { data: currentData, isLoading, emptyMessage } = getCurrentTabData();
   
-  // Then filter by selected category
-  const filteredSalesData = filterCategory === "all" 
-    ? [...dataFilteredByType] 
-    : dataFilteredByType.filter(sale => {
+  // Filter by selected category
+  const filteredData = filterCategory === "all" 
+    ? [...currentData] 
+    : currentData.filter(item => {
         switch(filterCategory) {
           case "paid":
-            return sale.status === "Paid";
+            return item.status === "Paid";
           case "unpaid":
-            return sale.status === "Unpaid";
+            return item.status === "Unpaid";
           case "late":
-            return sale.status === "Late Payment";
+            return item.status === "Late Payment";
           case "awaiting":
-            return sale.status === "Awaiting Payment";
+            return item.status === "Awaiting Payment";
           default:
             return true;
         }
@@ -56,11 +79,11 @@ const Sales = () => {
   
   // Further filter by search term if provided
   const searchFilteredData = searchValue 
-    ? filteredSalesData.filter(sale => 
-        sale.customer.toLowerCase().includes(searchValue.toLowerCase()) ||
-        sale.number.toLowerCase().includes(searchValue.toLowerCase())
+    ? filteredData.filter(item => 
+        item.customer.toLowerCase().includes(searchValue.toLowerCase()) ||
+        item.number.toLowerCase().includes(searchValue.toLowerCase())
       )
-    : filteredSalesData;
+    : filteredData;
   
   // Sort data by date (newest to oldest)
   const sortedData = [...searchFilteredData].sort((a, b) => {
@@ -107,6 +130,14 @@ const Sales = () => {
     navigate(`/edit-sales/${id}`);
   };
 
+  // Reset pagination when changing tabs
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+    setFilterCategory("all");
+    setSearchValue("");
+  };
+
   // Render empty table for empty tabs
   const renderEmptyTable = (message: string) => (
     <div className="rounded-md border">
@@ -125,7 +156,7 @@ const Sales = () => {
         <TableBody>
           <TableRow>
             <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-              {message}
+              {isLoading ? "Loading..." : message}
             </TableCell>
           </TableRow>
         </TableBody>
@@ -135,11 +166,21 @@ const Sales = () => {
   
   // Render content based on active tab
   const renderTabContent = () => {
-    // Determine message based on active tab
-    const emptyMessage = `No ${activeTab === "delivery" ? "sales invoices" : 
-                            activeTab === "order" ? "orders" : "quotations"} found.`;
+    // Check if we have data for this tab type or if still loading
+    if (isLoading) {
+      return (
+        <>
+          <SalesFilters 
+            filterCategory={filterCategory}
+            setFilterCategory={setFilterCategory}
+            searchValue={searchValue}
+            setSearchValue={setSearchValue}
+          />
+          {renderEmptyTable("Loading...")}
+        </>
+      );
+    }
     
-    // Check if we have data for this tab type
     if (sortedData.length === 0) {
       return (
         <>
@@ -178,6 +219,13 @@ const Sales = () => {
     );
   };
   
+  // Get all data for summary cards (combine all tabs data)
+  const allSalesData = [
+    ...transformSalesInvoiceData(salesInvoices),
+    ...transformOrderDeliveryData(orderDeliveries),
+    ...transformQuotationData(quotations)
+  ];
+  
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
@@ -197,14 +245,14 @@ const Sales = () => {
             {/* Use the SalesNavTabs component with lucide icons */}
             <SalesNavTabs 
               activeTab={activeTab} 
-              setActiveTab={setActiveTab} 
+              setActiveTab={handleTabChange} 
             />
 
             {/* Render content based on active tab */}
             {renderTabContent()}
 
             {/* Always show summary cards regardless of active tab */}
-            <SalesSummaryCards salesData={salesData} />
+            <SalesSummaryCards salesData={allSalesData} />
           </div>
         </div>
       </div>
