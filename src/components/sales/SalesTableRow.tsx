@@ -10,7 +10,7 @@ interface SalesData {
   date: string;
   number: string;
   customer: string;
-  customerId?: number; // Added customerId field
+  customerId?: number;
   dueDate: string;
   status: string;
   total: string;
@@ -25,19 +25,14 @@ interface SalesTableRowProps {
 export const SalesTableRow = ({ row, onDelete, onEdit }: SalesTableRowProps) => {
   const navigate = useNavigate();
   
-  // Find the contact ID for this customer
   const handleCustomerClick = () => {
-    // If we have a customerId, use it directly
     if (row.customerId) {
       navigate(`/contact-details/${row.customerId}`);
     } else {
-      // This is fallback logic in case customerId is not available
-      // Find the correct contact in the Contacts database - we'll use ID 1 for now as fallback
       navigate(`/contact-details/1`);
     }
   };
 
-  // Handle edit action
   const handleEdit = () => {
     if (onEdit) {
       onEdit(row.id);
@@ -46,18 +41,29 @@ export const SalesTableRow = ({ row, onDelete, onEdit }: SalesTableRowProps) => 
     }
   };
 
-  // Handle delete action
   const handleDelete = () => {
     if (onDelete) {
       onDelete(row.id);
     }
   };
 
+  // Determine the correct detail route based on the number prefix
+  const getDetailRoute = () => {
+    if (row.number.startsWith('INV-')) {
+      return `/sales-invoice/${row.id}`;
+    } else if (row.number.startsWith('ORD-')) {
+      return `/order-delivery/${row.id}`;
+    } else if (row.number.startsWith('QUO-')) {
+      return `/quotation/${row.id}`;
+    }
+    return `/sales-invoice/${row.id}`; // fallback
+  };
+
   return (
     <TableRow key={row.id}>
       <TableCell>{row.date}</TableCell>
       <TableCell>
-        <Link to={`/sales-invoice/${row.id}`} className="text-indigo-600 hover:underline">
+        <Link to={getDetailRoute()} className="text-indigo-600 hover:underline">
           {row.number}
         </Link>
       </TableCell>

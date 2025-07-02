@@ -3,17 +3,16 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Download, Printer, FileText } from "lucide-react";
-import { useSalesInvoiceById } from "@/hooks/useSalesDetail";
+import { ArrowLeft, Download, Printer, Truck, Package } from "lucide-react";
+import { useOrderDeliveryById } from "@/hooks/useSalesDetail";
 import { formatCurrency } from "@/lib/utils";
 
-const SalesInvoiceDetail = () => {
+const OrderDeliveryDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
-  const { data: invoice, isLoading, error } = useSalesInvoiceById(id || "");
+  const { data: order, isLoading, error } = useOrderDeliveryById(id || "");
 
-  // Function to handle the back button click
   const handleGoBack = () => {
     if (document.referrer && document.referrer.includes(window.location.hostname)) {
       navigate(-1);
@@ -28,14 +27,14 @@ const SalesInvoiceDetail = () => {
         <Sidebar />
         <div className="flex-1 overflow-auto p-6">
           <div className="flex justify-center items-center h-64">
-            <div className="text-lg">Loading sales invoice...</div>
+            <div className="text-lg">Loading order...</div>
           </div>
         </div>
       </div>
     );
   }
 
-  if (error || !invoice) {
+  if (error || !order) {
     return (
       <div className="flex h-screen bg-background">
         <Sidebar />
@@ -45,7 +44,7 @@ const SalesInvoiceDetail = () => {
           </Button>
           <Card>
             <CardContent className="p-6">
-              <p className="text-center py-8">Sales Invoice not found.</p>
+              <p className="text-center py-8">Order not found.</p>
             </CardContent>
           </Card>
         </div>
@@ -53,25 +52,21 @@ const SalesInvoiceDetail = () => {
     );
   }
 
-  // Calculate payment status
-  const isPaid = invoice.status === "Paid";
-  const isOverdue = !isPaid && new Date() > new Date(invoice.due_date);
-
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
       <div className="flex-1 overflow-auto">
-        <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6">
+        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6">
           <div className="flex items-center">
             <Button variant="outline" size="icon" className="bg-white/80 hover:bg-white mr-4" onClick={handleGoBack}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
               <h1 className="text-2xl font-semibold text-white flex items-center">
-                <FileText className="mr-2 h-5 w-5" /> 
-                INV-{invoice.number}
+                <Package className="mr-2 h-5 w-5" /> 
+                ORD-{order.number}
               </h1>
-              <p className="text-white/80 text-sm">Sales Invoice from {new Date(invoice.invoice_date).toLocaleDateString()}</p>
+              <p className="text-white/80 text-sm">Order from {new Date(order.order_date).toLocaleDateString()}</p>
             </div>
           </div>
         </div>
@@ -79,8 +74,8 @@ const SalesInvoiceDetail = () => {
         <div className="p-6">
           <div className="mb-6 flex justify-between items-center">
             <div>
-              <h2 className="text-xl font-semibold">Invoice Details</h2>
-              <p className="text-gray-500">View and manage sales invoice information</p>
+              <h2 className="text-xl font-semibold">Order & Delivery Details</h2>
+              <p className="text-gray-500">View and manage order information</p>
             </div>
             <div className="flex space-x-2">
               <Button variant="outline" className="flex items-center">
@@ -98,43 +93,33 @@ const SalesInvoiceDetail = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span>Invoice Summary</span>
+                  <span>Order Summary</span>
                   <span className={`text-sm px-3 py-1 rounded-full ${
-                    isPaid 
-                      ? "bg-green-100 text-green-800" 
-                      : isOverdue
-                        ? "bg-red-100 text-red-800"
-                        : "bg-yellow-100 text-yellow-800"
+                    order.status === 'Delivered' ? 'bg-green-100 text-green-800' : 
+                    order.status === 'Shipped' ? 'bg-blue-100 text-blue-800' :
+                    'bg-yellow-100 text-yellow-800'
                   }`}>
-                    {invoice.status}
+                    {order.status}
                   </span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
-                    <p className="text-sm text-gray-500">Invoice Number</p>
-                    <p className="font-medium">INV-{invoice.number}</p>
+                    <p className="text-sm text-gray-500">Order Number</p>
+                    <p className="font-medium">ORD-{order.number}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Invoice Date</p>
-                    <p className="font-medium">{new Date(invoice.invoice_date).toLocaleDateString()}</p>
+                    <p className="text-sm text-gray-500">Order Date</p>
+                    <p className="font-medium">{new Date(order.order_date).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Due Date</p>
-                    <p className={`font-medium ${isOverdue ? 'text-red-600' : ''}`}>
-                      {new Date(invoice.due_date).toLocaleDateString()}
-                    </p>
+                    <p className="text-sm text-gray-500">Delivery Date</p>
+                    <p className="font-medium">{new Date(order.delivery_date).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Status</p>
-                    <span className={`px-2 py-1 rounded-full text-sm inline-block mt-1 ${
-                      invoice.status === 'Paid' ? 'bg-green-100 text-green-800' : 
-                      isOverdue ? 'bg-red-100 text-red-800' : 
-                      'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {invoice.status}
-                    </span>
+                    <p className="text-sm text-gray-500">Tracking Number</p>
+                    <p className="font-medium">{order.tracking_number}</p>
                   </div>
                 </div>
               </CardContent>
@@ -148,7 +133,19 @@ const SalesInvoiceDetail = () => {
                 <div className="space-y-4">
                   <div>
                     <p className="text-sm text-gray-500">Customer Name</p>
-                    <p className="font-medium">{invoice.customer_name}</p>
+                    <p className="font-medium">{order.customer_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Email</p>
+                    <p className="font-medium">{order.customer_email}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Phone</p>
+                    <p className="font-medium">{order.customer_phone}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Shipping Address</p>
+                    <p className="text-gray-700">{order.shipping_address}</p>
                   </div>
                 </div>
               </CardContent>
@@ -156,7 +153,34 @@ const SalesInvoiceDetail = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Invoice Items</CardTitle>
+                <CardTitle className="flex items-center">
+                  <Truck className="mr-2 h-5 w-5" />
+                  Shipping Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-gray-500">Shipping Method</p>
+                    <p className="font-medium">{order.shipping_method}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Payment Method</p>
+                    <p className="font-medium">{order.payment_method}</p>
+                  </div>
+                  {order.notes && (
+                    <div>
+                      <p className="text-sm text-gray-500">Notes</p>
+                      <p className="text-gray-700">{order.notes}</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Order Items</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
@@ -170,8 +194,8 @@ const SalesInvoiceDetail = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {invoice.items && invoice.items.length > 0 ? (
-                        invoice.items.map((item: any, index: number) => (
+                      {order.items && order.items.length > 0 ? (
+                        order.items.map((item: any, index: number) => (
                           <tr key={index} className="border-b">
                             <td className="py-3 px-4">{item.name || item.description}</td>
                             <td className="text-right py-3 px-4">{item.quantity}</td>
@@ -182,7 +206,7 @@ const SalesInvoiceDetail = () => {
                       ) : (
                         <tr>
                           <td colSpan={4} className="py-4 text-center text-gray-500">
-                            No items in this invoice
+                            No items in this order
                           </td>
                         </tr>
                       )}
@@ -193,33 +217,7 @@ const SalesInvoiceDetail = () => {
                 <div className="mt-4 space-y-2 border-t pt-4">
                   <div className="flex justify-between font-bold text-lg">
                     <span>Grand Total</span>
-                    <span>{formatCurrency(invoice.grand_total)}</span>
-                  </div>
-                  <div className="flex justify-between pt-2 border-t">
-                    <span>Balance Due</span>
-                    <span className={isPaid ? 'text-green-600' : ''}>
-                      {isPaid ? formatCurrency(0) : formatCurrency(invoice.grand_total)}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Payment Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Payment Status</p>
-                    <p className={`font-medium ${isPaid ? 'text-green-600' : isOverdue ? 'text-red-600' : ''}`}>
-                      {isPaid ? 'Paid' : isOverdue ? 'Overdue' : 'Pending'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Total Amount</p>
-                    <p className="font-medium text-lg">{formatCurrency(invoice.grand_total)}</p>
+                    <span>{formatCurrency(order.grand_total)}</span>
                   </div>
                 </div>
               </CardContent>
@@ -231,4 +229,4 @@ const SalesInvoiceDetail = () => {
   );
 };
 
-export default SalesInvoiceDetail;
+export default OrderDeliveryDetail;
