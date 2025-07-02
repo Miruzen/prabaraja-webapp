@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
@@ -191,7 +190,7 @@ const ContactDetails = () => {
               <p className="text-white/80">#{contact.number} • {contact.category}</p>
             </div>
             <Button 
-              onClick={() => navigate(`/contact/${contact.id}/edit`)}
+              onClick={() => navigate(`/contact-details/${contact.id}/edit`)}
               className="bg-white text-purple-600 hover:bg-gray-100"
             >
               <Edit className="mr-2 h-4 w-4" />

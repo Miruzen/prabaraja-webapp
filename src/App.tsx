@@ -30,6 +30,7 @@ import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import { ReceivePaymentPage } from "./pages/ReceivePaymentPage";
+import Neraca from "./components/reports/neraca";
 
 // Import detail components
 import InvoiceDetail from "./components/detail/InvoiceDetail";
@@ -131,6 +132,9 @@ function App() {
                 </ProtectedRoute>
               } />
               
+              {/* Add missing cash-bank route that redirects to cashnbank */}
+              <Route path="/cash-bank" element={<Navigate to="/cashnbank" replace />} />
+              
               <Route path="/cashflow-analysis" element={
                 <ProtectedRoute>
                   <CashflowAnalysis />
@@ -152,6 +156,13 @@ function App() {
               <Route path="/reports" element={
                 <ProtectedRoute>
                   <Reports />
+                </ProtectedRoute>
+              } />
+              
+              {/* Add missing Neraca route */}
+              <Route path="/neraca" element={
+                <ProtectedRoute>
+                  <Neraca />
                 </ProtectedRoute>
               } />
               
@@ -240,6 +251,9 @@ function App() {
                   <RequestDetail />
                 </ProtectedRoute>
               } />
+              
+              {/* Add redirect for the old contact route format to the correct one */}
+              <Route path="/contact/:id" element={<Navigate to="/contact-details/:id" replace />} />
               
               {/* Fallback routes */}
               <Route path="*" element={<NotFound />} />
