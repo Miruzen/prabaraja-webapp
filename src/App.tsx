@@ -252,9 +252,6 @@ function App() {
                 </ProtectedRoute>
               } />
               
-              {/* Add redirect for the old contact route format to the correct one */}
-              <Route path="/contact/:id" element={<Navigate to="/contact-details/:id" replace />} />
-              
               {/* Fallback routes */}
               <Route path="*" element={<NotFound />} />
             </Routes>

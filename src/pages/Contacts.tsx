@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
@@ -81,7 +80,7 @@ const Contacts = () => {
   const deleteContactMutation = useDeleteContact();
 
   const handleContactClick = (contactId: string) => {
-    navigate(`/contact/${contactId}`);
+    navigate(`/contact-details/${contactId}`);
   };
 
   const handleDeleteContact = async (contactId: string, contactName: string) => {
@@ -276,7 +275,7 @@ const Contacts = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => navigate(`/contact/${contact.id}/edit`)}
+                            onClick={() => navigate(`/contact-details/${contact.id}/edit`)}
                             className="h-8 w-8 p-0"
                           >
                             <Edit size={14} />
