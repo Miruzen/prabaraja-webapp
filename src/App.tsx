@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 // Import all pages
 import Index from "./pages/Index";
@@ -29,7 +29,7 @@ import Expenses from "./pages/Expenses";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
-import ReceivePaymentPage from "./pages/ReceivePaymentPage";
+import { ReceivePaymentPage } from "./pages/ReceivePaymentPage";
 
 // Import detail components
 import InvoiceDetail from "./components/detail/InvoiceDetail";
