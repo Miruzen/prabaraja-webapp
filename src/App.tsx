@@ -178,7 +178,7 @@ function App() {
                 </ProtectedRoute>
               } />
               
-              {/* Create routes */}
+              {/* Create routes - Make sure these are properly defined */}
               <Route path="/create-purchase" element={
                 <ProtectedRoute>
                   <CreateNewPurchase />
