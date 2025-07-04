@@ -25,6 +25,7 @@ import { ConfirmRoleChangeDialog } from "@/components/ConfirmRoleChangeDialog";
 
 export default function Settings() {
   const [username, setUsername] = useState("");
+  const [roleSelects, setRoleSelects] = useState<Record<string, string>>({});
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     userId: string;
@@ -43,6 +44,17 @@ export default function Settings() {
   const { isAdmin, profile, isLoading: roleLoading } = useRoleAccess();
   const { data: profiles, isLoading: profilesLoading } = useProfiles();
   const updateUserRole = useUpdateUserRole();
+  
+  // Initialize role selects when profiles load
+  useEffect(() => {
+    if (profiles) {
+      const initialRoles: Record<string, string> = {};
+      profiles.forEach(profile => {
+        initialRoles[profile.id] = profile.role || 'member';
+      });
+      setRoleSelects(initialRoles);
+    }
+  }, [profiles]);
   
   // Load username from profile on component mount
   useEffect(() => {
@@ -76,6 +88,11 @@ export default function Settings() {
 
     if (!validation.isValid) {
       toast.error(validation.error || 'Invalid role change');
+      // Reset the select to the original value
+      setRoleSelects(prev => ({
+        ...prev,
+        [userId]: targetUser.role || 'member'
+      }));
       return;
     }
 
@@ -103,6 +120,15 @@ export default function Settings() {
     } catch (error) {
       // Error is already handled in the mutation
       console.error('Role change failed:', error);
+      
+      // Reset the select to the original value on error
+      const targetUser = profiles?.find(p => p.id === confirmDialog.userId);
+      if (targetUser) {
+        setRoleSelects(prev => ({
+          ...prev,
+          [confirmDialog.userId]: targetUser.role || 'member'
+        }));
+      }
     }
   };
 
@@ -112,6 +138,15 @@ export default function Settings() {
   };
 
   const closeConfirmDialog = () => {
+    // Reset the select to the original value when cancelling
+    const targetUser = profiles?.find(p => p.id === confirmDialog.userId);
+    if (targetUser) {
+      setRoleSelects(prev => ({
+        ...prev,
+        [confirmDialog.userId]: targetUser.role || 'member'
+      }));
+    }
+    
     setConfirmDialog(prev => ({ ...prev, isOpen: false }));
   };
 
@@ -228,8 +263,14 @@ export default function Settings() {
                             <TableCell>{userProfile.name || "—"}</TableCell>
                             <TableCell>
                               <Select
-                                defaultValue={currentRole}
-                                onValueChange={(value) => handleRoleChangeRequest(userProfile.id, value)}
+                                value={roleSelects[userProfile.id] || currentRole}
+                                onValueChange={(value) => {
+                                  setRoleSelects(prev => ({
+                                    ...prev,
+                                    [userProfile.id]: value
+                                  }));
+                                  handleRoleChangeRequest(userProfile.id, value);
+                                }}
                                 disabled={isCurrentUser || updateUserRole.isPending}
                               >
                                 <SelectTrigger className="w-32">
