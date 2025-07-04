@@ -17,45 +17,29 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-interface User {
-  email: string;
-  role: "admin" | "member";
-  name?: string;
-}
-
-// Mock users data
-const mockUsers: User[] = [
-  { email: "admin@gmail.com", role: "admin", name: "Admin User" },
-  { email: "john@example.com", role: "member", name: "John Doe" },
-  { email: "sarah@example.com", role: "member", name: "Sarah Smith" },
-  { email: "mike@example.com", role: "member", name: "Mike Johnson" },
-];
+import { useAuth } from "@/contexts/AuthContext";
+import { useRoleAccess } from "@/hooks/useRoleAccess";
+import { useProfiles, useUpdateUserRole } from "@/hooks/useProfiles";
+import { getRoleDisplayName, AVAILABLE_ROLES } from "@/utils/roleUtils";
 
 export default function Settings() {
   const [username, setUsername] = useState("");
-  const [currentUserEmail, setCurrentUserEmail] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const { user } = useAuth();
+  const { isAdmin, profile, isLoading: roleLoading } = useRoleAccess();
+  const { data: profiles, isLoading: profilesLoading } = useProfiles();
+  const updateUserRole = useUpdateUserRole();
   
-  // Load username and check if admin from localStorage on component mount
+  // Load username from profile on component mount
   useEffect(() => {
-    const savedUsername = localStorage.getItem("username");
-    if (savedUsername) {
-      setUsername(savedUsername);
+    if (profile?.name) {
+      setUsername(profile.name);
     }
-    
-    // Get current user email from localStorage (in a real app this would come from auth)
-    const email = localStorage.getItem("userEmail") || "";
-    setCurrentUserEmail(email);
-    
-    // Check if user is admin
-    const isUserAdmin = email === "admin@gmail.com";
-    setIsAdmin(isUserAdmin);
-  }, []);
+  }, [profile]);
 
   const handleSaveUsername = () => {
     if (username.trim()) {
+      // For now, we'll just save to localStorage as before
+      // In a full implementation, you'd update the profile in Supabase
       localStorage.setItem("username", username.trim());
       toast.success("Username updated successfully");
     } else {
@@ -63,18 +47,35 @@ export default function Settings() {
     }
   };
 
-  const handleRoleChange = (email: string, newRole: "admin" | "member") => {
-    const updatedUsers = users.map(user => 
-      user.email === email ? { ...user, role: newRole } : user
-    );
-    setUsers(updatedUsers);
-    toast.success(`User role updated to ${newRole}`);
+  const handleRoleChange = async (userId: string, newRole: string) => {
+    // Prevent admin from changing their own role
+    if (userId === user?.id) {
+      toast.error("You cannot change your own role");
+      return;
+    }
+
+    try {
+      await updateUserRole.mutateAsync({ userId, newRole });
+    } catch (error) {
+      console.error('Failed to update user role:', error);
+    }
   };
 
   const handleResetPassword = (email: string) => {
     // In a real app, this would trigger a password reset flow
     toast.success(`Password reset link sent to ${email}`);
   };
+
+  if (roleLoading) {
+    return (
+      <div className="flex h-screen bg-background">
+        <Sidebar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-lg">Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-background">
@@ -109,11 +110,22 @@ export default function Settings() {
                   <Input 
                     id="email"
                     type="email"
-                    value={currentUserEmail}
+                    value={user?.email || ''}
                     disabled
                     className="bg-gray-100"
                   />
                   <p className="text-sm text-muted-foreground">Your email address cannot be changed</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="role">Role</Label>
+                  <Input 
+                    id="role"
+                    type="text"
+                    value={getRoleDisplayName(profile?.role || 'member')}
+                    disabled
+                    className="bg-gray-100"
+                  />
+                  <p className="text-sm text-muted-foreground">Your role is managed by administrators</p>
                 </div>
                 <Button 
                   onClick={handleSaveUsername}
@@ -133,51 +145,71 @@ export default function Settings() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users.map((user) => (
-                      <TableRow key={user.email}>
-                        <TableCell>{user.email}</TableCell>
-                        <TableCell>{user.name || "—"}</TableCell>
-                        <TableCell>
-                          <Select
-                            defaultValue={user.role}
-                            onValueChange={(value) => handleRoleChange(user.email, value as "admin" | "member")}
-                          >
-                            <SelectTrigger className="w-32">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="admin">
-                                <Badge variant="outline" className="bg-blue-50 text-blue-600 hover:bg-blue-50">Admin</Badge>
-                              </SelectItem>
-                              <SelectItem value="member">
-                                <Badge variant="outline" className="bg-gray-50 text-gray-600 hover:bg-gray-50">Member</Badge>
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => handleResetPassword(user.email)}
-                          >
-                            Reset Password
-                          </Button>
-                        </TableCell>
+                {profilesLoading ? (
+                  <div className="text-center py-4">Loading users...</div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {profiles?.map((userProfile) => (
+                        <TableRow key={userProfile.id}>
+                          <TableCell>{userProfile.email || "—"}</TableCell>
+                          <TableCell>{userProfile.name || "—"}</TableCell>
+                          <TableCell>
+                            <Select
+                              defaultValue={userProfile.role || 'member'}
+                              onValueChange={(value) => handleRoleChange(userProfile.id, value)}
+                              disabled={userProfile.id === user?.id || updateUserRole.isPending}
+                            >
+                              <SelectTrigger className="w-32">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {AVAILABLE_ROLES.map((role) => (
+                                  <SelectItem key={role} value={role}>
+                                    <Badge 
+                                      variant="outline" 
+                                      className={`${
+                                        role === 'admin' ? 'bg-blue-50 text-blue-600 hover:bg-blue-50' :
+                                        role === 'team_lead' ? 'bg-green-50 text-green-600 hover:bg-green-50' :
+                                        role === 'division_member' ? 'bg-purple-50 text-purple-600 hover:bg-purple-50' :
+                                        'bg-gray-50 text-gray-600 hover:bg-gray-50'
+                                      }`}
+                                    >
+                                      {getRoleDisplayName(role)}
+                                    </Badge>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {userProfile.id === user?.id && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Cannot change own role
+                              </p>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleResetPassword(userProfile.email || '')}
+                              disabled={!userProfile.email}
+                            >
+                              Reset Password
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           )}
