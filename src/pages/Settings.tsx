@@ -20,10 +20,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/contexts/AuthContext";
 import { useRoleAccess } from "@/hooks/useRoleAccess";
 import { useProfiles, useUpdateUserRole } from "@/hooks/useProfiles";
-import { getRoleDisplayName, AVAILABLE_ROLES } from "@/utils/roleUtils";
+import { getRoleDisplayName, AVAILABLE_ROLES, validateRoleChange } from "@/utils/roleUtils";
+import { ConfirmRoleChangeDialog } from "@/components/ConfirmRoleChangeDialog";
 
 export default function Settings() {
   const [username, setUsername] = useState("");
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    userId: string;
+    userEmail: string;
+    currentRole: string;
+    newRole: string;
+  }>({
+    isOpen: false,
+    userId: '',
+    userEmail: '',
+    currentRole: '',
+    newRole: ''
+  });
+
   const { user } = useAuth();
   const { isAdmin, profile, isLoading: roleLoading } = useRoleAccess();
   const { data: profiles, isLoading: profilesLoading } = useProfiles();
@@ -47,23 +62,57 @@ export default function Settings() {
     }
   };
 
-  const handleRoleChange = async (userId: string, newRole: string) => {
-    // Prevent admin from changing their own role
-    if (userId === user?.id) {
-      toast.error("You cannot change your own role");
+  const handleRoleChangeRequest = (userId: string, newRole: string) => {
+    const targetUser = profiles?.find(p => p.id === userId);
+    if (!targetUser) return;
+
+    // Validate the role change
+    const validation = validateRoleChange(
+      profile?.role || 'member',
+      user?.id || '',
+      userId,
+      newRole
+    );
+
+    if (!validation.isValid) {
+      toast.error(validation.error || 'Invalid role change');
       return;
     }
 
+    // Show confirmation dialog
+    setConfirmDialog({
+      isOpen: true,
+      userId,
+      userEmail: targetUser.email || 'Unknown',
+      currentRole: targetUser.role || 'member',
+      newRole
+    });
+  };
+
+  const handleConfirmRoleChange = async () => {
+    if (!confirmDialog.userId || !confirmDialog.newRole) return;
+
     try {
-      await updateUserRole.mutateAsync({ userId, newRole });
+      await updateUserRole.mutateAsync({ 
+        userId: confirmDialog.userId, 
+        newRole: confirmDialog.newRole 
+      });
+      
+      // Close dialog on success
+      setConfirmDialog(prev => ({ ...prev, isOpen: false }));
     } catch (error) {
-      console.error('Failed to update user role:', error);
+      // Error is already handled in the mutation
+      console.error('Role change failed:', error);
     }
   };
 
   const handleResetPassword = (email: string) => {
     // In a real app, this would trigger a password reset flow
     toast.success(`Password reset link sent to ${email}`);
+  };
+
+  const closeConfirmDialog = () => {
+    setConfirmDialog(prev => ({ ...prev, isOpen: false }));
   };
 
   if (roleLoading) {
@@ -147,6 +196,10 @@ export default function Settings() {
               <CardContent>
                 {profilesLoading ? (
                   <div className="text-center py-4">Loading users...</div>
+                ) : !profiles || profiles.length === 0 ? (
+                  <div className="text-center py-4 text-muted-foreground">
+                    No users found in the system
+                  </div>
                 ) : (
                   <Table>
                     <TableHeader>
@@ -158,55 +211,67 @@ export default function Settings() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {profiles?.map((userProfile) => (
-                        <TableRow key={userProfile.id}>
-                          <TableCell>{userProfile.email || "—"}</TableCell>
-                          <TableCell>{userProfile.name || "—"}</TableCell>
-                          <TableCell>
-                            <Select
-                              defaultValue={userProfile.role || 'member'}
-                              onValueChange={(value) => handleRoleChange(userProfile.id, value)}
-                              disabled={userProfile.id === user?.id || updateUserRole.isPending}
-                            >
-                              <SelectTrigger className="w-32">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {AVAILABLE_ROLES.map((role) => (
-                                  <SelectItem key={role} value={role}>
-                                    <Badge 
-                                      variant="outline" 
-                                      className={`${
-                                        role === 'admin' ? 'bg-blue-50 text-blue-600 hover:bg-blue-50' :
-                                        role === 'team_lead' ? 'bg-green-50 text-green-600 hover:bg-green-50' :
-                                        role === 'division_member' ? 'bg-purple-50 text-purple-600 hover:bg-purple-50' :
-                                        'bg-gray-50 text-gray-600 hover:bg-gray-50'
-                                      }`}
-                                    >
-                                      {getRoleDisplayName(role)}
-                                    </Badge>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            {userProfile.id === user?.id && (
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Cannot change own role
-                              </p>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => handleResetPassword(userProfile.email || '')}
-                              disabled={!userProfile.email}
-                            >
-                              Reset Password
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {profiles.map((userProfile) => {
+                        const isCurrentUser = userProfile.id === user?.id;
+                        const currentRole = userProfile.role || 'member';
+                        
+                        return (
+                          <TableRow key={userProfile.id}>
+                            <TableCell className="font-medium">
+                              {userProfile.email || "—"}
+                              {isCurrentUser && (
+                                <Badge variant="outline" className="ml-2 text-xs">
+                                  You
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>{userProfile.name || "—"}</TableCell>
+                            <TableCell>
+                              <Select
+                                defaultValue={currentRole}
+                                onValueChange={(value) => handleRoleChangeRequest(userProfile.id, value)}
+                                disabled={isCurrentUser || updateUserRole.isPending}
+                              >
+                                <SelectTrigger className="w-32">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {AVAILABLE_ROLES.map((role) => (
+                                    <SelectItem key={role} value={role}>
+                                      <Badge 
+                                        variant="outline" 
+                                        className={`${
+                                          role === 'admin' ? 'bg-blue-50 text-blue-600 hover:bg-blue-50' :
+                                          role === 'team_lead' ? 'bg-green-50 text-green-600 hover:bg-green-50' :
+                                          role === 'division_member' ? 'bg-purple-50 text-purple-600 hover:bg-purple-50' :
+                                          'bg-gray-50 text-gray-600 hover:bg-gray-50'
+                                        }`}
+                                      >
+                                        {getRoleDisplayName(role)}
+                                      </Badge>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              {isCurrentUser && (
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Cannot change own role
+                                </p>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => handleResetPassword(userProfile.email || '')}
+                                disabled={!userProfile.email}
+                              >
+                                Reset Password
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 )}
@@ -225,6 +290,16 @@ export default function Settings() {
           )}
         </div>
       </div>
+
+      <ConfirmRoleChangeDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={closeConfirmDialog}
+        onConfirm={handleConfirmRoleChange}
+        userEmail={confirmDialog.userEmail}
+        currentRole={confirmDialog.currentRole}
+        newRole={confirmDialog.newRole}
+        isLoading={updateUserRole.isPending}
+      />
     </div>
   );
 }
