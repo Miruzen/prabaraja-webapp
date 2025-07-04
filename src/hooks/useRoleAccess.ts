@@ -1,29 +1,40 @@
 
-import { useAuth } from '@/contexts/AuthContext';
+import { useCurrentUserProfile } from './useProfiles';
 
 export const useRoleAccess = () => {
-  const { user } = useAuth();
+  const { data: profile, isLoading } = useCurrentUserProfile();
 
-  // For now, we'll use the user's role from user metadata
-  // Later this can be expanded to check against a roles table
-  const userRole = user?.user_metadata?.role || 'member';
+  // Get the user's role from their profile in Supabase
+  const userRole = profile?.role || 'member';
 
   const isAdmin = userRole === 'admin';
   const isMember = userRole === 'member';
+  const isTeamLead = userRole === 'team_lead';
+  const isDivisionMember = userRole === 'division_member';
 
-  // Admin can see all data, members have restricted access
+  // Permission checks based on role
   const canViewAllData = isAdmin;
-  const canCreateData = isAdmin || isMember;
-  const canEditData = isAdmin;
+  const canCreateData = isAdmin || isMember || isTeamLead;
+  const canEditData = isAdmin || isTeamLead;
   const canDeleteData = isAdmin;
+  
+  // New permissions for role management
+  const canManageUsers = isAdmin;
+  const canChangeUserRoles = isAdmin;
 
   return {
     userRole,
     isAdmin,
     isMember,
+    isTeamLead,
+    isDivisionMember,
     canViewAllData,
     canCreateData,
     canEditData,
     canDeleteData,
+    canManageUsers,
+    canChangeUserRoles,
+    isLoading,
+    profile,
   };
 };
