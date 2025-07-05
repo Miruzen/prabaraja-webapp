@@ -5,7 +5,6 @@ import { SalesNavTabs } from "@/components/sales/SalesNavTabs";
 import { SalesFilters } from "@/components/sales/SalesFilters";
 import { SalesTable } from "@/components/sales/SalesTable";
 import { SalesSummaryCards } from "@/components/sales/SalesSummaryCards";
-import { SalesDebugPanel } from "@/components/sales/SalesDebugPanel";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { toast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
@@ -21,7 +20,6 @@ const Sales = () => {
   const [searchValue, setSearchValue] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
-  const [showDebug, setShowDebug] = useState(process.env.NODE_ENV === 'development');
   
   // Fetch data from Supabase based on active tab
   const { data: salesInvoices = [], isLoading: loadingSalesInvoices } = useSalesInvoices();
@@ -238,25 +236,11 @@ const Sales = () => {
               <h1 className="text-2xl font-semibold text-white">Sales</h1>
               <p className="text-white/80"> Manage your company sales transaction</p>
             </div>
-            {process.env.NODE_ENV === 'development' && (
-              <button 
-                onClick={() => setShowDebug(!showDebug)}
-                className="text-white/80 hover:text-white text-sm underline"
-              >
-                {showDebug ? 'Hide' : 'Show'} Debug
-              </button>
-            )}
           </div>
         </div>
 
         <div className="p-6">
           <div className="space-y-6">
-            {/* Debug Panel - only visible in development */}
-            <SalesDebugPanel 
-              salesData={allSalesData} 
-              isVisible={showDebug} 
-            />
-
             {/* Use the SalesNavTabs component with lucide icons */}
             <SalesNavTabs 
               activeTab={activeTab} 

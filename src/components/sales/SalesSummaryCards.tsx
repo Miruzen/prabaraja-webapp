@@ -22,50 +22,30 @@ export const SalesSummaryCards = ({ salesData }: SalesSummaryCardsProps) => {
   // Define unpaid statuses to include all relevant states
   const unpaidStatuses = ["Unpaid", "Late Payment", "Awaiting Payment"];
   
-  // Calculate unpaid invoices total with improved error handling and status filtering
+  // Calculate unpaid invoices total
   const unpaidInvoices = salesData.filter(sale => unpaidStatuses.includes(sale.status));
   console.log('Filtered unpaid invoices:', unpaidInvoices);
   
   const unpaidTotal = unpaidInvoices.reduce((total, sale) => {
     console.log(`Processing sale ${sale.id}: ${sale.total} (status: ${sale.status})`);
     
-    if (!validateCurrencyAmount(sale.total)) {
-      console.warn(`Invalid currency amount for sale ${sale.id}: ${sale.total}`);
-      return total;
-    }
-    
     const amount = parseIndonesianCurrency(sale.total);
     console.log(`Parsed amount for sale ${sale.id}: ${amount}`);
-    
-    if (isNaN(amount) || amount < 0) {
-      console.warn(`Invalid parsed amount for sale ${sale.id}: ${amount}`);
-      return total;
-    }
     
     return total + amount;
   }, 0);
   
   console.log('Total unpaid amount calculated:', unpaidTotal);
 
-  // Calculate paid invoices total with improved error handling
+  // Calculate paid invoices total
   const paidInvoices = salesData.filter(sale => sale.status === "Paid");
   console.log('Filtered paid invoices:', paidInvoices);
   
   const paidTotal = paidInvoices.reduce((total, sale) => {
     console.log(`Processing paid sale ${sale.id}: ${sale.total}`);
     
-    if (!validateCurrencyAmount(sale.total)) {
-      console.warn(`Invalid currency amount for paid sale ${sale.id}: ${sale.total}`);
-      return total;
-    }
-    
     const amount = parseIndonesianCurrency(sale.total);
     console.log(`Parsed paid amount for sale ${sale.id}: ${amount}`);
-    
-    if (isNaN(amount) || amount < 0) {
-      console.warn(`Invalid parsed paid amount for sale ${sale.id}: ${amount}`);
-      return total;
-    }
     
     return total + amount;
   }, 0);
@@ -87,10 +67,6 @@ export const SalesSummaryCards = ({ salesData }: SalesSummaryCardsProps) => {
             <div className="text-xl font-semibold">
               {formatIndonesianCurrency(unpaidTotal)}
             </div>
-            {/* Debug information - remove in production */}
-            <div className="text-xs text-gray-400 mt-1">
-              Debug: {unpaidTotal.toLocaleString('en-US')} from {unpaidInvoices.length} invoices
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -107,10 +83,6 @@ export const SalesSummaryCards = ({ salesData }: SalesSummaryCardsProps) => {
             <div className="text-sm text-gray-500">Total</div>
             <div className="text-xl font-semibold">
               {formatIndonesianCurrency(paidTotal)}
-            </div>
-            {/* Debug information - remove in production */}
-            <div className="text-xs text-gray-400 mt-1">
-              Debug: {paidTotal.toLocaleString('en-US')} from {paidInvoices.length} invoices
             </div>
           </div>
         </CardContent>
