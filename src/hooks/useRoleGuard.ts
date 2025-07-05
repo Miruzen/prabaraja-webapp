@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 export const useRoleGuard = (requiredRole?: string, redirectTo: string = '/') => {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { userRole, isLoading: roleLoading } = useRoleAccess();
   const navigate = useNavigate();
 
