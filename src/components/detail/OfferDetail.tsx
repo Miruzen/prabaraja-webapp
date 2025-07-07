@@ -1,288 +1,296 @@
-
-import { useParams } from "react-router-dom";
-import { Sidebar } from "@/components/Sidebar";
-import { Button } from "@/components/ui/button";
+import { useParams, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Download, Printer, Share2, Tag, Clock, PercentCircle } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { Purchase, PURCHASES_STORAGE_KEY } from "@/types/purchase";
-import { formatCurrency } from "@/lib/utils";
-import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Calendar, Package, DollarSign, AlertCircle, Tag } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+
+interface OfferItem {
+  id: string;
+  name: string;
+  quantity: number;
+  unit_price: number;
+  total: number;
+}
+
+interface Offer {
+  id: string;
+  user_id: string;
+  number: number;
+  date: string;
+  expiry_date?: string;
+  due_date: string;
+  status: string;
+  discount_terms?: string;
+  items: OfferItem[];
+  grand_total: number;
+  tags?: string[];
+  created_at: string;
+  updated_at?: string;
+}
 
 const OfferDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const [offer, setOffer] = useState<Purchase | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
-  useEffect(() => {
-    const fetchOfferData = () => {
-      try {
-        const storedPurchases = localStorage.getItem(PURCHASES_STORAGE_KEY);
-        if (storedPurchases) {
-          const parsedPurchases = JSON.parse(storedPurchases);
-          const foundOffer = parsedPurchases.find((p: any) => p.id === id && p.type === "offer");
-          
-          if (foundOffer) {
-            // Convert date strings to Date objects
-            foundOffer.date = new Date(foundOffer.date);
-            foundOffer.dueDate = foundOffer.dueDate ? new Date(foundOffer.dueDate) : null;
-            setOffer(foundOffer);
-          }
-        }
-      } catch (error) {
-        console.error("Error loading offer data:", error);
-      } finally {
-        setLoading(false);
+  const { data: offer, isLoading, error } = useQuery({
+    queryKey: ['offer', id],
+    queryFn: async () => {
+      if (!id) throw new Error('Offer ID is required');
+      
+      const { data, error } = await supabase
+        .from('offers')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching offer:', error);
+        throw error;
       }
-    };
 
-    fetchOfferData();
-  }, [id]);
+      const transformedOffer: Offer = {
+        id: data.id,
+        user_id: data.user_id,
+        number: data.number,
+        date: data.date,
+        expiry_date: data.expiry_date,
+        due_date: data.due_date,
+        status: data.status,
+        discount_terms: data.discount_terms,
+        items: Array.isArray(data.items) ? (data.items as unknown as OfferItem[]) : [],
+        grand_total: data.grand_total,
+        tags: data.tags || [],
+        created_at: data.created_at,
+        updated_at: data.updated_at || undefined,
+      };
 
-  if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
-  }
+      return transformedOffer;
+    },
+    enabled: !!id && !!user,
+  });
 
-  if (!offer) {
+  if (isLoading) {
     return (
       <div className="flex h-screen bg-background">
-        <Sidebar />
-        <div className="flex-1 overflow-auto p-6">
-          <Link to="/purchases" className="mb-6 inline-block">
-            <Button variant="outline" size="sm" className="mb-6">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Purchases
-            </Button>
-          </Link>
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-center py-8">Offer not found.</p>
-            </CardContent>
-          </Card>
+        <div className="flex-1 overflow-auto">
+          <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
+            <h1 className="text-2xl font-semibold text-white">Offer Details</h1>
+          </div>
+          <div className="p-6">
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+              <p className="mt-2 text-gray-600">Loading offer details...</p>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
-  // Calculate standard price and discounted price
-  const standardPrice = offer.items && offer.items.length > 0
-    ? offer.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
-    : 0;
-
-  // Apply a 15% discount as an example
-  const discountPercentage = 15;
-  const discountAmount = standardPrice * (discountPercentage / 100);
-  const finalPrice = standardPrice - discountAmount;
-
-  return (
-    <div className="flex h-screen bg-background">
-      <Sidebar />
-      <div className="flex-1 overflow-auto">
-        <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6">
-          <div className="flex items-center">
-            <Link to="/purchases" className="mr-4">
-              <Button variant="outline" size="icon" className="bg-white/80 hover:bg-white">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-2xl font-semibold text-white flex items-center">
-                <Tag className="mr-2 h-5 w-5" /> 
-                {offer.number}
-              </h1>
-              <p className="text-white/80 text-sm">Offer received on {format(offer.date, 'PP')}</p>
+  if (error || !offer) {
+    return (
+      <div className="flex h-screen bg-background">
+        <div className="flex-1 overflow-auto">
+          <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
+            <h1 className="text-2xl font-semibold text-white">Offer Details</h1>
+          </div>
+          <div className="p-6">
+            <div className="text-center py-8">
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Offer Not Found</h3>
+              <p className="text-gray-600 mb-4">
+                The offer you're looking for doesn't exist or you don't have permission to view it.
+              </p>
+              <Link to="/purchases">
+                <Button variant="outline">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Purchases
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
+      </div>
+    );
+  }
 
-        <div className="p-6">
-          <div className="mb-6 flex justify-between items-center">
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  return (
+    <div className="flex h-screen bg-background">
+      <div className="flex-1 overflow-auto">
+        <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
+          <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold">Offer Details</h2>
-              <p className="text-gray-500">View and manage supplier offer information</p>
+              <h1 className="text-2xl font-semibold text-white">Offer Details</h1>
+              <p className="text-white/80">Offer #{offer.number}</p>
             </div>
-            <div className="flex space-x-2">
-              <Button variant="outline" className="flex items-center">
-                <Printer className="mr-2 h-4 w-4" />
-                Print
+            <Link to="/purchases">
+              <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Purchases
               </Button>
-              <Button variant="outline" className="flex items-center">
-                <Download className="mr-2 h-4 w-4" />
-                Download
-              </Button>
-              <Button variant="outline" className="flex items-center">
-                <Share2 className="mr-2 h-4 w-4" />
-                Share
-              </Button>
-            </div>
+            </Link>
           </div>
+        </div>
 
-          <div className="grid grid-cols-1 gap-6">
+        <div className="p-6 space-y-6">
+          {/* Header Information */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card>
-              <CardHeader>
-                <CardTitle>Offer Summary</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Offer Information
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <CardContent className="space-y-3">
+                <div>
+                  <p className="text-sm text-gray-600">Offer Date</p>
+                  <p className="font-medium">{offer.date}</p>
+                </div>
+                {offer.expiry_date && (
                   <div>
-                    <p className="text-sm text-gray-500">Offer Number</p>
-                    <p className="font-medium">{offer.number}</p>
+                    <p className="text-sm text-gray-600">Expiry Date</p>
+                    <p className="font-medium">{offer.expiry_date}</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Received Date</p>
-                    <p className="font-medium">{format(offer.date, 'PP')}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Valid Until</p>
-                    <p className="font-medium">{offer.dueDate ? format(offer.dueDate, 'PP') : 'Not specified'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Status</p>
-                    <span className={`px-2 py-1 rounded-full text-sm inline-block mt-1 ${
-                      offer.status === 'completed' ? 'bg-green-100 text-green-800' : 
-                      offer.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {offer.status.charAt(0).toUpperCase() + offer.status.slice(1)}
-                    </span>
-                  </div>
+                )}
+                <div>
+                  <p className="text-sm text-gray-600">Due Date</p>
+                  <p className="font-medium">{offer.due_date}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Status</p>
+                  <Badge className={getStatusColor(offer.status)}>
+                    {offer.status}
+                  </Badge>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Offer Terms</CardTitle>
-                <PercentCircle className="h-5 w-5 text-gray-500" />
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Tag className="h-5 w-5" />
+                  Offer Details
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+              <CardContent className="space-y-3">
+                <div>
+                  <p className="text-sm text-gray-600">Total Items</p>
+                  <p className="font-medium">{offer.items.length}</p>
+                </div>
+                {offer.discount_terms && (
                   <div>
-                    <p className="text-sm text-gray-500">Supplier</p>
-                    <p className="font-medium">XYZ Trading Group</p>
+                    <p className="text-sm text-gray-600">Discount Terms</p>
+                    <p className="font-medium">{offer.discount_terms}</p>
                   </div>
+                )}
+                {offer.tags && offer.tags.length > 0 && (
                   <div>
-                    <p className="text-sm text-gray-500">Offer Type</p>
-                    <p className="font-medium">Volume Discount</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Discount</p>
-                    <p className="font-medium text-green-600">{discountPercentage}% off standard pricing</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Offer Conditions</p>
-                    <p className="font-medium">Minimum order quantity: 50 units</p>
-                  </div>
-                  <div className="pt-2 border-t">
-                    <p className="text-sm text-gray-500">Valid For</p>
-                    <div className="flex items-center mt-1">
-                      <Clock className="h-4 w-4 text-amber-500 mr-2" />
-                      <p className="font-medium">
-                        {offer.dueDate 
-                          ? `${Math.max(0, Math.ceil((offer.dueDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))} days remaining` 
-                          : 'Undefined period'}
-                      </p>
+                    <p className="text-sm text-gray-600 mb-2">Tags</p>
+                    <div className="flex flex-wrap gap-1">
+                      {offer.tags.map((tag, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
                     </div>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle>Offered Items</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Financial Summary
+                </CardTitle>
               </CardHeader>
               <CardContent>
+                <div>
+                  <p className="text-sm text-gray-600">Total Amount</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    Rp. {(offer.grand_total || 0).toLocaleString("id-ID")}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Items Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                Offer Items
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {offer.items && offer.items.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
                     <thead>
                       <tr className="border-b">
-                        <th className="text-left py-3 px-4">Item</th>
-                        <th className="text-right py-3 px-4">Quantity</th>
-                        <th className="text-right py-3 px-4">Standard Price</th>
-                        <th className="text-right py-3 px-4">Offer Price</th>
-                        <th className="text-right py-3 px-4">Total</th>
+                        <th className="text-left p-3 font-medium text-gray-600">Item</th>
+                        <th className="text-right p-3 font-medium text-gray-600">Quantity</th>
+                        <th className="text-right p-3 font-medium text-gray-600">Unit Price</th>
+                        <th className="text-right p-3 font-medium text-gray-600">Total</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {offer.items && offer.items.length > 0 ? (
-                        offer.items.map((item, index) => (
-                          <tr key={index} className="border-b">
-                            <td className="py-3 px-4">{item.name}</td>
-                            <td className="text-right py-3 px-4">{item.quantity}</td>
-                            <td className="text-right py-3 px-4">{formatCurrency(item.price * 1.15)}</td>
-                            <td className="text-right py-3 px-4">{formatCurrency(item.price)}</td>
-                            <td className="text-right py-3 px-4">{formatCurrency(item.price * item.quantity)}</td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={5} className="py-4 text-center text-gray-500">
-                            No items in this offer
+                      {offer.items.map((item, index) => (
+                        <tr key={index} className="border-b hover:bg-gray-50">
+                          <td className="p-3">
+                            <div>
+                              <p className="font-medium">{item.name}</p>
+                            </div>
+                          </td>
+                          <td className="text-right p-3">{item.quantity || 0}</td>
+                          <td className="text-right p-3">
+                            Rp. {(item.unit_price || 0).toLocaleString("id-ID")}
+                          </td>
+                          <td className="text-right p-3 font-medium">
+                            Rp. {(item.total || 0).toLocaleString("id-ID")}
                           </td>
                         </tr>
-                      )}
+                      ))}
                     </tbody>
+                    <tfoot>
+                      <tr className="border-t-2 border-gray-300">
+                        <td colSpan={3} className="p-3 text-right font-medium">
+                          Grand Total:
+                        </td>
+                        <td className="text-right p-3 font-bold text-green-600">
+                          Rp. {(offer.grand_total || 0).toLocaleString("id-ID")}
+                        </td>
+                      </tr>
+                    </tfoot>
                   </table>
                 </div>
-
-                <div className="mt-4 space-y-2 border-t pt-4">
-                  <div className="flex justify-between">
-                    <span>Standard Price</span>
-                    <span className="line-through text-gray-500">{formatCurrency(standardPrice * 1.15)}</span>
-                  </div>
-                  <div className="flex justify-between text-green-600">
-                    <span>Discount ({discountPercentage}%)</span>
-                    <span>-{formatCurrency(standardPrice * 0.15)}</span>
-                  </div>
-                  <div className="flex justify-between font-bold text-lg">
-                    <span>Offer Price</span>
-                    <span>{formatCurrency(standardPrice)}</span>
-                  </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No items found for this offer.</p>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Additional Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Approved By</p>
-                    <p>{offer.approver}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Priority</p>
-                    <span className={`px-2 py-1 rounded-full text-xs inline-block ${
-                      offer.priority === 'High' ? 'bg-red-100 text-red-800' : 
-                      offer.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' : 
-                      'bg-green-100 text-green-800'
-                    }`}>
-                      {offer.priority}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Tags</p>
-                    <div className="flex flex-wrap gap-2">
-                      {offer.tags.map((tag, index) => (
-                        <span key={index} className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Notes</p>
-                    <p className="text-gray-700">
-                      This special offer is available for a limited time. Supplier has indicated willingness to negotiate further on bulk orders.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

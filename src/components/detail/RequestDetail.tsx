@@ -234,7 +234,7 @@ const RequestDetail = () => {
                 <div>
                   <p className="text-sm text-gray-600">Total Amount</p>
                   <p className="text-2xl font-bold text-green-600">
-                    Rp. {request.grand_total.toLocaleString("id-ID")}
+                    Rp. {(request.grand_total || 0).toLocaleString("id-ID")}
                   </p>
                 </div>
               </CardContent>
@@ -269,12 +269,12 @@ const RequestDetail = () => {
                               <p className="font-medium">{item.name}</p>
                             </div>
                           </td>
-                          <td className="text-right p-3">{item.quantity}</td>
+                          <td className="text-right p-3">{item.quantity || 0}</td>
                           <td className="text-right p-3">
-                            Rp. {item.unit_price.toLocaleString("id-ID")}
+                            Rp. {(item.unit_price || 0).toLocaleString("id-ID")}
                           </td>
                           <td className="text-right p-3 font-medium">
-                            Rp. {item.total.toLocaleString("id-ID")}
+                            Rp. {(item.total || 0).toLocaleString("id-ID")}
                           </td>
                         </tr>
                       ))}
@@ -285,7 +285,7 @@ const RequestDetail = () => {
                           Grand Total:
                         </td>
                         <td className="text-right p-3 font-bold text-green-600">
-                          Rp. {request.grand_total.toLocaleString("id-ID")}
+                          Rp. {(request.grand_total || 0).toLocaleString("id-ID")}
                         </td>
                       </tr>
                     </tfoot>

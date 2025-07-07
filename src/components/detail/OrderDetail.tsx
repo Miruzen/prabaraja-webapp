@@ -1,278 +1,282 @@
-
-import { useParams } from "react-router-dom";
-import { Sidebar } from "@/components/Sidebar";
-import { Button } from "@/components/ui/button";
+import { useParams, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Download, Printer, Share2, ShoppingCart, Calendar, Users } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { Purchase, PURCHASES_STORAGE_KEY } from "@/types/purchase";
-import { formatCurrency } from "@/lib/utils";
-import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Calendar, Package, DollarSign, AlertCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+
+interface OrderItem {
+  id: string;
+  name: string;
+  quantity: number;
+  unit_price: number;
+  total: number;
+}
+
+interface Order {
+  id: string;
+  user_id: string;
+  number: number;
+  date: string;
+  orders_date: string;
+  due_date: string;
+  status: string;
+  items: OrderItem[];
+  grand_total: number;
+  tags?: string[];
+  created_at: string;
+  updated_at?: string;
+}
 
 const OrderDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const [order, setOrder] = useState<Purchase | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
-  useEffect(() => {
-    const fetchOrderData = () => {
-      try {
-        const storedPurchases = localStorage.getItem(PURCHASES_STORAGE_KEY);
-        if (storedPurchases) {
-          const parsedPurchases = JSON.parse(storedPurchases);
-          const foundOrder = parsedPurchases.find((p: any) => p.id === id && p.type === "order");
-          
-          if (foundOrder) {
-            // Convert date strings to Date objects
-            foundOrder.date = new Date(foundOrder.date);
-            foundOrder.dueDate = foundOrder.dueDate ? new Date(foundOrder.dueDate) : null;
-            setOrder(foundOrder);
-          }
-        }
-      } catch (error) {
-        console.error("Error loading order data:", error);
-      } finally {
-        setLoading(false);
+  const { data: order, isLoading, error } = useQuery({
+    queryKey: ['order', id],
+    queryFn: async () => {
+      if (!id) throw new Error('Order ID is required');
+      
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching order:', error);
+        throw error;
       }
-    };
 
-    fetchOrderData();
-  }, [id]);
+      const transformedOrder: Order = {
+        id: data.id,
+        user_id: data.user_id,
+        number: data.number,
+        date: data.date,
+        orders_date: data.orders_date,
+        due_date: data.due_date,
+        status: data.status,
+        items: Array.isArray(data.items) ? (data.items as unknown as OrderItem[]) : [],
+        grand_total: data.grand_total,
+        tags: data.tags || [],
+        created_at: data.created_at,
+        updated_at: data.updated_at || undefined,
+      };
 
-  if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
-  }
+      return transformedOrder;
+    },
+    enabled: !!id && !!user,
+  });
 
-  if (!order) {
+  if (isLoading) {
     return (
       <div className="flex h-screen bg-background">
-        <Sidebar />
-        <div className="flex-1 overflow-auto p-6">
-          <Link to="/purchases" className="mb-6 inline-block">
-            <Button variant="outline" size="sm" className="mb-6">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Purchases
-            </Button>
-          </Link>
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-center py-8">Order not found.</p>
-            </CardContent>
-          </Card>
+        <div className="flex-1 overflow-auto">
+          <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
+            <h1 className="text-2xl font-semibold text-white">Order Details</h1>
+          </div>
+          <div className="p-6">
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+              <p className="mt-2 text-gray-600">Loading order details...</p>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
-  // Calculate subtotal and total for this order
-  const subtotal = order.items && order.items.length > 0
-    ? order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
-    : 0;
-
-  // Add tax (10% for example)
-  const tax = subtotal * 0.1;
-  const total = subtotal + tax;
-
-  return (
-    <div className="flex h-screen bg-background">
-      <Sidebar />
-      <div className="flex-1 overflow-auto">
-        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6">
-          <div className="flex items-center">
-            <Link to="/purchases" className="mr-4">
-              <Button variant="outline" size="icon" className="bg-white/80 hover:bg-white">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-2xl font-semibold text-white flex items-center">
-                <ShoppingCart className="mr-2 h-5 w-5" /> 
-                {order.number}
-              </h1>
-              <p className="text-white/80 text-sm">Purchase Order from {format(order.date, 'PP')}</p>
+  if (error || !order) {
+    return (
+      <div className="flex h-screen bg-background">
+        <div className="flex-1 overflow-auto">
+          <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
+            <h1 className="text-2xl font-semibold text-white">Order Details</h1>
+          </div>
+          <div className="p-6">
+            <div className="text-center py-8">
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Order Not Found</h3>
+              <p className="text-gray-600 mb-4">
+                The order you're looking for doesn't exist or you don't have permission to view it.
+              </p>
+              <Link to="/purchases">
+                <Button variant="outline">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Purchases
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
+      </div>
+    );
+  }
 
-        <div className="p-6">
-          <div className="mb-6 flex justify-between items-center">
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  return (
+    <div className="flex h-screen bg-background">
+      <div className="flex-1 overflow-auto">
+        <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
+          <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold">Order Details</h2>
-              <p className="text-gray-500">View and manage purchase order information</p>
+              <h1 className="text-2xl font-semibold text-white">Order Details</h1>
+              <p className="text-white/80">Order #{order.number}</p>
             </div>
-            <div className="flex space-x-2">
-              <Button variant="outline" className="flex items-center">
-                <Printer className="mr-2 h-4 w-4" />
-                Print
+            <Link to="/purchases">
+              <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Purchases
               </Button>
-              <Button variant="outline" className="flex items-center">
-                <Download className="mr-2 h-4 w-4" />
-                Download
-              </Button>
-              <Button variant="outline" className="flex items-center">
-                <Share2 className="mr-2 h-4 w-4" />
-                Share
-              </Button>
-            </div>
+            </Link>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-6">
+          {/* Header Information */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Order Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <p className="text-sm text-gray-600">Order Date</p>
+                  <p className="font-medium">{order.orders_date}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Due Date</p>
+                  <p className="font-medium">{order.due_date}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Status</p>
+                  <Badge className={getStatusColor(order.status)}>
+                    {order.status}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  Order Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <p className="text-sm text-gray-600">Total Items</p>
+                  <p className="font-medium">{order.items.length}</p>
+                </div>
+                {order.tags && order.tags.length > 0 && (
+                  <div>
+                    <p className="text-sm text-gray-600 mb-2">Tags</p>
+                    <div className="flex flex-wrap gap-1">
+                      {order.tags.map((tag, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Financial Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div>
+                  <p className="text-sm text-gray-600">Total Amount</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    Rp. {(order.grand_total || 0).toLocaleString("id-ID")}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
-          <div className="grid grid-cols-1 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Order Number</p>
-                    <p className="font-medium">{order.number}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Order Date</p>
-                    <p className="font-medium">{format(order.date, 'PP')}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Expected Delivery</p>
-                    <p className="font-medium">{order.dueDate ? format(order.dueDate, 'PP') : 'Not specified'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Status</p>
-                    <span className={`px-2 py-1 rounded-full text-sm inline-block mt-1 ${
-                      order.status === 'completed' ? 'bg-green-100 text-green-800' : 
-                      order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Supplier Information</CardTitle>
-                <Users className="h-5 w-5 text-gray-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Supplier</p>
-                    <p className="font-medium">ABC Supply Co.</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Contact Person</p>
-                    <p className="font-medium">John Doe</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Contact Email</p>
-                    <p className="font-medium">john.doe@abcsupply.com</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Contact Phone</p>
-                    <p className="font-medium">+1 (555) 123-4567</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Order Items</CardTitle>
-              </CardHeader>
-              <CardContent>
+          {/* Items Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                Order Items
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {order.items && order.items.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
                     <thead>
                       <tr className="border-b">
-                        <th className="text-left py-3 px-4">Item</th>
-                        <th className="text-right py-3 px-4">Quantity</th>
-                        <th className="text-right py-3 px-4">Unit Price</th>
-                        <th className="text-right py-3 px-4">Total</th>
+                        <th className="text-left p-3 font-medium text-gray-600">Item</th>
+                        <th className="text-right p-3 font-medium text-gray-600">Quantity</th>
+                        <th className="text-right p-3 font-medium text-gray-600">Unit Price</th>
+                        <th className="text-right p-3 font-medium text-gray-600">Total</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {order.items && order.items.length > 0 ? (
-                        order.items.map((item, index) => (
-                          <tr key={index} className="border-b">
-                            <td className="py-3 px-4">{item.name}</td>
-                            <td className="text-right py-3 px-4">{item.quantity}</td>
-                            <td className="text-right py-3 px-4">{formatCurrency(item.price)}</td>
-                            <td className="text-right py-3 px-4">{formatCurrency(item.price * item.quantity)}</td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={4} className="py-4 text-center text-gray-500">
-                            No items in this order
+                      {order.items.map((item, index) => (
+                        <tr key={index} className="border-b hover:bg-gray-50">
+                          <td className="p-3">
+                            <div>
+                              <p className="font-medium">{item.name}</p>
+                            </div>
+                          </td>
+                          <td className="text-right p-3">{item.quantity || 0}</td>
+                          <td className="text-right p-3">
+                            Rp. {(item.unit_price || 0).toLocaleString("id-ID")}
+                          </td>
+                          <td className="text-right p-3 font-medium">
+                            Rp. {(item.total || 0).toLocaleString("id-ID")}
                           </td>
                         </tr>
-                      )}
+                      ))}
                     </tbody>
+                    <tfoot>
+                      <tr className="border-t-2 border-gray-300">
+                        <td colSpan={3} className="p-3 text-right font-medium">
+                          Grand Total:
+                        </td>
+                        <td className="text-right p-3 font-bold text-green-600">
+                          Rp. {(order.grand_total || 0).toLocaleString("id-ID")}
+                        </td>
+                      </tr>
+                    </tfoot>
                   </table>
                 </div>
-
-                <div className="mt-4 space-y-2 border-t pt-4">
-                  <div className="flex justify-between">
-                    <span>Subtotal</span>
-                    <span>{formatCurrency(subtotal)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Tax (10%)</span>
-                    <span>{formatCurrency(tax)}</span>
-                  </div>
-                  <div className="flex justify-between font-bold text-lg">
-                    <span>Total</span>
-                    <span>{formatCurrency(total)}</span>
-                  </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No items found for this order.</p>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Additional Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Approved By</p>
-                    <p>{order.approver}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Priority</p>
-                    <span className={`px-2 py-1 rounded-full text-xs inline-block ${
-                      order.priority === 'High' ? 'bg-red-100 text-red-800' : 
-                      order.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' : 
-                      'bg-green-100 text-green-800'
-                    }`}>
-                      {order.priority}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Tags</p>
-                    <div className="flex flex-wrap gap-2">
-                      {order.tags.map((tag, index) => (
-                        <span key={index} className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Payment Terms</p>
-                    <p>Net 30 days</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Notes</p>
-                    <p className="text-gray-700">
-                      Please deliver all items at once. Partial deliveries will not be accepted.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
