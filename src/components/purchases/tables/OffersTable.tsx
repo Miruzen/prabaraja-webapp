@@ -73,7 +73,7 @@
                     <TableCell>{format(offer.date, "dd/MM/yyyy")}</TableCell>
                     <TableCell>
                     <Link
-                        to={`/offers/${offer.id}`}
+                        to={`/offer/${offer.id}`}
                         className="text-indigo-600 hover:underline"
                     >
                         {offer.number}

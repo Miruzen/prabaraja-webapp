@@ -147,7 +147,7 @@ export function OrdersTable({ orders, onDelete, onEdit }: OrdersTableProps) {
                   </TableCell>
                   <TableCell>
                     <Link
-                      to={`/orders/${order.id}`}
+                      to={`/order/${order.id}`}
                       className="text-indigo-600 hover:underline"
                     >
                       {order.number}

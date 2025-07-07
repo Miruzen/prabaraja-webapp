@@ -90,7 +90,7 @@ export function ShipmentsTable({ shipments, onDelete, onEdit }: ShipmentsTablePr
                 <TableCell>{formatDate(shipment.date)}</TableCell>
                 <TableCell>
                   <Link 
-                    to={`/shipments/${shipment.id}`}
+                    to={`/shipment/${shipment.id}`}
                     className="text-indigo-600 hover:underline"
                   >
                     {shipment.trackingNumber}

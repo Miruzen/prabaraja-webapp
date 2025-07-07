@@ -81,7 +81,7 @@
                     <TableCell>{format(request.date, "dd/MM/yyyy")}</TableCell>
                     <TableCell>
                     <Link
-                        to={`/requests/${request.id}`}
+                        to={`/request/${request.id}`}
                         className="text-indigo-600 hover:underline"
                     >
                         {request.number}
