@@ -70,6 +70,44 @@ export const useUpdateUserRole = () => {
   });
 };
 
+// Hook to update current user profile name
+export const useUpdateProfileName = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ name }: { name: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ 
+          name: name,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating profile name:', error);
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['profiles'] });
+      queryClient.invalidateQueries({ queryKey: ['profile', data.id] });
+      toast.success('Username updated successfully');
+    },
+    onError: (error) => {
+      console.error('Failed to update username:', error);
+      toast.error('Failed to update username');
+    },
+  });
+};
+
 // Hook to get current user profile
 export const useCurrentUserProfile = () => {
   const { user } = useAuth();

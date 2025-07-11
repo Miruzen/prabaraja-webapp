@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRoleAccess } from "@/hooks/useRoleAccess";
-import { useProfiles, useUpdateUserRole } from "@/hooks/useProfiles";
+import { useProfiles, useUpdateUserRole, useUpdateProfileName } from "@/hooks/useProfiles";
 import { getRoleDisplayName, AVAILABLE_ROLES, validateRoleChange } from "@/utils/roleUtils";
 import { ConfirmRoleChangeDialog } from "@/components/ConfirmRoleChangeDialog";
 
@@ -44,6 +44,7 @@ export default function Settings() {
   const { isAdmin, profile, isLoading: roleLoading } = useRoleAccess();
   const { data: profiles, isLoading: profilesLoading } = useProfiles();
   const updateUserRole = useUpdateUserRole();
+  const updateProfileName = useUpdateProfileName();
   
   // Initialize role selects when profiles load
   useEffect(() => {
@@ -63,12 +64,15 @@ export default function Settings() {
     }
   }, [profile]);
 
-  const handleSaveUsername = () => {
+  const handleSaveUsername = async () => {
     if (username.trim()) {
-      // For now, we'll just save to localStorage as before
-      // In a full implementation, you'd update the profile in Supabase
-      localStorage.setItem("username", username.trim());
-      toast.success("Username updated successfully");
+      try {
+        await updateProfileName.mutateAsync({ name: username.trim() });
+        // Also keep localStorage for backward compatibility
+        localStorage.setItem("username", username.trim());
+      } catch (error) {
+        console.error('Error updating username:', error);
+      }
     } else {
       toast.error("Username cannot be empty");
     }
@@ -214,8 +218,10 @@ export default function Settings() {
                 <Button 
                   onClick={handleSaveUsername}
                   className="flex items-center gap-2"
+                  disabled={updateProfileName.isPending}
                 >
-                  <Save className="h-4 w-4" /> Save Changes
+                  <Save className="h-4 w-4" /> 
+                  {updateProfileName.isPending ? 'Saving...' : 'Save Changes'}
                 </Button>
               </div>
             </CardContent>

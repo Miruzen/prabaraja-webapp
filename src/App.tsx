@@ -60,7 +60,7 @@ function App() {
           <BrowserRouter>
             <Routes>
               {/* Public routes */}
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPass />} />
