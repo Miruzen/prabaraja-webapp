@@ -1,11 +1,12 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Card } from "@/components/ui/card";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { ArrowUpRight, ArrowDownRight, AreaChartIcon, LineChartIcon } from "lucide-react";
-import { salesData as allSalesData } from "@/data/salesData";
 import { formatCurrency } from "@/lib/utils";
+import { useDashboardFinance } from "@/hooks/useDashboardFinance";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface StatCardProps { 
   title: string;
@@ -27,115 +28,39 @@ const StatCard = ({ title, amount, trend, isPositive }: StatCardProps) => (
   </Card>
 );
 
-// Helper function to get current month data
-const getCurrentMonthData = (data: typeof allSalesData) => {
-  const now = new Date();
-  const currentMonth = now.getMonth() + 1; // January is 0
-  const currentYear = now.getFullYear();
-  
-  return data.filter(sale => {
-    const [day, month, year] = sale.date.split('/').map(Number);
-    return month === currentMonth && year === currentYear;
-  });
-};
-
-// Helper function to get previous month data
-const getPreviousMonthData = (data: typeof allSalesData) => {
-  const now = new Date();
-  // Get previous month (handling January case)
-  let prevMonth = now.getMonth(); // 0-11
-  let prevYear = now.getFullYear();
-  
-  if (prevMonth === 0) {
-    prevMonth = 12;
-    prevYear -= 1;
-  }
-  
-  return data.filter(sale => {
-    const [day, month, year] = sale.date.split('/').map(Number);
-    return month === prevMonth && year === prevYear;
-  });
-};
-
-// Helper to calculate total amount from sales data
-const calculateTotal = (data: typeof allSalesData) => {
-  return data.reduce((total, sale) => {
-    const amount = parseFloat(sale.total.replace(/[^\d.]/g, '').replace('.', ''));
-    return total + amount;
-  }, 0);
-};
-
-// Prepare chart data from sales data
-const generateChartData = (data: typeof allSalesData) => {
-  const monthlyData: Record<string, { month: string, profit: number, loss: number }> = {};
-  
-  data.forEach(sale => {
-    const [day, month, year] = sale.date.split('/').map(Number);
-    const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'short' });
-    const amount = parseFloat(sale.total.replace(/[^\d.]/g, '').replace('.', ''));
-    
-    if (!monthlyData[monthName]) {
-      monthlyData[monthName] = { month: monthName, profit: 0, loss: 0 };
-    }
-    
-    if (sale.status === 'Paid' || sale.status === 'Awaiting Payment') {
-      monthlyData[monthName].profit += amount;
-    } else if (sale.status === 'Unpaid' || sale.status === 'Late Payment') {
-      monthlyData[monthName].loss += amount;
-    }
-  });
-  
-  return Object.values(monthlyData).sort((a, b) => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return months.indexOf(a.month) - months.indexOf(b.month);
-  });
-};
+const LoadingSkeleton = () => (
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {[...Array(4)].map((_, i) => (
+      <Card key={i} className="p-6 space-y-2">
+        <Skeleton className="h-4 w-32" />
+        <div className="flex items-end gap-2">
+          <Skeleton className="h-8 w-24" />
+          <Skeleton className="h-4 w-20" />
+        </div>
+      </Card>
+    ))}
+  </div>
+);
 
 const Dashboard = () => {
   const [chartType, setChartType] = useState<'area' | 'line'>('area');
-  const [chartData, setChartData] = useState<any[]>([]);
-  const [currentMonthSales, setCurrentMonthSales] = useState(0);
-  const [previousMonthSales, setPreviousMonthSales] = useState(0);
-  const [currentMonthPayments, setCurrentMonthPayments] = useState(0);
-  const [previousMonthPayments, setPreviousMonthPayments] = useState(0);
-
-  useEffect(() => {
-    // Get data for current and previous months
-    const currentMonthData = getCurrentMonthData(allSalesData);
-    const previousMonthData = getPreviousMonthData(allSalesData);
-    
-    // Calculate totals
-    const currentSalesTotal = calculateTotal(currentMonthData);
-    const previousSalesTotal = calculateTotal(previousMonthData);
-    
-    // Calculate payments (Paid status only)
-    const currentPaymentsTotal = calculateTotal(currentMonthData.filter(sale => sale.status === 'Paid'));
-    const previousPaymentsTotal = calculateTotal(previousMonthData.filter(sale => sale.status === 'Paid'));
-    
-    // Generate chart data
-    const chartData = generateChartData(allSalesData);
-    
-    // Update state
-    setCurrentMonthSales(currentSalesTotal);
-    setPreviousMonthSales(previousSalesTotal);
-    setCurrentMonthPayments(currentPaymentsTotal);
-    setPreviousMonthPayments(previousPaymentsTotal);
-    setChartData(chartData);
-  }, []);
+  const { data, loading, error } = useDashboardFinance();
 
   // Calculate percentage changes
-  const salesPercentChange = previousMonthSales === 0 
-    ? 100 
-    : ((currentMonthSales - previousMonthSales) / previousMonthSales) * 100;
+  const salesPercentChange = data && data.previousMonthSales !== 0 
+    ? ((data.currentMonthSales - data.previousMonthSales) / data.previousMonthSales) * 100
+    : 0;
   
-  const paymentsPercentChange = previousMonthPayments === 0 
-    ? 100 
-    : ((currentMonthPayments - previousMonthPayments) / previousMonthPayments) * 100;
+  const paymentsPercentChange = data && data.previousMonthPayments !== 0 
+    ? ((data.currentMonthPayments - data.previousMonthPayments) / data.previousMonthPayments) * 100
+    : 0;
 
   const renderChart = () => {
+    if (!data?.monthlyData) return null;
+
     if (chartType === 'area') {
       return (
-        <AreaChart data={chartData}>
+        <AreaChart data={data.monthlyData}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="month" />
           <YAxis />
@@ -160,7 +85,7 @@ const Dashboard = () => {
       );
     } else {
       return (
-        <LineChart data={chartData}>
+        <LineChart data={data.monthlyData}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="month" />
           <YAxis />
@@ -182,6 +107,30 @@ const Dashboard = () => {
     }
   };
 
+  if (error) {
+    return (
+      <div className="flex h-screen">
+        <Sidebar />
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
+            <h1 className="text-2xl font-semibold text-white">Dashboard Overview</h1>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto bg-gray-50 p-8">
+            <div className="max-w-6xl mx-auto">
+              <Card className="p-6">
+                <div className="text-center text-red-600">
+                  <h3 className="text-lg font-semibold mb-2">Error Loading Dashboard Data</h3>
+                  <p>{error}</p>
+                </div>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen">
       <Sidebar />
@@ -192,32 +141,36 @@ const Dashboard = () => {
         
         <div className="flex-1 overflow-y-auto bg-gray-50 p-8">
           <div className="max-w-6xl mx-auto space-y-8">            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <StatCard 
-                title="Total Sales (Current Month)" 
-                amount={formatCurrency(currentMonthSales)} 
-                trend={`${salesPercentChange.toFixed(1)}% vs last month`}
-                isPositive={salesPercentChange >= 0}
-              />
-              <StatCard 
-                title="Total Sales (Previous Month)" 
-                amount={formatCurrency(previousMonthSales)} 
-                trend="Compared to current"
-                isPositive={true}
-              />
-              <StatCard 
-                title="Payments Received (Current Month)" 
-                amount={formatCurrency(currentMonthPayments)} 
-                trend={`${paymentsPercentChange.toFixed(1)}% vs last month`}
-                isPositive={paymentsPercentChange >= 0}
-              />
-              <StatCard 
-                title="Payments Received (Previous Month)" 
-                amount={formatCurrency(previousMonthPayments)} 
-                trend="Compared to current"
-                isPositive={true}
-              />
-            </div>
+            {loading ? (
+              <LoadingSkeleton />
+            ) : data ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <StatCard 
+                  title="Total Sales (Current Month)" 
+                  amount={formatCurrency(data.currentMonthSales)} 
+                  trend={`${salesPercentChange.toFixed(1)}% vs last month`}
+                  isPositive={salesPercentChange >= 0}
+                />
+                <StatCard 
+                  title="Total Sales (Previous Month)" 
+                  amount={formatCurrency(data.previousMonthSales)} 
+                  trend="Compared to current"
+                  isPositive={true}
+                />
+                <StatCard 
+                  title="Payments Received (Current Month)" 
+                  amount={formatCurrency(data.currentMonthPayments)} 
+                  trend={`${paymentsPercentChange.toFixed(1)}% vs last month`}
+                  isPositive={paymentsPercentChange >= 0}
+                />
+                <StatCard 
+                  title="Payments Received (Previous Month)" 
+                  amount={formatCurrency(data.previousMonthPayments)} 
+                  trend="Compared to current"
+                  isPositive={true}
+                />
+              </div>
+            ) : null}
 
             <Card className="p-6">
               <div className="flex justify-between items-center mb-6">
@@ -238,9 +191,15 @@ const Dashboard = () => {
                 </div>
               </div>
               <div className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  {renderChart()}
-                </ResponsiveContainer>
+                {loading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <Skeleton className="h-full w-full" />
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    {renderChart()}
+                  </ResponsiveContainer>
+                )}
               </div>
             </Card>
           </div>
