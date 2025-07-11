@@ -1,6 +1,5 @@
 
 import { 
-  Home, 
   LayoutDashboard, 
   FileText, 
   Wallet, 
@@ -15,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCurrentUserProfile } from '@/hooks/useProfiles';
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -38,13 +38,13 @@ const NavItem = ({ icon, label, href, isActive }: NavItemProps) => (
 export const Sidebar = () => {
   const currentPath = window.location.pathname;
   const { signOut, user } = useAuth();
+  const { data: profile } = useCurrentUserProfile();
 
   const handleLogout = async () => {
     await signOut();
   };
 
   const navItems = [
-    { icon: <Home size={20} />, label: 'Home', href: '/' },
     { icon: <LayoutDashboard size={20} />, label: 'Dashboard', href: '/dashboard' },
     { icon: <FileText size={20} />, label: 'Reports', href: '/reports' },
     { icon: <Wallet size={20} />, label: 'Cash & bank', href: '/cash-bank' },
@@ -66,7 +66,7 @@ export const Sidebar = () => {
             Welcome back!
           </div>
           <div className="text-sm font-medium text-sidebar-text truncate">
-            {user.user_metadata?.name || user.email}
+            {profile?.name || user.user_metadata?.name || user.email}
           </div>
         </div>
       )}
