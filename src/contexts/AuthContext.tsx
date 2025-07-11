@@ -88,7 +88,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast.error('Error signing out');
       console.error('Error signing out:', error);
     } else {
-      // Force redirect to login page
       window.location.href = '/login';
     }
   };
