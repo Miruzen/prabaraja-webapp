@@ -7,9 +7,10 @@ import { toast } from "sonner";
 import { ArrowLeft, Truck, User, Calendar, CreditCard, Package, Tag, MapPin, FileText, Clock, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import CustomerInfoSection from "@/components/sales/CustomerInfoSection";
 import SalesItemsSection from "@/components/sales/SalesItemsSection";
-import { getLatestInvoiceNumber, formatPriceWithSeparator, findContactIdByName } from "@/utils/salesUtils";
-import { salesData } from "@/data/salesData";
-import { v4 as uuidv4 } from 'uuid';
+import { formatPriceWithSeparator } from "@/utils/salesUtils";
+import { useCreateSale } from "@/hooks/useSales";
+import { useCreateOrderDelivery, useCreateQuotation } from "@/hooks/useSalesData";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Select,
   SelectContent,
@@ -92,6 +93,12 @@ const CreateNewSales = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { type = "delivery" } = (location.state as LocationState) || {};
+  const { user } = useAuth();
+  
+  // Mutation hooks
+  const createSale = useCreateSale();
+  const createOrderDelivery = useCreateOrderDelivery();
+  const createQuotation = useCreateQuotation();
   
   const [customerName, setCustomerName] = useState("");
   const [invoiceNumber, setInvoiceNumber] = useState("");
@@ -132,20 +139,20 @@ const CreateNewSales = () => {
   };
 
   useEffect(() => {
-    // Generate a unique order number when creating a new Order & Delivery
+    // Generate a unique number for each document type
+    const timestamp = Date.now();
+    const randomNum = Math.floor(Math.random() * 1000);
+    let generatedNumber;
+    
     if (type === "order") {
-      const orderPrefix = "ORD";
-      const timestamp = new Date().getTime().toString().slice(-6);
-      const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-      const generatedOrderNum = `${orderPrefix}-${timestamp}-${randomNum}`;
-      setInvoiceNumber(generatedOrderNum);
+      generatedNumber = `${timestamp}${randomNum}`;
+    } else if (type === "quotation") {
+      generatedNumber = `${timestamp}${randomNum}`;
     } else {
-      // Get the latest invoice/order/quote number when component mounts
-      const lastInvoiceNumber = getLatestInvoiceNumber();
-      const numericPart = parseInt(lastInvoiceNumber || "0");
-      const nextInvoiceNumber = (numericPart + 1).toString();
-      setInvoiceNumber(nextInvoiceNumber);
+      generatedNumber = `${timestamp}${randomNum}`;
     }
+    
+    setInvoiceNumber(generatedNumber);
     
     // Set current date as default for invoice date
     const today = new Date();
@@ -224,7 +231,7 @@ const CreateNewSales = () => {
     return formatPriceWithSeparator(price);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!isFormValid) {
@@ -232,95 +239,91 @@ const CreateNewSales = () => {
       return;
     }
 
-    // Format the invoice date properly for consistency
-    let formattedInvoiceDate;
-    if (invoiceDate) {
-      const date = new Date(invoiceDate);
-      formattedInvoiceDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
-    } else {
-      // Fallback to today if no date provided
-      const today = new Date();
-      formattedInvoiceDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
-    }
-    
-    // Format due date properly
-    let formattedDueDate;
-    if (dueDate) {
-      const date = new Date(dueDate);
-      formattedDueDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
-    } else {
-      formattedDueDate = formattedInvoiceDate; // Default to invoice date if not provided
-    }
-    
-    // Find or create contact ID for the customer
-    const customerId = findContactIdByName(customerName);
-    
-    // Create the appropriate document based on type
-    let documentTitle;
-    let documentStatus;
-    let documentType: "invoice" | "order" | "quotation";
-    
-    switch(type) {
-      case "delivery":
-        documentTitle = `Sales Invoice #${invoiceNumber}`;
-        documentStatus = status.charAt(0).toUpperCase() + status.slice(1);
-        documentType = "invoice"; // Map "delivery" to "invoice"
-        break;
-      case "order":
-        documentTitle = `Order #${invoiceNumber}`;
-        documentStatus = status.charAt(0).toUpperCase() + status.slice(1).replace("_", " ");
-        documentType = "order";
-        break;
-      case "quotation":
-        documentTitle = `Quotation #${invoiceNumber}`;
-        documentStatus = "Sent";
-        documentType = "quotation";
-        break;
-      default:
-        documentTitle = `Sales Document #${invoiceNumber}`;
-        documentStatus = "Created";
-        documentType = "invoice";
-    }
-    
-    // Create the new document with properly formatted data
-    const newDocument = {
-      id: invoiceNumber,
-      date: formattedInvoiceDate,
-      number: documentTitle,
-      customer: customerName,
-      customerId: customerId,
-      dueDate: formattedDueDate,
-      status: documentStatus,
-      total: `Rp ${formatPrice(calculateTotal())}`,
-      type: documentType // Use the mapped type
-    };
-
-    // Add additional data based on type
-    if (type === "order") {
-      Object.assign(newDocument, {
-        customerPhone,
-        customerEmail,
-        customerAddress,
-        shippingMethod,
-        paymentMethod,
-        trackingNumber,
-        notes
-      });
-    } else if (type === "quotation") {
-      Object.assign(newDocument, {
-        validUntil,
-        termsAndConditions
-      });
+    if (!user) {
+      toast.error("User not authenticated");
+      return;
     }
 
-    // Add the new document to the beginning of the salesData array
-    salesData.unshift(newDocument);
+    try {
+      const calculatedTotal = calculateTotal();
+      const numericInvoiceNumber = parseInt(invoiceNumber);
 
-    console.log(`Added new ${type}:`, newDocument);
-    console.log("Updated salesData length:", salesData.length);
+      if (type === "delivery") {
+        // Create Sales Invoice - map status to correct type
+        let saleStatus: 'Paid' | 'Unpaid' | 'Late Payment' | 'Awaiting Payment';
+        
+        switch(status) {
+          case "unpaid":
+            saleStatus = "Unpaid";
+            break;
+          case "pending_payment":
+            saleStatus = "Awaiting Payment";
+            break;
+          case "in_progress":
+            saleStatus = "Awaiting Payment";
+            break;
+          default:
+            saleStatus = "Unpaid";
+        }
+        
+        const saleData = {
+          number: numericInvoiceNumber,
+          customer_name: customerName,
+          invoice_date: invoiceDate,
+          due_date: dueDate,
+          status: saleStatus,
+          items: items,
+          grand_total: calculatedTotal,
+        };
 
-    toast.success(`${getPageTitle()} created successfully!`);
-    navigate("/sales");
+        await createSale.mutateAsync(saleData);
+        toast.success("Sales Invoice created successfully!");
+
+      } else if (type === "order") {
+        // Create Order Delivery
+        const orderData = {
+          number: numericInvoiceNumber,
+          customer_name: customerName,
+          customer_email: customerEmail,
+          customer_phone: customerPhone,
+          order_date: invoiceDate,
+          delivery_date: dueDate,
+          status: status.charAt(0).toUpperCase() + status.slice(1).replace("_", " "),
+          tracking_number: trackingNumber || `TRK-${Date.now()}`,
+          shipping_address: customerAddress,
+          shipping_method: shippingMethod,
+          payment_method: paymentMethod,
+          items: items,
+          grand_total: calculatedTotal,
+          notes: notes || null,
+        };
+
+        await createOrderDelivery.mutateAsync(orderData);
+        toast.success("Order & Delivery created successfully!");
+
+      } else if (type === "quotation") {
+        // Create Quotation
+        const quotationData = {
+          number: numericInvoiceNumber,
+          customer_name: customerName,
+          quotation_date: invoiceDate,
+          valid_until: validUntil,
+          status: "Sent",
+          items: items,
+          total: calculatedTotal,
+          terms: termsAndConditions || null,
+        };
+
+        await createQuotation.mutateAsync(quotationData);
+        toast.success("Quotation created successfully!");
+      }
+
+      navigate("/sales");
+
+    } catch (error) {
+      console.error('Error creating document:', error);
+      toast.error("Failed to create document. Please try again.");
+    }
   };
 
   // Get the current status object from options

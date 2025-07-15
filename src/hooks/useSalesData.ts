@@ -121,3 +121,165 @@ export const useQuotations = () => {
     enabled: !!user,
   });
 };
+
+// ========== MUTATION HOOKS ==========
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+
+// Create Order Delivery
+export const useCreateOrderDelivery = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (newOrder: Omit<OrderDelivery, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+      const { data, error } = await supabase
+        .from('order_deliveries')
+        .insert([{
+          ...newOrder,
+          user_id: user?.id,
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating order delivery:', error);
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['order-deliveries'] });
+    },
+  });
+};
+
+// Update Order Delivery
+export const useUpdateOrderDelivery = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<OrderDelivery> }) => {
+      const { data, error } = await supabase
+        .from('order_deliveries')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating order delivery:', error);
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['order-deliveries'] });
+    },
+  });
+};
+
+// Delete Order Delivery
+export const useDeleteOrderDelivery = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('order_deliveries')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error deleting order delivery:', error);
+        throw error;
+      }
+
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['order-deliveries'] });
+    },
+  });
+};
+
+// Create Quotation
+export const useCreateQuotation = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (newQuotation: Omit<Quotation, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+      const { data, error } = await supabase
+        .from('quotations')
+        .insert([{
+          ...newQuotation,
+          user_id: user?.id,
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating quotation:', error);
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quotations'] });
+    },
+  });
+};
+
+// Update Quotation
+export const useUpdateQuotation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Quotation> }) => {
+      const { data, error } = await supabase
+        .from('quotations')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating quotation:', error);
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quotations'] });
+    },
+  });
+};
+
+// Delete Quotation
+export const useDeleteQuotation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('quotations')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error deleting quotation:', error);
+        throw error;
+      }
+
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quotations'] });
+    },
+  });
+};
