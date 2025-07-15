@@ -327,103 +327,44 @@ const CustomerInfoSection = ({
         </div>
         
         {/* For Order & Delivery type, show additional shipping fields */}
-        {type === "order" && setCustomerAddress && setShippingMethod && setPaymentMethod && (
-          <>
-            <div className="space-y-2 md:col-span-2">
-              <label htmlFor="customerAddress" className="text-sm font-medium flex items-center gap-2">
-                <Home className="h-4 w-4 text-gray-500" />
-                Shipping Address
-              </label>
-              <textarea
-                id="customerAddress"
-                className="w-full p-2 border rounded-md"
-                rows={3}
-                placeholder="Enter complete shipping address"
-                value={customerAddress}
-                onChange={(e) => setCustomerAddress(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="shippingMethod" className="text-sm font-medium">
-                Shipping Method
-              </label>
-              <select
-                id="shippingMethod"
-                className="w-full p-2 border rounded-md appearance-none bg-white"
-                value={shippingMethod}
-                onChange={(e) => setShippingMethod(e.target.value)}
-              >
-                <option value="" disabled>Select shipping method</option>
-                {shippingMethodOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                <ChevronDown className="h-4 w-4" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="paymentMethod" className="text-sm font-medium">
-                Payment Method
-              </label>
-              <select
-                id="paymentMethod"
-                className="w-full p-2 border rounded-md appearance-none bg-white"
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-              >
-                <option value="" disabled>Select payment method</option>
-                {paymentMethodOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                <ChevronDown className="h-4 w-4" />
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* Status */}
-        <div className="space-y-2">
-          <label htmlFor="status" className="text-sm font-medium">
-            Status
-          </label>
-          <div className="relative">
-            <select
-              id="status"
-              className="w-full p-2 border rounded-md appearance-none bg-white"
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-            >
-              {statusOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none text-gray-500" />
-          </div>
-        </div>
-        
-        {/* Notes for Order & Delivery */}
-        {type === "order" && setNotes && (
+        {type === "order" && setCustomerAddress && (
           <div className="space-y-2 md:col-span-2">
-            <label htmlFor="notes" className="text-sm font-medium">
-              Notes (Optional)
+            <label htmlFor="customerAddress" className="text-sm font-medium flex items-center gap-2">
+              <Home className="h-4 w-4 text-gray-500" />
+              Shipping Address
             </label>
             <textarea
-              id="notes"
+              id="customerAddress"
               className="w-full p-2 border rounded-md"
               rows={3}
-              placeholder="Add any additional notes or instructions for this order"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Enter complete shipping address"
+              value={customerAddress}
+              onChange={(e) => setCustomerAddress(e.target.value)}
             />
+          </div>
+        )}
+
+        {/* Status - only show for non-order types */}
+        {type !== "order" && (
+          <div className="space-y-2">
+            <label htmlFor="status" className="text-sm font-medium">
+              Status
+            </label>
+            <div className="relative">
+              <select
+                id="status"
+                className="w-full p-2 border rounded-md appearance-none bg-white"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                {statusOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none text-gray-500" />
+            </div>
           </div>
         )}
       </div>
