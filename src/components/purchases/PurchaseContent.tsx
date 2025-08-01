@@ -215,7 +215,7 @@ export function PurchaseContent() {
     .filter(p => {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      return p.status === "completed" && new Date(p.date) >= thirtyDaysAgo;
+      return p.status === "Completed" && new Date(p.date) >= thirtyDaysAgo;
     })
     .reduce((total, p) => total + p.amount, 0);
 
@@ -360,31 +360,31 @@ export function PurchaseContent() {
         case "invoice":
           await updateInvoiceMutation.mutateAsync({
             id,
-            updates: { status: "completed" }
+            updates: { status: "Completed" }
           });
           break;
         case "request":
           await updateRequestMutation.mutateAsync({
             id,
-            updates: { status: "completed" }
+            updates: { status: "Completed" }
           });
           break;
         case "offer":
           await updateOfferMutation.mutateAsync({
             id,
-            updates: { status: "completed" }
+            updates: { status: "Completed" }
           });
           break;
         case "order":
           await updateOrderMutation.mutateAsync({
             id,
-            updates: { status: "completed" }
+            updates: { status: "Completed" }
           });
           break;
         case "shipment":
           await updateShipmentMutation.mutateAsync({
             id,
-            updates: { status: "completed" }
+            updates: { status: "Completed" }
           });
           break;
         default:
@@ -467,7 +467,7 @@ export function PurchaseContent() {
     try {
       await updateInvoiceMutation.mutateAsync({
         id,
-        updates: { status: "completed" }
+        updates: { status: "Completed" }
       });
       toast.success("Payment received successfully");
     } catch (error) {
