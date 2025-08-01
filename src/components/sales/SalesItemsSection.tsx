@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X, Plus } from "lucide-react";
 import { useState } from "react";
+import { formatInputCurrency, parseInputCurrency } from "@/lib/utils";
 
 interface SalesItemType {
   id: string;
@@ -32,6 +33,19 @@ const SalesItemsSection = ({
 }: SalesItemsSectionProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showProductSearch, setShowProductSearch] = useState(false);
+  
+  const formatPriceDisplay = (price: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "decimal",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(price);
+  };
+
+  const handlePriceChange = (id: string, value: string) => {
+    const numericValue = parseInputCurrency(value);
+    updateItem(id, 'price', numericValue);
+  };
   
   const addItem = () => {
     setItems([
@@ -135,12 +149,11 @@ const SalesItemsSection = ({
               </div>
               <div className="col-span-2">
                 <Input 
-                  type="number" 
-                  min="0"
-                  placeholder="Price" 
-                  prefix="Rp"
-                  value={item.price}
-                  onChange={(e) => updateItem(item.id, 'price', parseFloat(e.target.value) || 0)}
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="0" 
+                  value={formatPriceDisplay(item.price)}
+                  onChange={(e) => handlePriceChange(item.id, e.target.value)}
                 />
               </div>
               {allowProductSearch && (

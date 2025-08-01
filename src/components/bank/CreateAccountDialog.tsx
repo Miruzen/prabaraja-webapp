@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus } from "lucide-react";
+import { formatInputCurrency, parseInputCurrency } from "@/lib/utils";
 
 const INDONESIAN_BANKS = [
   "Bank Central Asia (BCA)",
@@ -33,6 +34,14 @@ interface CreateAccountFormData {
   startBalance: number;
 }
 
+const formatPriceDisplay = (price: number) => {
+  return new Intl.NumberFormat("id-ID", {
+    style: "decimal",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(price);
+};
+
 interface CreateAccountDialogProps {
   onSubmit: (data: CreateAccountFormData) => void;
 }
@@ -47,6 +56,11 @@ export function CreateAccountDialog({ onSubmit }: CreateAccountDialogProps) {
     accountNumber: "",
     startBalance: 0
   });
+
+  const handleStartBalanceChange = (value: string) => {
+    const numericValue = parseInputCurrency(value);
+    setFormData({ ...formData, startBalance: numericValue });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,11 +162,12 @@ export function CreateAccountDialog({ onSubmit }: CreateAccountDialogProps) {
             <Label htmlFor="startBalance">Start Balance (IDR)</Label>
             <Input
               id="startBalance"
-              type="number"
-              value={formData.startBalance}
-              onChange={(e) => setFormData({ ...formData, startBalance: Number(e.target.value) })}
+              type="text"
+              inputMode="numeric"
+              value={formatPriceDisplay(formData.startBalance)}
+              onChange={(e) => handleStartBalanceChange(e.target.value)}
               required
-              min={0}
+              placeholder="0"
             />
           </div>
           <div className="flex justify-end space-x-4 pt-4">
