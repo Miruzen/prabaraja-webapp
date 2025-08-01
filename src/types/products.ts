@@ -10,12 +10,16 @@ export interface Product {
     status: string;
     }
     
-    export interface Warehouse {
-        code: string;
-        name: string;
-        location: string;
-        totalStock: number;
-    }
+export interface Warehouse {
+    id: string;
+    user_id: string;
+    number: number;
+    name: string;
+    location: string;
+    total_stock: number;
+    created_at: string;
+    updated_at?: string;
+}
     
     export interface DropdownOption {
         label: string;

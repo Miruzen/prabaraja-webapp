@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Warehouse } from "@/types/products";
+import { Warehouse } from "@/hooks/useWarehouses";
 
 interface WarehouseTableProps {
   warehouses: Warehouse[];
@@ -28,11 +28,11 @@ export const WarehouseTable: React.FC<WarehouseTableProps> = ({ warehouses }) =>
       </TableHeader>
       <TableBody>
         {warehouses.map((warehouse) => (
-          <TableRow key={warehouse.code}>
-            <TableCell>{warehouse.code}</TableCell>
+          <TableRow key={warehouse.id}>
+            <TableCell>WH{warehouse.number.toString().padStart(3, '0')}</TableCell>
             <TableCell>{warehouse.name}</TableCell>
             <TableCell>{warehouse.location}</TableCell>
-            <TableCell>{warehouse.totalStock}</TableCell>
+            <TableCell>{warehouse.total_stock}</TableCell>
           </TableRow>
         ))}
       </TableBody>

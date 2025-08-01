@@ -37,21 +37,8 @@
     },
     ];
 
-    // Mock warehouses data
-    export const warehouses: Warehouse[] = [
-    {
-        code: "WH001",
-        name: "Main Warehouse",
-        location: "Tangerang",
-        totalStock: 100,
-    },
-    {
-        code: "WH002",
-        name: "Secondary Warehouse",
-        location: "Jakarta",
-        totalStock: 50,
-    },
-    ];
+    // Mock warehouses data (deprecated - using Supabase data)
+    export const warehouses: any[] = [];
 
     // Product categories
     export const productCategories = ["All", "Electronics", "Office", "Furniture"];

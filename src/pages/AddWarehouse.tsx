@@ -6,26 +6,47 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { warehouses, warehouseLocations } from "@/data/productData";
+import { useWarehouses, useCreateWarehouse } from "@/hooks/useWarehouses";
+import { toast } from "sonner";
 
-function generateNextWarehouseCode() {
-  if (!warehouses.length) return "WH001";
-  const lastWarehouse = warehouses[warehouses.length - 1];
-  const codeNum = parseInt(lastWarehouse.code.replace("WH", "")) + 1;
-  return `WH${codeNum.toString().padStart(3, "0")}`;
-}
+const warehouseLocations = ["Jakarta", "Surabaya", "Bandung", "Medan", "Makassar"];
 
 const AddWarehouse = () => {
   const navigate = useNavigate();
-  const warehouseCode = useMemo(() => generateNextWarehouseCode(), []);
+  const { data: warehouses } = useWarehouses();
+  const createWarehouseMutation = useCreateWarehouse();
+  
+  const warehouseCode = useMemo(() => {
+    if (!warehouses?.length) return "WH001";
+    const maxNumber = Math.max(...warehouses.map(w => w.number));
+    return `WH${(maxNumber + 1).toString().padStart(3, "0")}`;
+  }, [warehouses]);
+
   const [name, setName] = useState("");
-  const [location, setLocation] = useState(warehouseLocations[1] || "");
+  const [location, setLocation] = useState(warehouseLocations[0] || "");
   const [totalStock, setTotalStock] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert("Warehouse added! (Demo only)");
-    navigate("/products");
+    
+    if (!warehouses) return;
+    
+    const nextNumber = warehouses.length > 0 ? Math.max(...warehouses.map(w => w.number)) + 1 : 1;
+    
+    try {
+      await createWarehouseMutation.mutateAsync({
+        number: nextNumber,
+        name,
+        location,
+        total_stock: parseInt(totalStock)
+      });
+      
+      toast.success("Warehouse added successfully!");
+      navigate("/products");
+    } catch (error) {
+      toast.error("Failed to add warehouse");
+      console.error("Error adding warehouse:", error);
+    }
   };
 
   return (
@@ -78,7 +99,9 @@ const AddWarehouse = () => {
                   <Button type="button" variant="secondary" onClick={() => navigate("/products")}>
                     Cancel
                   </Button>
-                  <Button type="submit">Add Warehouse</Button>
+                  <Button type="submit" disabled={createWarehouseMutation.isPending}>
+                    {createWarehouseMutation.isPending ? "Adding..." : "Add Warehouse"}
+                  </Button>
                 </div>
               </form>
             </CardContent>

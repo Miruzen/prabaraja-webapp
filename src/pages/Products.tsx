@@ -46,12 +46,7 @@ const Products = () => {
     status: product.status,
   }));
 
-  const warehouses = warehousesData.map(warehouse => ({
-    code: `WH${warehouse.number.toString().padStart(3, '0')}`,
-    name: warehouse.name,
-    location: warehouse.location,
-    totalStock: warehouse.total_stock,
-  }));
+  const warehouses = warehousesData;
 
   // Get unique categories and locations for filters
   const productCategories = ["All", ...Array.from(new Set(products.map(p => p.category)))];
