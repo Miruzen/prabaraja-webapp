@@ -9,7 +9,7 @@ export interface Invoice {
   type: 'invoice' | 'purchase_order' | 'quotation';
   date: string;
   due_date: string;
-  status: 'pending' | 'Completed' | 'cancelled';
+  status: 'pending' | 'completed' | 'cancelled';
   approver: string;
   tags?: string[];
   items: any[];
@@ -33,7 +33,7 @@ export interface Offer {
   date: string;
   expiry_date?: string;
   due_date: string;
-  status: 'pending' | 'Completed' | 'cancelled';
+  status: 'pending' | 'completed' | 'cancelled';
   discount_terms?: string;
   tags?: string[];
   items: any[];
@@ -50,7 +50,7 @@ export interface Order {
   date: string;
   orders_date: string;
   due_date: string;
-  status: 'pending' | 'Completed' | 'cancelled';
+  status: 'pending' | 'completed' | 'cancelled';
   tags?: string[];
   items: any[];
   grand_total: number;
@@ -65,7 +65,7 @@ export interface Request {
   type: string;
   date?: string;
   due_date: string;
-  status: 'pending' | 'Completed' | 'cancelled';
+  status: 'pending' | 'completed' | 'cancelled';
   requested_by: string;
   urgency: 'High' | 'Medium' | 'Low';
   tags?: string[];
@@ -83,7 +83,7 @@ export interface Shipment {
   date: string;
   shipping_date: string;
   due_date: string;
-  status: 'pending' | 'Completed' | 'cancelled';
+  status: 'pending' | 'completed' | 'cancelled';
   tracking_number: string;
   carrier: string;
   tags?: string[];

@@ -110,7 +110,7 @@ export function InvoicesTable({
                       "inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-xs font-medium",
                       {
                         "bg-yellow-100 text-yellow-800": invoice.status === "pending",
-                        "bg-green-100 text-green-800": invoice.status === "Completed",
+                        "bg-green-100 text-green-800": invoice.status === "completed",
                         "bg-red-100 text-red-800": invoice.status === "cancelled",
                         "bg-blue-100 text-blue-800": invoice.status === "Half-paid",
                       }
@@ -119,7 +119,7 @@ export function InvoicesTable({
                         "h-2 w-2",
                         {
                           "fill-yellow-500": invoice.status === "pending",
-                          "fill-green-500": invoice.status === "Completed",
+                          "fill-green-500": invoice.status === "completed",
                           "fill-red-500": invoice.status === "cancelled",
                           "fill-blue-500": invoice.status === "Half-paid",
                         }

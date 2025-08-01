@@ -35,15 +35,15 @@ export function ActiveAccountMenu({
 }: ActiveAccountMenuProps) {
   const navigate = useNavigate();
 
-  // const handleCashflowAnalysisClick = () => {
-  //   navigate('/cashflow-analysis', { 
-  //     state: { 
-  //       selectedAccount: account.code,
-  //       accounts: allAccounts,
-  //       transactions
-  //     }
-  //   });
-  // };
+  const handleCashflowAnalysisClick = () => {
+    navigate('/cashflow-analysis', { 
+      state: { 
+        selectedAccount: account.code,
+        accounts: allAccounts,
+        transactions
+      }
+    });
+  };
 
   return (
     <DropdownMenuContent align="end" className="w-[200px] bg-white">
@@ -67,12 +67,10 @@ export function ActiveAccountMenu({
         <PiggyBank className="mr-2 h-4 w-4 text-[#10B981]" />
         Receive Money
       </DropdownMenuItem>
-      {/*
       <DropdownMenuItem onClick={handleCashflowAnalysisClick} className="cursor-pointer">
         <BarChart className="mr-2 h-4 w-4 text-[#8B5CF6]" />
         Cashflow Analysis
       </DropdownMenuItem>
-      */}
     </DropdownMenuContent>
   );
 }

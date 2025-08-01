@@ -8,7 +8,7 @@ export interface PurchaseItem {
 }
 
 export type PurchaseType = "invoice" | "shipment" | "order" | "offer" | "request";
-export type PurchaseStatus = "pending" | "Completed" | "cancelled" | "Half-paid";
+export type PurchaseStatus = "pending" | "completed" | "cancelled" | "Half-paid";
 export type PurchasePriority = "High" | "Medium" | "Low";
 
 // Base interface with COMMON fields
