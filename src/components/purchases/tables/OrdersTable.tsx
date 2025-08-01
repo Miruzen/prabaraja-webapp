@@ -76,50 +76,6 @@ export function OrdersTable({ orders, onDelete, onEdit }: OrdersTableProps) {
   return (
     <>
       <div className="border rounded-lg">
-        {/* Table Controls */}
-        <div className="p-4 flex justify-between items-center">
-          <div className="flex items-center space-x-4 w-2/3">
-            {/* Status Filter */}
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">
-                  <span className="flex items-center gap-2">
-                    <Circle className="h-2 w-2 fill-yellow-500" />
-                    Pending
-                  </span>
-                </SelectItem>
-                <SelectItem value="completed">
-                  <span className="flex items-center gap-2">
-                    <Circle className="h-2 w-2 fill-green-500" />
-                    Completed
-                  </span>
-                </SelectItem>
-                <SelectItem value="cancelled">
-                  <span className="flex items-center gap-2">
-                    <Circle className="h-2 w-2 fill-red-500" />
-                    Cancelled
-                  </span>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-            
-            {/* Search Input */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search orders..." 
-                className="pl-9"
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-              />
-            </div>
-          </div>
-        </div>
-
         <Table>
           <TableHeader>
             <TableRow>

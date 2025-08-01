@@ -167,7 +167,6 @@ const CustomerInfoSection = ({
     switch(type) {
       case "delivery": return "Due Date";
       case "order": return "Delivery Date";
-      case "quotation": return "Valid Until";
       default: return "Due Date";
     }
   };
