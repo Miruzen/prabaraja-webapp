@@ -10,6 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { formatCurrency, parseInputCurrency, formatInputCurrency } from "@/lib/utils";
+import { handleError } from "@/utils/errorHandler";
 
 interface Account {
   code: string;
@@ -18,6 +19,7 @@ interface Account {
   bankName?: string;
   accountNumber?: string;
   archived?: boolean;
+  accountType?: string;
 }
 
 interface TransferFundsDialogProps {
@@ -74,6 +76,12 @@ export function TransferFundsDialog({
   
   const fromAccountBalance = selectedFromAccount ? getAccountBalance(selectedFromAccount.balance) : 0;
   const insufficientFunds = numericAmount > fromAccountBalance;
+  
+  // Check for invalid account type transfers
+  const isInvalidTransfer = selectedFromAccount && selectedToAccount && (
+    (selectedFromAccount.accountType === 'Credit' && selectedToAccount.accountType === 'Debit') ||
+    (selectedFromAccount.accountType === 'Debit' && selectedToAccount.accountType === 'Credit')
+  );
 
   const handleClose = () => {
     form.reset();
@@ -83,14 +91,17 @@ export function TransferFundsDialog({
 
   const onSubmit = (data: z.infer<typeof transferFormSchema>) => {
     if (previewMode) {
-      onTransfer(
-        data.fromAccount,
-        data.toAccount,
-        parseInputCurrency(data.amount),
-        data.notes || ""
-      );
-      toast.success("Funds transferred successfully");
-      handleClose();
+      try {
+        onTransfer(
+          data.fromAccount,
+          data.toAccount,
+          parseInputCurrency(data.amount),
+          data.notes || ""
+        );
+        handleClose();
+      } catch (error) {
+        handleError(error, 'Transfer failed');
+      }
     } else {
       setPreviewMode(true);
     }
@@ -203,6 +214,11 @@ export function TransferFundsDialog({
                           Insufficient funds in the source account
                         </p>
                       )}
+                      {isInvalidTransfer && (
+                        <p className="text-sm text-destructive mt-1">
+                          Cannot transfer between Credit and Debit account types
+                        </p>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -238,14 +254,14 @@ export function TransferFundsDialog({
                   <Button variant="outline" type="button" onClick={() => setPreviewMode(false)}>
                     Back
                   </Button>
-                  <Button type="submit" disabled={insufficientFunds}>
+                  <Button type="submit" disabled={insufficientFunds || isInvalidTransfer}>
                     Confirm Transfer
                   </Button>
                 </div>
               ) : (
                 <Button 
                   type="submit" 
-                  disabled={!watchToAccount || !watchAmount || insufficientFunds}
+                  disabled={!watchToAccount || !watchAmount || insufficientFunds || isInvalidTransfer}
                 >
                   Review Transfer
                 </Button>

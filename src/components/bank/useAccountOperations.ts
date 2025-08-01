@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { parseInputCurrency } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { handleError, showSuccessMessage } from "@/utils/errorHandler";
 
 interface Account {
   code: string;
@@ -13,6 +14,7 @@ interface Account {
   bankType?: string;
   accountNumber?: string;
   archived?: boolean;
+  accountType?: string;
 }
 
 interface Transaction {
@@ -89,7 +91,8 @@ export function useAccountOperations() {
           bankName: account.bank_name,
           bankType: account.account_type,
           accountNumber: account.bank_number,
-          archived: account.status === 'Archived'
+          archived: account.status === 'Archived',
+          accountType: account.account_type
         };
       }) || [];
 
@@ -101,7 +104,7 @@ export function useAccountOperations() {
       setAccounts(formattedAccounts);
     } catch (error) {
       console.error('❌ Cash & Bank Debug - Error in fetchAccounts:', error);
-      toast.error('Failed to fetch accounts');
+      handleError(error, 'Failed to load accounts');
     } finally {
       setLoading(false);
     }
@@ -188,7 +191,7 @@ export function useAccountOperations() {
       setTransactions(formattedTransactions);
     } catch (error) {
       console.error('❌ Cash & Bank Debug - Error fetching transactions:', error);
-      toast.error('Failed to fetch transactions');
+      handleError(error, 'Failed to load transaction history');
     }
   };
 
@@ -301,11 +304,11 @@ export function useAccountOperations() {
       }
 
       console.log('✅ Cash & Bank Debug - Account created successfully');
-      toast.success("Account created successfully");
+      showSuccessMessage("Account created successfully");
       fetchAccounts();
     } catch (error) {
       console.error('❌ Cash & Bank Debug - Error creating account:', error);
-      toast.error('Failed to create account');
+      handleError(error, 'Failed to create account');
     }
   };
 
@@ -321,11 +324,11 @@ export function useAccountOperations() {
 
       if (error) throw error;
 
-      toast.success("Account archived successfully");
+      showSuccessMessage("Account archived successfully");
       fetchAccounts();
     } catch (error) {
       console.error('Error archiving account:', error);
-      toast.error('Failed to archive account');
+      handleError(error, 'Failed to archive account');
     }
   };
 
@@ -341,11 +344,11 @@ export function useAccountOperations() {
 
       if (error) throw error;
 
-      toast.success("Account unarchived successfully");
+      showSuccessMessage("Account unarchived successfully");
       fetchAccounts();
     } catch (error) {
       console.error('Error unarchiving account:', error);
-      toast.error('Failed to unarchive account');
+      handleError(error, 'Failed to unarchive account');
     }
   };
 
@@ -361,12 +364,12 @@ export function useAccountOperations() {
 
       if (error) throw error;
 
-      toast.success("Account deleted permanently");
+      showSuccessMessage("Account deleted permanently");
       fetchAccounts();
       fetchTransactions();
     } catch (error) {
       console.error('Error deleting account:', error);
-      toast.error('Failed to delete account');
+      handleError(error, 'Failed to delete account');
     }
   };
 
@@ -387,11 +390,11 @@ export function useAccountOperations() {
 
       if (error) throw error;
 
-      toast.success("Account updated successfully");
+      showSuccessMessage("Account updated successfully");
       fetchAccounts();
     } catch (error) {
       console.error('Error updating account:', error);
-      toast.error('Failed to update account');
+      handleError(error, 'Failed to update account');
     }
   };
   
@@ -399,27 +402,41 @@ export function useAccountOperations() {
     if (!user?.id) return;
 
     try {
-      // Get current balances
-      const { data: fromAccount } = await supabase
+      // Get source and destination accounts with their types
+      const { data: fromAccountData } = await supabase
         .from('cashbank')
-        .select('balance')
+        .select('balance, account_type')
         .eq('user_id', user.id)
         .eq('number', parseInt(fromCode))
         .single();
 
-      const { data: toAccount } = await supabase
+      const { data: toAccountData } = await supabase
         .from('cashbank')
-        .select('balance')
+        .select('balance, account_type')
         .eq('user_id', user.id)
         .eq('number', parseInt(toCode))
         .single();
 
-      if (!fromAccount || !toAccount) {
-        throw new Error('Accounts not found');
+      if (!fromAccountData || !toAccountData) {
+        throw new Error('account_not_found');
       }
 
-      const sourceBefore = fromAccount.balance;
-      const targetBefore = toAccount.balance;
+      // Check for invalid account type transfers
+      if (fromAccountData.account_type === 'Credit' && toAccountData.account_type === 'Debit') {
+        throw new Error('credit_to_debit_transfer');
+      }
+      
+      if (fromAccountData.account_type === 'Debit' && toAccountData.account_type === 'Credit') {
+        throw new Error('debit_to_credit_transfer');
+      }
+
+      // Check for sufficient funds
+      if (fromAccountData.balance < amount) {
+        throw new Error('insufficient_funds');
+      }
+
+      const sourceBefore = fromAccountData.balance;
+      const targetBefore = toAccountData.balance;
       const sourceAfter = sourceBefore - amount;
       const targetAfter = targetBefore + amount;
 
@@ -458,12 +475,12 @@ export function useAccountOperations() {
         throw new Error('Failed to update account balances');
       }
 
-      toast.success("Funds transferred successfully");
+      showSuccessMessage("Funds transferred successfully");
       fetchAccounts();
       fetchTransactions();
     } catch (error) {
       console.error('Error transferring funds:', error);
-      toast.error('Failed to transfer funds');
+      handleError(error, 'Failed to transfer funds');
     }
   };
   
@@ -513,12 +530,12 @@ export function useAccountOperations() {
 
       if (updateError) throw updateError;
 
-      toast.success("Money received successfully");
+      showSuccessMessage("Money received successfully");
       fetchAccounts();
       fetchTransactions();
     } catch (error) {
       console.error('Error receiving money:', error);
-      toast.error('Failed to receive money');
+      handleError(error, 'Failed to receive money');
     }
   };
 

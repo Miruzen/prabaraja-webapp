@@ -14,6 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { cn, formatInputCurrency, parseInputCurrency } from "@/lib/utils";
+import { handleError } from "@/utils/errorHandler";
 
 interface Account {
   code: string;
@@ -70,16 +71,19 @@ export function ReceiveMoneyDialog({
 
   const onSubmit = (data: z.infer<typeof receiveMoneySchema>) => {
     if (previewMode) {
-      onReceive(
-        account.code,
-        parseInputCurrency(data.amount),
-        data.payer,
-        data.reference || "",
-        data.date,
-        data.notes || ""
-      );
-      toast.success("Payment received successfully");
-      handleClose();
+      try {
+        onReceive(
+          account.code,
+          parseInputCurrency(data.amount),
+          data.payer,
+          data.reference || "",
+          data.date,
+          data.notes || ""
+        );
+        handleClose();
+      } catch (error) {
+        handleError(error, 'Failed to record payment');
+      }
     } else {
       setPreviewMode(true);
     }
@@ -98,7 +102,7 @@ export function ReceiveMoneyDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {previewMode ? "Confirm Payment Receipt" : "Record Incoming Payment"}
@@ -106,7 +110,7 @@ export function ReceiveMoneyDialog({
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 px-1">
             {previewMode ? (
               <div className="space-y-4 p-4 border rounded-md bg-muted/30">
                 <div className="grid grid-cols-2 gap-2">
@@ -291,17 +295,17 @@ export function ReceiveMoneyDialog({
               </>
             )}
             
-            <DialogFooter className="flex justify-between">
-              <Button variant="outline" type="button" onClick={handleClose}>
+            <DialogFooter className="flex flex-col sm:flex-row justify-between gap-2 pt-4">
+              <Button variant="outline" type="button" onClick={handleClose} className="w-full sm:w-auto">
                 Cancel
               </Button>
               
               {previewMode ? (
-                <div className="flex gap-2">
-                  <Button variant="outline" type="button" onClick={() => setPreviewMode(false)}>
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  <Button variant="outline" type="button" onClick={() => setPreviewMode(false)} className="w-full sm:w-auto">
                     Back
                   </Button>
-                  <Button type="submit">
+                  <Button type="submit" className="w-full sm:w-auto">
                     Confirm Receipt
                   </Button>
                 </div>
@@ -309,6 +313,7 @@ export function ReceiveMoneyDialog({
                 <Button 
                   type="submit" 
                   disabled={!watchAmount || !form.getValues("payer")}
+                  className="w-full sm:w-auto"
                 >
                   Review Receipt
                 </Button>
