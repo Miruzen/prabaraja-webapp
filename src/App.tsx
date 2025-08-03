@@ -21,6 +21,7 @@ import AddWarehouse from "./pages/AddWarehouse";
 import AdjustStock from "./pages/AdjustStock";
 import Contacts from "./pages/Contacts";
 import CreateContact from "./pages/CreateContact";
+import EditContact from "./pages/EditContact";
 import ContactDetails from "./pages/ContactDetails";
 import CashnBank from "./pages/CashnBank";
 import CashflowAnalysis from "./pages/CashflowAnalysis";
@@ -123,6 +124,12 @@ function App() {
               <Route path="/contact-details/:id" element={
                 <ProtectedRoute>
                   <ContactDetails />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/contact-details/:id/edit" element={
+                <ProtectedRoute>
+                  <EditContact />
                 </ProtectedRoute>
               } />
               

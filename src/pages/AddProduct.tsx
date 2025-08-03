@@ -6,9 +6,21 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, Trash2 } from "lucide-react";
 import { useProducts, useCreateProduct } from "@/hooks/useProducts";
+import { useProductCategories } from "@/hooks/useProductCategories";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const unitOptions = ["Unit", "pcs", "box", "set", "pack"];
 
@@ -32,12 +44,11 @@ const AddProduct = () => {
   const [buyPrice, setBuyPrice] = useState("");
   const [sellPrice, setSellPrice] = useState("");
   const [status, setStatus] = useState("In Stock");
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [showAddCategory, setShowAddCategory] = useState(false);
 
-  // Get unique categories from existing products
-  const existingCategories = Array.from(new Set(products.map(p => p.category))).filter(Boolean);
-  const productCategories = existingCategories.length > 0 
-    ? existingCategories 
-    : ["Electronics", "Office", "Furniture"];
+  const { categories, addCategory, deleteCategory, getAllCategoryNames } = useProductCategories();
+  const productCategories = getAllCategoryNames();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,6 +79,35 @@ const AddProduct = () => {
     }
   };
 
+  const handleAddCategory = () => {
+    if (!newCategoryName.trim()) {
+      toast.error("Please enter a category name");
+      return;
+    }
+
+    const success = addCategory(newCategoryName);
+    if (success) {
+      toast.success(`Category "${newCategoryName}" added successfully!`);
+      setCategory(newCategoryName);
+      setNewCategoryName("");
+      setShowAddCategory(false);
+    } else {
+      toast.error("Category already exists");
+    }
+  };
+
+  const handleDeleteCategory = (categoryName: string) => {
+    const result = deleteCategory(categoryName);
+    if (result.success) {
+      toast.success(result.message);
+      if (category === categoryName) {
+        setCategory(productCategories.find(c => c !== categoryName) || "Electronics");
+      }
+    } else {
+      toast.error(result.message);
+    }
+  };
+
   return (
     <div className="flex min-h-screen">
       <Sidebar />
@@ -95,16 +135,86 @@ const AddProduct = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold mb-1">Category</label>
-                  <Select value={category} onValueChange={setCategory}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {productCategories.map((cat) => (
-                        <SelectItem value={cat} key={cat}>{cat}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="space-y-2">
+                    <Select value={category} onValueChange={setCategory}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {productCategories.map((cat) => (
+                          <SelectItem value={cat} key={cat}>{cat}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    {showAddCategory ? (
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Enter new category"
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          onKeyPress={(e) => e.key === 'Enter' && handleAddCategory()}
+                        />
+                        <Button type="button" size="sm" onClick={handleAddCategory}>
+                          Add
+                        </Button>
+                        <Button type="button" size="sm" variant="outline" onClick={() => {
+                          setShowAddCategory(false);
+                          setNewCategoryName("");
+                        }}>
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowAddCategory(true)}
+                        className="w-full"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add New Category
+                      </Button>
+                    )}
+
+                    <div className="space-y-1">
+                      <p className="text-xs text-gray-500">Manage Categories:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {categories.map((cat) => (
+                          <div key={cat.name} className="flex items-center gap-1 bg-gray-100 rounded px-2 py-1 text-xs">
+                            <span>{cat.name} ({cat.productCount})</span>
+                            {cat.productCount === 0 && !["Electronics", "Office", "Furniture"].includes(cat.name) && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <button className="text-red-500 hover:text-red-700">
+                                    <Trash2 size={12} />
+                                  </button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Category</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete the category "{cat.name}"?
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleDeleteCategory(cat.name)}
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold mb-1">Name *</label>

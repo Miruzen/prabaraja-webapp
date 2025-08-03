@@ -2,13 +2,13 @@
     import { Search } from "lucide-react";
     import { Input } from "@/components/ui/input";
     import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+    import { useProductCategories } from "@/hooks/useProductCategories";
 
     interface ProductFiltersProps {
     searchQuery: string;
     setSearchQuery: (query: string) => void;
     selectedProductCategory: string;
     setSelectedProductCategory: (category: string) => void;
-    productCategories: string[];
     }
 
     export const ProductFilters: React.FC<ProductFiltersProps> = ({
@@ -16,8 +16,9 @@
     setSearchQuery,
     selectedProductCategory,
     setSelectedProductCategory,
-    productCategories,
     }) => {
+    const { getAllCategoryNames } = useProductCategories();
+    const productCategories = ["All", ...getAllCategoryNames()];
     return (
         <div className="flex gap-4 flex-1">
         <div className="relative flex-1">

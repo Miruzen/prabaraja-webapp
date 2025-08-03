@@ -142,7 +142,6 @@ const Products = () => {
                       setSearchQuery={setSearchQuery}
                       selectedProductCategory={selectedProductCategory}
                       setSelectedProductCategory={setSelectedProductCategory}
-                      productCategories={productCategories}
                     />
                     <ChevronDropdown options={dropdownOptions} />
                   </div>
