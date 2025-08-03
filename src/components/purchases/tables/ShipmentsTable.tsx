@@ -115,7 +115,7 @@ export function ShipmentsTable({ shipments, onDelete, onEdit }: ShipmentsTablePr
                         "fill-red-500 text-red-500": shipment.status === "cancelled",
                       }
                     )} />
-                    {shipment.status}
+                    {shipment.status.charAt(0).toUpperCase() + shipment.status.slice(1)}
                   </span>
                 </TableCell>
                 <TableCell>

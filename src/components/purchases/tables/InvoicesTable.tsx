@@ -124,7 +124,7 @@ export function InvoicesTable({
                           "fill-blue-500": invoice.status === "Half-paid",
                         }
                       )} />
-                      {invoice.status}
+                      {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
                     </span>
                   </TableCell>
                   <TableCell>
