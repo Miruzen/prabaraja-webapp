@@ -70,16 +70,18 @@ export function AddPurchaseDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[80vh] flex flex-col">
         <PurchaseDialogHeader type={formData.type as PurchaseType} />
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <PurchaseFormFields
-            formData={formData}
-            setFormData={setFormData}
-            generateDefaultNumber={generateDefaultPurchaseNumber}
-          />
-          <PurchaseDialogFooter type={formData.type as PurchaseType} />
-        </form>
+        <div className="flex-1 overflow-y-auto">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <PurchaseFormFields
+              formData={formData}
+              setFormData={setFormData}
+              generateDefaultNumber={generateDefaultPurchaseNumber}
+            />
+            <PurchaseDialogFooter type={formData.type as PurchaseType} />
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
