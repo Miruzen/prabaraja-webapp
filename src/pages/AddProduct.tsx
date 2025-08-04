@@ -109,7 +109,7 @@ const AddProduct = () => {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen w-full">
       <Sidebar />
       <div className="flex-1 overflow-auto">
         <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6 flex items-center gap-4">
@@ -126,7 +126,7 @@ const AddProduct = () => {
           </div>
         </div>
         <div className="p-6">
-          <Card className="w-full max-w-7xl mx-auto">
+          <Card className="w-full max-w-5xl mx-auto">
             <CardContent className="p-6">
               <form className="grid grid-cols-1 lg:grid-cols-2 gap-6" onSubmit={handleSubmit}>
                 <div>

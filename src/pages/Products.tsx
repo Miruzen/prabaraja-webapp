@@ -121,69 +121,61 @@ const Products = () => {
   }
 
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="flex h-screen w-full">
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 overflow-auto">
         <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
           <h1 className="text-2xl font-semibold text-white">Products</h1>
           <p className="text-white/80">Manage your company Products</p>
         </div>
 
-        <div className="p-4 sm:p-6 flex-1 overflow-hidden">
-          <Card className="h-full flex flex-col">
-            <CardContent className="p-4 sm:p-6 flex-1 overflow-hidden">
+        <div className="p-6">
+          <Card>
+            <CardContent className="p-6">
               <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
 
               {activeTab === "Products" && (
-                <div className="flex flex-col h-full">
-                  <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
-                    <div className="flex-1">
-                      <ProductFilters
-                        searchQuery={searchQuery}
-                        setSearchQuery={setSearchQuery}
-                        selectedProductCategory={selectedProductCategory}
-                        setSelectedProductCategory={setSelectedProductCategory}
-                      />
-                    </div>
-                    <div className="flex-shrink-0">
-                      <ChevronDropdown options={dropdownOptions} />
-                    </div>
+                <div className="space-y-6">
+                  <div className="flex flex-col sm:flex-row justify-between gap-4">
+                    <ProductFilters
+                      searchQuery={searchQuery}
+                      setSearchQuery={setSearchQuery}
+                      selectedProductCategory={selectedProductCategory}
+                      setSelectedProductCategory={setSelectedProductCategory}
+                    />
+                    <ChevronDropdown options={dropdownOptions} />
                   </div>
 
-                  <div className="flex-1 border rounded-lg overflow-hidden">
-                    <div className="h-full overflow-y-auto">
-                      <ProductTable products={currentProducts} />
-                    </div>
+                  <div className="border rounded-lg overflow-hidden">
+                    <ProductTable products={currentProducts} />
                   </div>
                   
-                  <div className="mt-4 flex justify-center">
-                    <ProductPagination
-                      currentPage={currentPage}
-                      totalProductPages={totalProductPages}
-                      setCurrentPage={setCurrentPage}
-                    />
-                  </div>
+                  {totalProductPages > 1 && (
+                    <div className="flex justify-center">
+                      <ProductPagination
+                        currentPage={currentPage}
+                        totalProductPages={totalProductPages}
+                        setCurrentPage={setCurrentPage}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 
               {activeTab === "Warehouses" && (
-                <div className="flex flex-col h-full">
-                  <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
-                    <div className="flex-1">
-                      <WarehouseFilters
-                        searchQuery={searchQuery}
-                        setSearchQuery={setSearchQuery}
-                        selectedWarehouseLocation={selectedWarehouseLocation}
-                        setSelectedWarehouseLocation={setSelectedWarehouseLocation}
-                        warehouseLocations={warehouseLocations}
-                      />
-                    </div>
-                    <div className="flex-shrink-0">
-                      <ChevronDropdown options={dropdownOptions} />
-                    </div>
+                <div className="space-y-6">
+                  <div className="flex flex-col sm:flex-row justify-between gap-4">
+                    <WarehouseFilters
+                      searchQuery={searchQuery}
+                      setSearchQuery={setSearchQuery}
+                      selectedWarehouseLocation={selectedWarehouseLocation}
+                      setSelectedWarehouseLocation={setSelectedWarehouseLocation}
+                      warehouseLocations={warehouseLocations}
+                    />
+                    <ChevronDropdown options={dropdownOptions} />
                   </div>
 
-                  <div className="flex-1 overflow-auto">
+                  <div className="border rounded-lg overflow-auto">
                     <WarehouseTable warehouses={filteredWarehouses} />
                   </div>
                 </div>
