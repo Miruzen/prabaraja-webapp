@@ -179,22 +179,14 @@ export const AssetsTable = ({
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setCurrentPage((p) => Math.max(1, p - 1));
-                }}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 aria-disabled={currentPage === 1}
               />
             </PaginationItem>
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
               <PaginationItem key={page}>
                 <PaginationLink
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setCurrentPage(page);
-                  }}
+                  onClick={() => setCurrentPage(page)}
                   isActive={currentPage === page}
                 >
                   {page}
@@ -203,11 +195,7 @@ export const AssetsTable = ({
             ))}
             <PaginationItem>
               <PaginationNext
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setCurrentPage((p) => Math.min(totalPages, p + 1));
-                }}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 aria-disabled={currentPage === totalPages}
               />
             </PaginationItem>

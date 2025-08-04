@@ -125,10 +125,10 @@ const AddProduct = () => {
             <p className="text-white/80">Fill out the form to add a product.</p>
           </div>
         </div>
-        <div className="flex flex-col items-center py-10">
-          <Card className="w-full max-w-lg">
+        <div className="p-6">
+          <Card className="w-full max-w-7xl mx-auto">
             <CardContent className="p-6">
-              <form className="space-y-4" onSubmit={handleSubmit}>
+              <form className="grid grid-cols-1 lg:grid-cols-2 gap-6" onSubmit={handleSubmit}>
                 <div>
                   <label className="block text-sm font-semibold mb-1">Product Code</label>
                   <Input value={productCode} readOnly />
@@ -263,7 +263,7 @@ const AddProduct = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex justify-end gap-2 pt-4">
+                <div className="lg:col-span-2 flex justify-end gap-2 pt-4">
                   <Button 
                     type="button" 
                     variant="secondary" 
