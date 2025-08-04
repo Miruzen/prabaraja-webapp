@@ -11,8 +11,9 @@ interface OfferItem {
   id: string;
   name: string;
   quantity: number;
-  unit_price: number;
-  total: number;
+  unit_price?: number;
+  price?: number;
+  total?: number;
 }
 
 interface Offer {
@@ -263,10 +264,10 @@ const OfferDetail = () => {
                           </td>
                           <td className="text-right p-3">{item.quantity || 0}</td>
                           <td className="text-right p-3">
-                            Rp. {(item.unit_price || 0).toLocaleString("id-ID")}
+                            Rp. {((item.unit_price || item.price) || 0).toLocaleString("id-ID")}
                           </td>
                           <td className="text-right p-3 font-medium">
-                            Rp. {(item.total || 0).toLocaleString("id-ID")}
+                            Rp. {(item.total || ((item.quantity || 0) * ((item.unit_price || item.price) || 0))).toLocaleString("id-ID")}
                           </td>
                         </tr>
                       ))}

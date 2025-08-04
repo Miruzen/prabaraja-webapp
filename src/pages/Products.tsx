@@ -35,6 +35,7 @@ const Products = () => {
 
   // Transform Supabase data to match UI expectations
   const products = productsData.map(product => ({
+    id: product.id,
     code: `PRD${product.number.toString().padStart(3, '0')}`,
     category: product.category,
     name: product.name,

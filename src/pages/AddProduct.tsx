@@ -43,7 +43,7 @@ const AddProduct = () => {
   const [unit, setUnit] = useState(unitOptions[0]);
   const [buyPrice, setBuyPrice] = useState("");
   const [sellPrice, setSellPrice] = useState("");
-  const [status, setStatus] = useState("In Stock");
+  
   const [newCategoryName, setNewCategoryName] = useState("");
   const [showAddCategory, setShowAddCategory] = useState(false);
 
@@ -68,7 +68,7 @@ const AddProduct = () => {
         unit,
         buy_price: parseFloat(buyPrice),
         sell_price: sellPrice ? parseFloat(sellPrice) : null,
-        status,
+        status: parseInt(totalStock) < parseInt(minStock) ? "Out of Stock" : "In Stock",
       });
 
       toast.success("Product added successfully!");
@@ -250,18 +250,6 @@ const AddProduct = () => {
                 <div>
                   <label className="block text-sm font-semibold mb-1">Sell Price</label>
                   <Input type="number" value={sellPrice} min={0} step="0.01" onChange={(e) => setSellPrice(e.target.value)} />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-1">Status</label>
-                  <Select value={status} onValueChange={setStatus}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="In Stock">In Stock</SelectItem>
-                      <SelectItem value="Out of Stock">Out of Stock</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
                 <div className="lg:col-span-2 flex justify-end gap-2 pt-4">
                   <Button 
