@@ -463,17 +463,8 @@ export function PurchaseContent() {
   };
 
   // New receive payment handler for invoices
-  const handleReceivePayment = async (id: string) => {
-    try {
-      await updateInvoiceMutation.mutateAsync({
-        id,
-        updates: { status: "completed" }
-      });
-      toast.success("Payment received successfully");
-    } catch (error) {
-      console.error('Error receiving payment:', error);
-      toast.error("Failed to process payment");
-    }
+  const handleReceivePayment = (id: string) => {
+    navigate(`/receive-payment/${id}`);
   };
 
   // Get the default purchase type based on the active tab

@@ -1,27 +1,28 @@
-    import { useState, useEffect } from "react";
-    import { useNavigate, useParams } from "react-router-dom";
-    import { Button } from "@/components/ui/button";
-    import { Input } from "@/components/ui/input";
-    import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-    } from "@/components/ui/select";
-    import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-    } from "@/components/ui/table";
-    import { Sidebar } from "@/components/Sidebar";
-    import { Wallet, FileText, Banknote, ArrowLeft, Trash, Link as LinkIcon, UploadCloud } from "lucide-react";
-    import { formatCurrency, formatInputCurrency, parseInputCurrency } from "@/lib/utils";
-    import { Purchase, PURCHASES_STORAGE_KEY, isInvoice, InvoicePurchase } from "@/types/purchase";
-    import { toast, Toaster } from "sonner";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
+} from "@/components/ui/select";
+import {
+Table,
+TableBody,
+TableCell,
+TableHead,
+TableHeader,
+TableRow,
+} from "@/components/ui/table";
+import { Sidebar } from "@/components/Sidebar";
+import { Wallet, FileText, Banknote, ArrowLeft, Trash, Link as LinkIcon, UploadCloud } from "lucide-react";
+import { formatCurrency, formatInputCurrency, parseInputCurrency } from "@/lib/utils";
+import { toast, Toaster } from "sonner";
+import { useInvoices, useUpdateInvoice } from "@/hooks/usePurchases";
+import { useCreateReceivePaymentTransaction } from "@/hooks/useReceivePayment";
 
     interface InvoiceItem {
     name: string;
@@ -36,78 +37,67 @@
     file?: File;
     }
 
-    export function ReceivePaymentPage() {
-    const { invoiceId } = useParams<{ invoiceId: string }>();
-    const navigate = useNavigate();
-    const [invoice, setInvoice] = useState< InvoicePurchase | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [paymentMethod, setPaymentMethod] = useState<string>("");
-    const [paymentAmount, setPaymentAmount] = useState<string>("");
-    const [proformaItems, setProformaItems] = useState<InvoiceItem[]>([]);
-    const [attachments, setAttachments] = useState<Attachment[]>([]);
-    const [linkUrl, setLinkUrl] = useState<string>("");
+export function ReceivePaymentPage() {
+const { invoiceId } = useParams<{ invoiceId: string }>();
+const navigate = useNavigate();
+const [paymentMethod, setPaymentMethod] = useState<string>("");
+const [paymentAmount, setPaymentAmount] = useState<string>("");
+const [proformaItems, setProformaItems] = useState<InvoiceItem[]>([]);
+const [attachments, setAttachments] = useState<Attachment[]>([]);
+const [linkUrl, setLinkUrl] = useState<string>("");
 
-    // Load invoice data from localStorage
-    useEffect(() => {
-        const loadInvoiceData = () => {
-        try {
-            const storedPurchases = localStorage.getItem(PURCHASES_STORAGE_KEY);
-            if (storedPurchases) {
-            const purchases: Purchase[] = JSON.parse(storedPurchases);
-            const foundInvoice = purchases.find(p => 
-                p.id === invoiceId && isInvoice(p)  // Ensure we only get invoices
-              ) as InvoicePurchase | undefined;  // Explicit type cast
-            
-            if (foundInvoice) {
-                setInvoice({
-                ...foundInvoice,
-                  paidAmount: foundInvoice.paidAmount || 0  // Default to 0 if undefined
-                });
-            } else {
-                setError("Invoice not found");
-            }
-            }
-        } catch (err) {
-            setError("Failed to load invoice data");
-        } finally {
-            setLoading(false);
-        }
-        };
-        loadInvoiceData();
-    }, [invoiceId]);
+// Fetch invoice data from Supabase
+const { data: invoices = [], isLoading } = useInvoices();
+const updateInvoiceMutation = useUpdateInvoice();
+const createPaymentMutation = useCreateReceivePaymentTransaction();
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        
-        if (!invoice) return;
+const invoice = invoices.find(inv => inv.id === invoiceId);
+const loading = isLoading;
+const error = !loading && !invoice ? "Invoice not found" : null;
 
+// Data is fetched via hooks above, no useEffect needed
+
+const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!invoice) return;
+
+    try {
         const numericAmount = parseInputCurrency(paymentAmount);
-        const newPaidAmount = (invoice?.paidAmount || 0) + numericAmount;
-        const remainingAmount = invoice.amount - newPaidAmount;
+        
+        // Create payment transaction record
+        await createPaymentMutation.mutateAsync({
+            transaction_date: new Date().toISOString().split('T')[0],
+            description: `Payment received for Invoice #${invoice.number}`,
+            coa_code: paymentMethod === "cash" ? "101" : "102", // Basic COA codes
+            credit: numericAmount, // Credit for payment received
+        });
 
-        // Update status
-        const newStatus = newPaidAmount >= invoice.amount ? "completed" : "Half-paid";
+        // Update invoice status based on payment
+        const currentPaidAmount = invoice.paid_amount || 0;
+        const newPaidAmount = currentPaidAmount + numericAmount;
+        const newStatus = newPaidAmount >= invoice.grand_total ? "completed" : "Half-paid";
 
-        // Update in localStorage
-        const storedPurchases = localStorage.getItem(PURCHASES_STORAGE_KEY);
-        if (storedPurchases) {
-        const purchases: Purchase[] = JSON.parse(storedPurchases);
-        const updatedPurchases = purchases.map(p => 
-            p.id === invoice.id ? { 
-            ...p, 
-            paidAmount: newPaidAmount,
-            status: newStatus
-            } : p
-        );
-        localStorage.setItem(PURCHASES_STORAGE_KEY, JSON.stringify(updatedPurchases));
-        }
+        await updateInvoiceMutation.mutateAsync({
+            id: invoice.id,
+            updates: { 
+                status: newStatus,
+                paid_amount: newPaidAmount,
+                payment_method: paymentMethod,
+                payment_date: new Date().toISOString().split('T')[0]
+            }
+        });
 
+        const remainingAmount = invoice.grand_total - newPaidAmount;
         toast.success("Payment received successfully!", {
-        description: `Status: ${newStatus}, Remaining: ${formatCurrency(remainingAmount)}`
+            description: `Status: ${newStatus}, Remaining: ${formatCurrency(remainingAmount)}`
         });
         navigate("/purchases");
-    };
+    } catch (error) {
+        console.error('Error processing payment:', error);
+        toast.error("Failed to process payment");
+    }
+};
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -135,16 +125,16 @@
         setProformaItems(prev => prev.filter((_, i) => i !== index));
     };
 
-    const handlePaymentAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!invoice) return;
-        
-        const rawValue = e.target.value;
-        const numericValue = parseInputCurrency(rawValue);
-        const maxAmount = invoice.amount - (invoice.paidAmount || 0);
-        const correctedValue = Math.min(numericValue, maxAmount);
+const handlePaymentAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!invoice) return;
+    
+    const rawValue = e.target.value;
+    const numericValue = parseInputCurrency(rawValue);
+    const maxAmount = invoice.grand_total - (invoice.paid_amount || 0);
+    const correctedValue = Math.min(numericValue, maxAmount);
 
-        setPaymentAmount(formatInputCurrency(correctedValue.toString()));
-    };
+    setPaymentAmount(formatInputCurrency(correctedValue.toString()));
+};
 
     const isFormValid = () => {
         if (!invoice) return false;
@@ -185,11 +175,8 @@
         );
     }
 
-    const totalInvoiceAmount = invoice.amount || invoice.items.reduce(
-        (total, item) => total + item.price * item.quantity, 
-        0
-    );
-    const getPaidAmount = () => invoice?.paidAmount || 0;
+const totalInvoiceAmount = invoice.grand_total;
+const getPaidAmount = () => invoice?.paid_amount || 0;
 
     return (
         <div className="flex h-screen bg-background">
