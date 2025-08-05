@@ -7,7 +7,7 @@ export interface FinanceSummaryData {
 }
 
 export interface FinanceApiResponse {
-  success: boolean;
+  error: boolean;
   data: {
     monthlyData: FinanceSummaryData[];
     currentMonthSales: number;
@@ -55,7 +55,7 @@ export const useDashboardFinance = () => {
 
         const result: FinanceApiResponse = await response.json();
 
-        if (result.success) {
+        if (!result.error && result.data) {
           setData(result.data);
         } else {
           throw new Error("API returned unsuccessful response");
