@@ -256,6 +256,36 @@ export type Database = {
         }
         Relationships: []
       }
+      chart_of_accounts: {
+        Row: {
+          account_type: string
+          balance: number | null
+          created_at: string | null
+          description: string
+          id: number
+          number: number
+          updated_at: string | null
+        }
+        Insert: {
+          account_type: string
+          balance?: number | null
+          created_at?: string | null
+          description: string
+          id?: number
+          number: number
+          updated_at?: string | null
+        }
+        Update: {
+          account_type?: string
+          balance?: number | null
+          created_at?: string | null
+          description?: string
+          id?: number
+          number?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           address: string
@@ -348,6 +378,10 @@ export type Database = {
           id: string
           items: Json
           number: number
+          paid_amount: number | null
+          payment_date: string | null
+          payment_method: string | null
+          payment_reference: string | null
           pph: number | null
           pph_percentage: number | null
           pph_type: string | null
@@ -370,6 +404,10 @@ export type Database = {
           id?: string
           items: Json
           number: number
+          paid_amount?: number | null
+          payment_date?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
           pph?: number | null
           pph_percentage?: number | null
           pph_type?: string | null
@@ -392,6 +430,10 @@ export type Database = {
           id?: string
           items?: Json
           number?: number
+          paid_amount?: number | null
+          payment_date?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
           pph?: number | null
           pph_percentage?: number | null
           pph_type?: string | null
@@ -685,6 +727,42 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           valid_until?: string
+        }
+        Relationships: []
+      }
+      receive_payment_transactions: {
+        Row: {
+          coa_code: string
+          created_at: string | null
+          credit: number | null
+          debit: number | null
+          description: string
+          id: string
+          transaction_date: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          coa_code: string
+          created_at?: string | null
+          credit?: number | null
+          debit?: number | null
+          description: string
+          id?: string
+          transaction_date: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          coa_code?: string
+          created_at?: string | null
+          credit?: number | null
+          debit?: number | null
+          description?: string
+          id?: string
+          transaction_date?: string
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }

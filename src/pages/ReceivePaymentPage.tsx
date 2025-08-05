@@ -74,18 +74,19 @@ const handleSubmit = async (e: React.FormEvent) => {
         });
 
         // Update invoice status based on payment
-        const currentPaidAmount = invoice.paid_amount || 0;
+        const currentPaidAmount = (invoice as any).paid_amount || 0;
         const newPaidAmount = currentPaidAmount + numericAmount;
-        const newStatus = newPaidAmount >= invoice.grand_total ? "completed" : "Half-paid";
+        const newStatus = newPaidAmount >= invoice.grand_total ? "completed" : "pending";
 
         await updateInvoiceMutation.mutateAsync({
             id: invoice.id,
             updates: { 
                 status: newStatus,
-                paid_amount: newPaidAmount,
-                payment_method: paymentMethod,
-                payment_date: new Date().toISOString().split('T')[0]
-            }
+                ...(newPaidAmount && { paid_amount: newPaidAmount }),
+                ...(paymentMethod && { payment_method: paymentMethod }),
+                payment_date: new Date().toISOString().split('T')[0],
+                payment_reference: `Payment-${invoice.number}-${Date.now()}`
+            } as any
         });
 
         const remainingAmount = invoice.grand_total - newPaidAmount;
@@ -130,7 +131,7 @@ const handlePaymentAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     
     const rawValue = e.target.value;
     const numericValue = parseInputCurrency(rawValue);
-    const maxAmount = invoice.grand_total - (invoice.paid_amount || 0);
+    const maxAmount = invoice.grand_total - ((invoice as any).paid_amount || 0);
     const correctedValue = Math.min(numericValue, maxAmount);
 
     setPaymentAmount(formatInputCurrency(correctedValue.toString()));
@@ -176,7 +177,7 @@ const handlePaymentAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     }
 
 const totalInvoiceAmount = invoice.grand_total;
-const getPaidAmount = () => invoice?.paid_amount || 0;
+const getPaidAmount = () => (invoice as any)?.paid_amount || 0;
 
     return (
         <div className="flex h-screen bg-background">
