@@ -80,9 +80,9 @@ export function InvoicesTable({
               <TableHead>Invoice #</TableHead>
               <TableHead>Due Date</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Paid</TableHead>
               <TableHead>Balance</TableHead>
+              <TableHead>Paid</TableHead>
+              <TableHead>Amount</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -90,7 +90,7 @@ export function InvoicesTable({
             {invoices.map((invoice) => {
               const paidAmount = (invoice as any).paid_amount || 0;
               const invoiceTotal = (invoice as any).grand_total || invoice.amount;
-              const balance = invoiceTotal - paidAmount;
+              const remainingAmount = invoiceTotal - paidAmount;
 
               return (
                 <TableRow key={invoice.id}>
@@ -144,7 +144,7 @@ export function InvoicesTable({
                     {new Intl.NumberFormat("id-ID", {
                       style: "currency",
                       currency: "IDR",
-                    }).format(balance)}
+                    }).format(remainingAmount)}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>

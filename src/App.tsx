@@ -28,6 +28,7 @@ import CashflowAnalysis from "./pages/CashflowAnalysis";
 import Assets from "./pages/Assets";
 import Expenses from "./pages/Expenses";
 import Reports from "./pages/Reports";
+import MasterData from "./pages/MasterData";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import { ReceivePaymentPage } from "./pages/ReceivePaymentPage";
@@ -163,6 +164,12 @@ function App() {
               <Route path="/reports" element={
                 <ProtectedRoute>
                   <Reports />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/master-data" element={
+                <ProtectedRoute>
+                  <MasterData />
                 </ProtectedRoute>
               } />
               

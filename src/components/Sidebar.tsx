@@ -47,6 +47,7 @@ export const Sidebar = () => {
   const navItems = [
     { icon: <LayoutDashboard size={20} />, label: 'Dashboard', href: '/dashboard' },
     { icon: <FileText size={20} />, label: 'Reports', href: '/reports' },
+    { icon: <Database size={20} />, label: 'Master data', href: '/master-data' },
     { icon: <Wallet size={20} />, label: 'Cash & bank', href: '/cash-bank' },
     { icon: <ShoppingBag size={20} />, label: 'Sales', href: '/sales' },
     { icon: <ShoppingCart size={20} />, label: 'Purchases', href: '/purchases' },

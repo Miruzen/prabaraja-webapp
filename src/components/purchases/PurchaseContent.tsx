@@ -503,11 +503,9 @@ export function PurchaseContent() {
         last30DaysPayments={last30DaysPayments}
       />
       
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="flex-1 min-w-0">
-          <PurchaseNavTabs activeTab={activeTab} setActiveTab={setActiveTab} />
-        </div>
-        <div className="flex-shrink-0 w-full sm:w-auto">
+      <div className="flex flex-col gap-4">
+        <PurchaseNavTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+        <div className="flex justify-end">
           <PurchaseAddButton onAddPurchase={handleAddPurchaseClick} />
         </div>
       </div>
