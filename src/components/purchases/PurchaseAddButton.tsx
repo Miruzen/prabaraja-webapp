@@ -32,7 +32,7 @@ export function PurchaseAddButton({ onAddPurchase }: PurchaseAddButtonProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button className="ml-auto">
+        <Button className="whitespace-nowrap">
           <Plus className="mr-2 h-4 w-4" /> Add New
         </Button>
       </DropdownMenuTrigger>

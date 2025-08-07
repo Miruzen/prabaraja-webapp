@@ -76,7 +76,8 @@ const handleSubmit = async (e: React.FormEvent) => {
         // Update invoice status based on payment
         const currentPaidAmount = (invoice as any).paid_amount || 0;
         const newPaidAmount = currentPaidAmount + numericAmount;
-        const newStatus = newPaidAmount >= invoice.grand_total ? "completed" : "pending";
+        const newStatus = newPaidAmount >= invoice.grand_total ? "completed" : 
+                          newPaidAmount > 0 ? "Half-paid" : "pending";
 
         await updateInvoiceMutation.mutateAsync({
             id: invoice.id,

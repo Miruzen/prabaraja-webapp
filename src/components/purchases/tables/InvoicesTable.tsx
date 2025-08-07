@@ -88,8 +88,9 @@ export function InvoicesTable({
           </TableHeader>
           <TableBody>
             {invoices.map((invoice) => {
-              const paidAmount = invoice.paidAmount || 0;
-              const balance = invoice.amount - paidAmount;
+              const paidAmount = (invoice as any).paid_amount || 0;
+              const invoiceTotal = (invoice as any).grand_total || invoice.amount;
+              const balance = invoiceTotal - paidAmount;
 
               return (
                 <TableRow key={invoice.id}>
@@ -131,7 +132,7 @@ export function InvoicesTable({
                     {new Intl.NumberFormat("id-ID", {
                       style: "currency",
                       currency: "IDR",
-                    }).format(invoice.amount)}
+                    }).format(invoiceTotal)}
                   </TableCell>
                   <TableCell>
                     {new Intl.NumberFormat("id-ID", {
