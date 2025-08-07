@@ -179,7 +179,7 @@ function App() {
                 </ProtectedRoute>
               } />
               
-              <Route path="/receive-payment" element={
+              <Route path="/receive-payment/:invoiceId" element={
                 <ProtectedRoute>
                   <ReceivePaymentPage />
                 </ProtectedRoute>

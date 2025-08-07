@@ -503,9 +503,11 @@ export function PurchaseContent() {
         last30DaysPayments={last30DaysPayments}
       />
       
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between overflow-hidden">
         <PurchaseNavTabs activeTab={activeTab} setActiveTab={setActiveTab} />
-        <PurchaseAddButton onAddPurchase={handleAddPurchaseClick} />
+        <div className="flex-shrink-0">
+          <PurchaseAddButton onAddPurchase={handleAddPurchaseClick} />
+        </div>
       </div>
 
       <PurchaseFilters

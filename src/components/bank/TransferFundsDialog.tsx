@@ -71,11 +71,13 @@ export function TransferFundsDialog({
   const selectedToAccount = activeAccounts.find(acc => acc.code === watchToAccount);
   
   const getAccountBalance = (balanceString: string) => {
-    return parseInt(balanceString.replace(/[^\d-]/g, '')) || 0;
+    // Handle negative balances properly and improve parsing
+    const cleanString = balanceString.replace(/[^\d-]/g, '');
+    return parseInt(cleanString) || 0;
   };
   
   const fromAccountBalance = selectedFromAccount ? getAccountBalance(selectedFromAccount.balance) : 0;
-  const insufficientFunds = numericAmount > fromAccountBalance;
+  const insufficientFunds = numericAmount > 0 && numericAmount > fromAccountBalance;
   
   // Check for invalid account type transfers
   const isInvalidTransfer = selectedFromAccount && selectedToAccount && (
