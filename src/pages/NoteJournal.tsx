@@ -6,10 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Paperclip } from "lucide-react";
+import { Plus, Paperclip, Calendar } from "lucide-react";
 import { useChartOfAccounts } from '@/hooks/useChartOfAccounts';
 import { formatInputCurrency, parseInputCurrency, formatCurrency } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 interface JournalEntry {
   id: string;
@@ -23,6 +27,9 @@ const NoteJournal = () => {
   const [entries, setEntries] = useState<JournalEntry[]>([
     { id: '1', account: '', description: '', debit: 0, credit: 0 }
   ]);
+  const [transactionNumber, setTransactionNumber] = useState('[Auto]');
+  const [transactionDate, setTransactionDate] = useState<Date>(new Date());
+  const [tag, setTag] = useState('');
   const [memo, setMemo] = useState('');
   
   const { data: chartOfAccounts } = useChartOfAccounts();
@@ -83,6 +90,12 @@ const NoteJournal = () => {
     setEntries(prev => [...prev, { id: newId, account: '', description: '', debit: 0, credit: 0 }]);
   };
 
+  const removeRow = (id: string) => {
+    if (entries.length > 1) {
+      setEntries(prev => prev.filter(entry => entry.id !== id));
+    }
+  };
+
   const totalDebit = entries.reduce((sum, entry) => sum + entry.debit, 0);
   const totalCredit = entries.reduce((sum, entry) => sum + entry.credit, 0);
   const isBalanced = totalDebit === totalCredit && totalDebit > 0;
@@ -122,24 +135,72 @@ const NoteJournal = () => {
       <Sidebar />
       <div className="flex-1 overflow-auto">
         <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
-          <h1 className="text-2xl font-semibold text-white">Note Journal</h1>
-          <p className="text-white/80">Create and manage journal entries</p>
+          <div className="text-sm text-white/70 mb-1">Transaksi</div>
+          <h1 className="text-2xl font-semibold text-white">Jurnal Umum</h1>
         </div>
         
         <div className="p-6 space-y-6">
+          {/* Transaction Header */}
+          <div className="grid grid-cols-3 gap-4 bg-blue-50 p-4 rounded-lg">
+            <div className="space-y-2">
+              <Label htmlFor="transaction-number">No Transaksi</Label>
+              <Input
+                id="transaction-number"
+                value={transactionNumber}
+                readOnly
+                className="bg-gray-100"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="transaction-date">Tgl Transaksi</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !transactionDate && "text-muted-foreground"
+                    )}
+                  >
+                    <Calendar className="mr-2 h-4 w-4" />
+                    {transactionDate ? format(transactionDate, "dd/MM/yyyy") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={transactionDate}
+                    onSelect={setTransactionDate}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="tag">Tag</Label>
+              <Input
+                id="tag"
+                value={tag}
+                onChange={(e) => setTag(e.target.value)}
+                placeholder="Enter tag"
+              />
+            </div>
+          </div>
           {/* Journal Entry Table */}
           <div className="rounded-md border">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[250px]">Account</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead className="w-[150px] text-right">Debit (IDR)</TableHead>
-                  <TableHead className="w-[150px] text-right">Credit (IDR)</TableHead>
+                <TableRow className="bg-blue-100">
+                  <TableHead className="w-[250px]">Akun</TableHead>
+                  <TableHead>Deskripsi</TableHead>
+                  <TableHead className="w-[150px] text-right">Debit</TableHead>
+                  <TableHead className="w-[150px] text-right">Kredit</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {entries.map((entry) => (
+                {entries.map((entry, index) => (
                   <TableRow key={entry.id}>
                     <TableCell>
                       <Select 
@@ -147,7 +208,7 @@ const NoteJournal = () => {
                         onValueChange={(value) => handleAccountChange(entry.id, value)}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select account" />
+                          <SelectValue placeholder="Pilih akun" />
                         </SelectTrigger>
                         <SelectContent>
                           {chartOfAccounts?.map((account) => (
@@ -162,7 +223,7 @@ const NoteJournal = () => {
                       <Input
                         value={entry.description}
                         onChange={(e) => handleDescriptionChange(entry.id, e.target.value)}
-                        placeholder="Enter description"
+                        placeholder="Masukkan deskripsi"
                       />
                     </TableCell>
                     <TableCell>
@@ -185,6 +246,17 @@ const NoteJournal = () => {
                         className="text-right"
                       />
                     </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeRow(entry.id)}
+                        disabled={entries.length === 1}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        –
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -192,23 +264,23 @@ const NoteJournal = () => {
           </div>
 
           {/* Add Data Button */}
-          <Button onClick={addNewRow} variant="outline" className="w-full">
+          <Button onClick={addNewRow} variant="default" className="bg-teal-600 hover:bg-teal-700 text-white">
             <Plus className="mr-2 h-4 w-4" />
-            Add Data
+            Tambah Data
           </Button>
 
           {/* Totals */}
           <div className="grid grid-cols-2 gap-4 max-w-md ml-auto">
             <div className="space-y-2">
               <Label>Total Debit</Label>
-              <div className="text-right font-mono text-lg">
-                {formatCurrency(totalDebit)}
+              <div className="text-right font-mono text-lg bg-green-50 p-2 rounded border">
+                Rp. {formatPriceDisplay(totalDebit)}
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Total Credit</Label>
-              <div className="text-right font-mono text-lg">
-                {formatCurrency(totalCredit)}
+              <Label>Total Kredit</Label>
+              <div className="text-right font-mono text-lg bg-green-50 p-2 rounded border">
+                Rp. {formatPriceDisplay(totalCredit)}
               </div>
             </div>
           </div>
@@ -220,7 +292,7 @@ const NoteJournal = () => {
                 ? 'bg-green-100 text-green-800' 
                 : 'bg-red-100 text-red-800'
             }`}>
-              {isBalanced ? '✓ Balanced' : '✗ Not Balanced'}
+              {isBalanced ? '✓ Seimbang' : '✗ Tidak Seimbang'}
             </div>
           </div>
 
@@ -231,30 +303,31 @@ const NoteJournal = () => {
               id="memo"
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
-              placeholder="Enter memo (optional)"
+              placeholder="Masukkan memo (opsional)"
               rows={3}
             />
           </div>
 
           {/* Attachment */}
           <div className="space-y-2">
-            <Label>Attachment</Label>
+            <Label>📎 Lampiran</Label>
             <Button variant="outline" className="w-full">
               <Paperclip className="mr-2 h-4 w-4" />
-              Attach File
+              Lampirkan File
             </Button>
           </div>
 
           {/* Submit Buttons */}
           <div className="flex justify-end space-x-2">
             <Button variant="outline">
-              Cancel
+              Batal
             </Button>
             <Button 
               onClick={handleSubmit}
               disabled={!isBalanced}
+              className="bg-blue-600 hover:bg-blue-700"
             >
-              Save Journal Entry
+              Simpan Jurnal
             </Button>
           </div>
         </div>
