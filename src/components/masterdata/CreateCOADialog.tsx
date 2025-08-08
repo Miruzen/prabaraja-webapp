@@ -1,0 +1,127 @@
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useCreateChartOfAccount } from '@/hooks/useChartOfAccounts';
+import { useToast } from '@/hooks/use-toast';
+
+interface CreateCOADialogProps {
+  children: React.ReactNode;
+}
+
+export const CreateCOADialog = ({ children }: CreateCOADialogProps) => {
+  const [open, setOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    number: '',
+    description: '',
+    account_type: '',
+    balance: 0
+  });
+
+  const { toast } = useToast();
+  const createMutation = useCreateChartOfAccount();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await createMutation.mutateAsync({
+        number: parseInt(formData.number),
+        description: formData.description,
+        account_type: formData.account_type,
+        balance: formData.balance
+      });
+      
+      toast({
+        title: "Success",
+        description: "Chart of Account created successfully",
+      });
+      
+      setOpen(false);
+      setFormData({ number: '', description: '', account_type: '', balance: 0 });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create Chart of Account",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {children}
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Create New Chart of Account</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="number">Account Code</Label>
+            <Input
+              id="number"
+              value={formData.number}
+              onChange={(e) => setFormData(prev => ({ ...prev, number: e.target.value }))}
+              placeholder="Enter account code"
+              required
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="description">Account Name</Label>
+            <Input
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              placeholder="Enter account name"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="account_type">Category</Label>
+            <Select value={formData.account_type} onValueChange={(value) => setFormData(prev => ({ ...prev, account_type: value }))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Kas & Bank">Kas & Bank</SelectItem>
+                <SelectItem value="Akun Piutang">Akun Piutang</SelectItem>
+                <SelectItem value="Persediaan">Persediaan</SelectItem>
+                <SelectItem value="Aktiva Lancar Lainnya">Aktiva Lancar Lainnya</SelectItem>
+                <SelectItem value="Aktiva Tetap">Aktiva Tetap</SelectItem>
+                <SelectItem value="Hutang">Hutang</SelectItem>
+                <SelectItem value="Modal">Modal</SelectItem>
+                <SelectItem value="Pendapatan">Pendapatan</SelectItem>
+                <SelectItem value="Beban">Beban</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="balance">Initial Balance (IDR)</Label>
+            <Input
+              id="balance"
+              type="number"
+              value={formData.balance}
+              onChange={(e) => setFormData(prev => ({ ...prev, balance: parseFloat(e.target.value) || 0 }))}
+              placeholder="Enter initial balance"
+            />
+          </div>
+
+          <div className="flex justify-end space-x-2">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={createMutation.isPending}>
+              {createMutation.isPending ? 'Creating...' : 'Create'}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
