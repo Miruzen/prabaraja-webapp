@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sidebar } from "@/components/Sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { useJournalTransactions } from '@/hooks/useJournalTransactions';
 import { CreateCOADialog } from '@/components/masterdata/CreateCOADialog';
 
 const MasterData = () => {
+  const navigate = useNavigate();
   const [selectedCoaCode, setSelectedCoaCode] = useState<string>('');
   const [showJournalEntries, setShowJournalEntries] = useState(false);
   
@@ -52,7 +54,7 @@ const MasterData = () => {
         <div className="p-6">
           {/* Action Buttons */}
           <div className="flex gap-4 mb-6">
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => navigate('/note-journal')}>
               Note Journal
             </Button>
             <CreateCOADialog>

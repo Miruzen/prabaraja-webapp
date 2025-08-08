@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreateChartOfAccount } from '@/hooks/useChartOfAccounts';
 import { useToast } from '@/hooks/use-toast';
+import { formatInputCurrency, parseInputCurrency } from '@/lib/utils';
 
 interface CreateCOADialogProps {
   children: React.ReactNode;
@@ -22,6 +23,19 @@ export const CreateCOADialog = ({ children }: CreateCOADialogProps) => {
 
   const { toast } = useToast();
   const createMutation = useCreateChartOfAccount();
+
+  const formatPriceDisplay = (price: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "decimal",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(price);
+  };
+
+  const handleBalanceChange = (value: string) => {
+    const numericValue = parseInputCurrency(value);
+    setFormData(prev => ({ ...prev, balance: numericValue }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,10 +119,11 @@ export const CreateCOADialog = ({ children }: CreateCOADialogProps) => {
             <Label htmlFor="balance">Initial Balance (IDR)</Label>
             <Input
               id="balance"
-              type="number"
-              value={formData.balance}
-              onChange={(e) => setFormData(prev => ({ ...prev, balance: parseFloat(e.target.value) || 0 }))}
-              placeholder="Enter initial balance"
+              type="text"
+              inputMode="numeric"
+              value={formatPriceDisplay(formData.balance)}
+              onChange={(e) => handleBalanceChange(e.target.value)}
+              placeholder="0"
             />
           </div>
 

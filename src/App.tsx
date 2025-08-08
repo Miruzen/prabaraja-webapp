@@ -29,6 +29,7 @@ import Assets from "./pages/Assets";
 import Expenses from "./pages/Expenses";
 import Reports from "./pages/Reports";
 import MasterData from "./pages/MasterData";
+import NoteJournal from "./pages/NoteJournal";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import { ReceivePaymentPage } from "./pages/ReceivePaymentPage";
@@ -170,6 +171,12 @@ function App() {
               <Route path="/master-data" element={
                 <ProtectedRoute>
                   <MasterData />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/note-journal" element={
+                <ProtectedRoute>
+                  <NoteJournal />
                 </ProtectedRoute>
               } />
               
