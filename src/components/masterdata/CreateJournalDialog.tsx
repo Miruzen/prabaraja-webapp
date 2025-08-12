@@ -108,11 +108,11 @@ export function CreateJournalDialog({ children, coaAccounts }: CreateJournalDial
                 <SelectValue placeholder="Select COA Account" />
               </SelectTrigger>
               <SelectContent>
-                {coaAccounts?.map((account) => (
-                  <SelectItem key={account.id} value={account.number.toString()}>
-                    {account.number} - {account.description}
-                  </SelectItem>
-                ))}
+                      {coaAccounts?.map((account) => (
+                        <SelectItem key={account.id} value={account.account_code}>
+                          {account.account_code} - {account.name}
+                        </SelectItem>
+                      ))}
               </SelectContent>
             </Select>
           </div>

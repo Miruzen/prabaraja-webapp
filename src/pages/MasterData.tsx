@@ -102,12 +102,12 @@ const MasterData = () => {
                     ) : (
                       chartOfAccounts?.map((account) => (
                         <TableRow key={account.id}>
-                          <TableCell className="font-mono">{account.number}</TableCell>
-                          <TableCell>{account.description}</TableCell>
-                          <TableCell>{account.account_type}</TableCell>
+                          <TableCell className="font-mono">{account.account_code}</TableCell>
+                          <TableCell>{account.name}</TableCell>
+                          <TableCell>{account.category}</TableCell>
                           <TableCell>All</TableCell>
                           <TableCell className="text-right font-mono">
-                            {formatCurrency(account.balance || 0)}
+                            {formatCurrency(account.entry_balance || 0)}
                           </TableCell>
                         </TableRow>
                       ))
@@ -127,8 +127,8 @@ const MasterData = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {chartOfAccounts?.map((account) => (
-                        <SelectItem key={account.id} value={account.number.toString()}>
-                          {account.number} - {account.description}
+                        <SelectItem key={account.id} value={account.account_code}>
+                          {account.account_code} - {account.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

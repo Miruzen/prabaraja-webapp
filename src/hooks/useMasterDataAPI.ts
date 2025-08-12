@@ -1,13 +1,24 @@
 import { useState, useEffect } from "react";
 
 export interface COAAccount {
-  id: number;
-  number: number;
-  account_type: string;
-  description: string;
-  balance: number;
+  id: string;
+  category: string;
+  account_code: string;
+  name: string;
+  detail_type: string;
+  detail_desc: string;
+  tax: string | null;
+  bank_name: string | null;
+  entry_balance: number;
+  description: string | null;
+  user_access: string;
+  lock_option: boolean;
   created_at: string;
   updated_at: string;
+  user_id: string | null;
+  level: number;
+  parent_code: string | null;
+  parent_id: string | null;
 }
 
 export interface JournalTransaction {
