@@ -132,15 +132,29 @@ export function useAccountOperations() {
         .select('*')
         .eq('user_id', user.id);
 
+      // Get all cashbank accounts to map IDs to numbers
+      const { data: cashbankAccounts, error: accountsError } = await supabase
+        .from('cashbank')
+        .select('id, number')
+        .eq('user_id', user.id);
+
       console.log('🔍 Cash & Bank Debug - Transaction queries result:', {
         transfers: transfers?.length || 0,
         receives: receives?.length || 0,
         transferError: transferError,
-        receiveError: receiveError
+        receiveError: receiveError,
+        accountsError: accountsError
       });
 
       if (transferError) throw transferError;
       if (receiveError) throw receiveError;
+      if (accountsError) throw accountsError;
+
+      // Create a map of account ID to account number
+      const accountMap = new Map();
+      cashbankAccounts?.forEach(account => {
+        accountMap.set(account.id, account.number.toString());
+      });
 
       const formattedTransactions: Transaction[] = [];
 
@@ -153,7 +167,7 @@ export function useAccountOperations() {
           description: `Transfer to account`,
           amount: transfer.amount,
           type: "outflow",
-          accountCode: transfer.from_account,
+          accountCode: accountMap.get(transfer.from_account) || '',
           reference: transfer.notes || "Fund transfer"
         });
 
@@ -164,7 +178,7 @@ export function useAccountOperations() {
           description: `Transfer from account`,
           amount: transfer.amount,
           type: "inflow",
-          accountCode: transfer.to_account,
+          accountCode: accountMap.get(transfer.to_account) || '',
           reference: transfer.notes || "Fund transfer"
         });
       });
@@ -177,7 +191,7 @@ export function useAccountOperations() {
           description: `Payment from ${receive.payer_name}${receive.notes ? `: ${receive.notes}` : ''}`,
           amount: receive.amount,
           type: "inflow",
-          accountCode: receive.receiving_account,
+          accountCode: accountMap.get(receive.receiving_account) || '',
           reference: receive.reference || receive.payer_name
         });
       });
@@ -402,23 +416,23 @@ export function useAccountOperations() {
     if (!user?.id) return;
 
     try {
-      // Get source and destination accounts with their types
+      // Get source and destination accounts with their IDs and types
       const { data: fromAccountData } = await supabase
         .from('cashbank')
-        .select('balance, account_type')
+        .select('id, balance, account_type')
         .eq('user_id', user.id)
         .eq('number', parseInt(fromCode))
         .single();
 
       const { data: toAccountData } = await supabase
         .from('cashbank')
-        .select('balance, account_type')
+        .select('id, balance, account_type')
         .eq('user_id', user.id)
         .eq('number', parseInt(toCode))
         .single();
 
       if (!fromAccountData || !toAccountData) {
-        throw new Error('account_not_found');
+        throw new Error('Account not found. Please refresh and try again.');
       }
 
       // Check for invalid account type transfers
@@ -440,13 +454,13 @@ export function useAccountOperations() {
       const sourceAfter = sourceBefore - amount;
       const targetAfter = targetBefore + amount;
 
-      // Create transfer transaction record
+      // Create transfer transaction record using account IDs
       const { error: transferError } = await supabase
         .from('bank_transfer_transactions')
         .insert({
           user_id: user.id,
-          from_account: fromCode,
-          to_account: toCode,
+          from_account: fromAccountData.id,
+          to_account: toAccountData.id,
           amount: amount,
           notes: notes,
           number: Date.now(), // Simple number generation
@@ -458,18 +472,16 @@ export function useAccountOperations() {
 
       if (transferError) throw transferError;
 
-      // Update account balances
+      // Update account balances using IDs
       const { error: updateFromError } = await supabase
         .from('cashbank')
         .update({ balance: sourceAfter })
-        .eq('user_id', user.id)
-        .eq('number', parseInt(fromCode));
+        .eq('id', fromAccountData.id);
 
       const { error: updateToError } = await supabase
         .from('cashbank')
         .update({ balance: targetAfter })
-        .eq('user_id', user.id)
-        .eq('number', parseInt(toCode));
+        .eq('id', toAccountData.id);
 
       if (updateFromError || updateToError) {
         throw new Error('Failed to update account balances');
@@ -480,7 +492,11 @@ export function useAccountOperations() {
       fetchTransactions();
     } catch (error) {
       console.error('Error transferring funds:', error);
-      handleError(error, 'Failed to transfer funds');
+      if (error.message?.includes('22P02')) {
+        handleError(error, 'Internal account mapping issue. Please refresh and try again.');
+      } else {
+        handleError(error, 'Failed to transfer funds');
+      }
     }
   };
   
@@ -488,27 +504,27 @@ export function useAccountOperations() {
     if (!user?.id) return;
 
     try {
-      // Get current balance
+      // Get account ID and current balance
       const { data: account } = await supabase
         .from('cashbank')
-        .select('balance')
+        .select('id, balance')
         .eq('user_id', user.id)
         .eq('number', parseInt(accountCode))
         .single();
 
       if (!account) {
-        throw new Error('Account not found');
+        throw new Error('Account not found. Please refresh and try again.');
       }
 
       const balanceBefore = account.balance;
       const balanceAfter = balanceBefore + amount;
 
-      // Create receive transaction record
+      // Create receive transaction record using account ID
       const { error: receiveError } = await supabase
         .from('bank_receive_transactions')
         .insert({
           user_id: user.id,
-          receiving_account: accountCode,
+          receiving_account: account.id,
           amount: amount,
           payer_name: payer,
           reference: reference,
@@ -521,12 +537,11 @@ export function useAccountOperations() {
 
       if (receiveError) throw receiveError;
 
-      // Update account balance
+      // Update account balance using ID
       const { error: updateError } = await supabase
         .from('cashbank')
         .update({ balance: balanceAfter })
-        .eq('user_id', user.id)
-        .eq('number', parseInt(accountCode));
+        .eq('id', account.id);
 
       if (updateError) throw updateError;
 
@@ -535,7 +550,11 @@ export function useAccountOperations() {
       fetchTransactions();
     } catch (error) {
       console.error('Error receiving money:', error);
-      handleError(error, 'Failed to receive money');
+      if (error.message?.includes('22P02')) {
+        handleError(error, 'Internal account mapping issue. Please refresh and try again.');
+      } else {
+        handleError(error, 'Failed to receive money');
+      }
     }
   };
 
