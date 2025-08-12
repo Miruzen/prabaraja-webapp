@@ -10,6 +10,7 @@ import { Plus, Paperclip, Calendar } from "lucide-react";
 import { useChartOfAccounts } from '@/hooks/useChartOfAccounts';
 import { formatInputCurrency, parseInputCurrency, formatCurrency } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { useCreateJournal } from '@/hooks/useMasterDataAPI';
 import { format } from 'date-fns';
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -34,6 +35,7 @@ const NoteJournal = () => {
   
   const { data: chartOfAccounts } = useChartOfAccounts();
   const { toast } = useToast();
+  const { createJournal, loading: creatingJournal } = useCreateJournal();
 
   const formatPriceDisplay = (price: number) => {
     return price === 0 ? '' : new Intl.NumberFormat("id-ID", {
@@ -100,7 +102,7 @@ const NoteJournal = () => {
   const totalCredit = entries.reduce((sum, entry) => sum + entry.credit, 0);
   const isBalanced = totalDebit === totalCredit && totalDebit > 0;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!isBalanced) {
       toast({
         title: "Validation Error",
@@ -124,10 +126,37 @@ const NoteJournal = () => {
       return;
     }
 
-    toast({
-      title: "Success",
-      description: "Journal entry created successfully",
-    });
+    try {
+      // Create journal entries using the API
+      for (const entry of entries) {
+        if (entry.debit > 0 || entry.credit > 0) {
+          await createJournal({
+            coa_code: entry.account,
+            description: entry.description,
+            transaction_date: transactionDate.toISOString().split('T')[0],
+            credit: entry.credit,
+            debit: entry.debit,
+          });
+        }
+      }
+
+      toast({
+        title: "Success",
+        description: "Journal entry created successfully",
+      });
+
+      // Reset form
+      setEntries([{ id: '1', account: '', description: '', debit: 0, credit: 0 }]);
+      setTransactionDate(new Date());
+      setTag('');
+      setMemo('');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create journal entry",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -324,10 +353,10 @@ const NoteJournal = () => {
             </Button>
             <Button 
               onClick={handleSubmit}
-              disabled={!isBalanced}
+              disabled={!isBalanced || creatingJournal}
               className="bg-blue-600 hover:bg-blue-700"
             >
-              Simpan Jurnal
+              {creatingJournal ? 'Menyimpan...' : 'Simpan Jurnal'}
             </Button>
           </div>
         </div>

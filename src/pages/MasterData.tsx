@@ -54,11 +54,12 @@ const MasterData = () => {
         <div className="p-6">
           {/* Action Buttons */}
           <div className="flex gap-4 mb-6">
-            <CreateJournalDialog coaAccounts={chartOfAccounts || []}>
-              <Button variant="outline">
-                Note Journal
-              </Button>
-            </CreateJournalDialog>
+            <Button 
+              variant="outline"
+              onClick={() => navigate('/note-journal')}
+            >
+              Note Journal
+            </Button>
             <CreateCOADialog>
               <Button>
                 Create New COA
