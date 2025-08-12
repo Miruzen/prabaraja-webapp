@@ -3,13 +3,24 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 export interface ChartOfAccount {
-  id: number;
-  number: number;
-  account_type: string;
-  description: string;
-  balance: number;
+  id: string;
+  account_code: string;
+  name: string;
+  category: string;
+  detail_type: string;
+  detail_desc: string;
+  tax: string | null;
+  bank_name: string | null;
+  entry_balance: number;
+  description: string | null;
+  user_access: string;
+  lock_option: boolean;
   created_at: string;
   updated_at: string;
+  user_id: string | null;
+  level: number;
+  parent_code: string | null;
+  parent_id: string | null;
 }
 
 export const useChartOfAccounts = () => {
@@ -21,7 +32,7 @@ export const useChartOfAccounts = () => {
       const { data, error } = await supabase
         .from('chart_of_accounts')
         .select('*')
-        .order('number', { ascending: true });
+        .order('account_code', { ascending: true });
 
       if (error) {
         console.error('Error fetching chart of accounts:', error);

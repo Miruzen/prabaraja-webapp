@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      "Archive COA": {
+        Row: {
+          account_code: string
+          bank_name: string | null
+          category: string
+          created_at: string | null
+          description: string | null
+          detail_desc: string | null
+          detail_type: string | null
+          entry_balance: number | null
+          id: string
+          lock_option: boolean | null
+          name: string
+          tax: string | null
+          updated_at: string | null
+          user_access: string | null
+          user_id: string | null
+        }
+        Insert: {
+          account_code: string
+          bank_name?: string | null
+          category: string
+          created_at?: string | null
+          description?: string | null
+          detail_desc?: string | null
+          detail_type?: string | null
+          entry_balance?: number | null
+          id?: string
+          lock_option?: boolean | null
+          name: string
+          tax?: string | null
+          updated_at?: string | null
+          user_access?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          account_code?: string
+          bank_name?: string | null
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          detail_desc?: string | null
+          detail_type?: string | null
+          entry_balance?: number | null
+          id?: string
+          lock_option?: boolean | null
+          name?: string
+          tax?: string | null
+          updated_at?: string | null
+          user_access?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       assets: {
         Row: {
           asset_name: string
@@ -258,33 +312,74 @@ export type Database = {
       }
       chart_of_accounts: {
         Row: {
-          account_type: string
-          balance: number | null
+          account_code: string
+          bank_name: string | null
+          category: string
           created_at: string | null
-          description: string
-          id: number
-          number: number
+          description: string | null
+          detail_desc: string | null
+          detail_type: string | null
+          entry_balance: number | null
+          id: string
+          level: number
+          lock_option: boolean | null
+          name: string
+          parent_code: string | null
+          parent_id: string | null
+          tax: string | null
           updated_at: string | null
+          user_access: string | null
+          user_id: string | null
         }
         Insert: {
-          account_type: string
-          balance?: number | null
+          account_code: string
+          bank_name?: string | null
+          category: string
           created_at?: string | null
-          description: string
-          id?: number
-          number: number
+          description?: string | null
+          detail_desc?: string | null
+          detail_type?: string | null
+          entry_balance?: number | null
+          id?: string
+          level: number
+          lock_option?: boolean | null
+          name: string
+          parent_code?: string | null
+          parent_id?: string | null
+          tax?: string | null
           updated_at?: string | null
+          user_access?: string | null
+          user_id?: string | null
         }
         Update: {
-          account_type?: string
-          balance?: number | null
+          account_code?: string
+          bank_name?: string | null
+          category?: string
           created_at?: string | null
-          description?: string
-          id?: number
-          number?: number
+          description?: string | null
+          detail_desc?: string | null
+          detail_type?: string | null
+          entry_balance?: number | null
+          id?: string
+          level?: number
+          lock_option?: boolean | null
+          name?: string
+          parent_code?: string | null
+          parent_id?: string | null
+          tax?: string | null
           updated_at?: string | null
+          user_access?: string | null
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "chart_of_accounts_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "chart_of_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contacts: {
         Row: {
@@ -445,6 +540,51 @@ export type Database = {
           type?: string
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      journal_of_COA: {
+        Row: {
+          attachment_url: string | null
+          created_at: string | null
+          date: string
+          id: string
+          journal_code: string
+          journal_details: Json
+          memo: string | null
+          tag: string | null
+          total_amount_credit: number
+          total_amount_debit: number
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          attachment_url?: string | null
+          created_at?: string | null
+          date: string
+          id?: string
+          journal_code: string
+          journal_details: Json
+          memo?: string | null
+          tag?: string | null
+          total_amount_credit?: number
+          total_amount_debit?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          attachment_url?: string | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          journal_code?: string
+          journal_details?: Json
+          memo?: string | null
+          tag?: string | null
+          total_amount_credit?: number
+          total_amount_debit?: number
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -660,6 +800,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          company_logo: string | null
           created_at: string | null
           email: string | null
           id: string
@@ -668,6 +809,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          company_logo?: string | null
           created_at?: string | null
           email?: string | null
           id: string
@@ -676,6 +818,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          company_logo?: string | null
           created_at?: string | null
           email?: string | null
           id?: string
@@ -951,6 +1094,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_journal_reference: {
+        Args: { search_text: string }
+        Returns: {
+          id: string
+        }[]
+      }
+      find_journal_refs_by_account_code: {
+        Args: { search_code: string }
+        Returns: {
+          id: string
+        }[]
+      }
       update_offer: {
         Args: {
           p_id: string

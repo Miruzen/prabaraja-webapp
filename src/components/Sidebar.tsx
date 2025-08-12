@@ -63,12 +63,24 @@ export const Sidebar = () => {
       {/* User info section */}
       {user && (
         <div className="p-4 border-b border-sidebar-border">
-          <div className="text-sm text-sidebar-text">
-            Welcome back!
-          </div>
-          <div className="text-sm font-medium text-sidebar-text truncate">
-            {profile?.name || user.user_metadata?.name || user.email}
-          </div>
+          {profile?.company_logo ? (
+            <div className="flex items-center justify-center p-2">
+              <img 
+                src={profile.company_logo} 
+                alt="Company Logo" 
+                className="max-h-12 max-w-full object-contain"
+              />
+            </div>
+          ) : (
+            <>
+              <div className="text-sm text-sidebar-text">
+                Welcome back!
+              </div>
+              <div className="text-sm font-medium text-sidebar-text truncate">
+                {profile?.name || user.user_metadata?.name || user.email}
+              </div>
+            </>
+          )}
         </div>
       )}
 

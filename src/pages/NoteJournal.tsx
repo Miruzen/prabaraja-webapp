@@ -183,7 +183,7 @@ const NoteJournal = () => {
           {/* Transaction Header */}
           <div className="grid grid-cols-3 gap-4 bg-blue-50 p-4 rounded-lg">
             <div className="space-y-2">
-              <Label htmlFor="transaction-number">Transaction Number</Label>
+              <Label htmlFor="transaction-number">Transaction Number <span className="text-red-500">*</span></Label>
               <Input
                 id="transaction-number"
                 value={transactionNumber}
@@ -192,7 +192,7 @@ const NoteJournal = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="transaction-date">Transaction Date</Label>
+              <Label htmlFor="transaction-date">Transaction Date <span className="text-red-500">*</span></Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -232,8 +232,8 @@ const NoteJournal = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-blue-100">
-                  <TableHead className="w-[250px]">Account</TableHead>
-                  <TableHead>Description</TableHead>
+                  <TableHead className="w-[250px]">Account <span className="text-red-500">*</span></TableHead>
+                  <TableHead>Description <span className="text-red-500">*</span></TableHead>
                   <TableHead className="w-[150px] text-right">Debit</TableHead>
                   <TableHead className="w-[150px] text-right">Credit</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
@@ -338,7 +338,7 @@ const NoteJournal = () => {
 
           {/* Memo */}
           <div className="space-y-2">
-            <Label htmlFor="memo">Memo</Label>
+            <Label htmlFor="memo">Memo <span className="text-red-500">*</span></Label>
             <Textarea
               id="memo"
               value={memo}

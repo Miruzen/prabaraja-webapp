@@ -11,6 +11,7 @@ export interface UserProfile {
   role: string | null;
   created_at: string | null;
   updated_at: string | null;
+  company_logo: string | null;
 }
 
 // Hook to fetch all user profiles (admin only)

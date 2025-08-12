@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { FileQuestion, Save, User, Users } from "lucide-react";
+import { FileQuestion, Save, User, Users, Upload, Image } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -20,11 +20,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/contexts/AuthContext";
 import { useRoleAccess } from "@/hooks/useRoleAccess";
 import { useProfiles, useUpdateUserRole, useUpdateProfileName } from "@/hooks/useProfiles";
+import { useUpdateProfileLogo } from "@/hooks/useUpdateProfileLogo";
 import { getRoleDisplayName, AVAILABLE_ROLES, validateRoleChange } from "@/utils/roleUtils";
 import { ConfirmRoleChangeDialog } from "@/components/ConfirmRoleChangeDialog";
 
 export default function Settings() {
   const [username, setUsername] = useState("");
+  const [companyLogo, setCompanyLogo] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [roleSelects, setRoleSelects] = useState<Record<string, string>>({});
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
@@ -45,6 +48,7 @@ export default function Settings() {
   const { data: profiles, isLoading: profilesLoading } = useProfiles();
   const updateUserRole = useUpdateUserRole();
   const updateProfileName = useUpdateProfileName();
+  const updateProfileLogo = useUpdateProfileLogo();
   
   // Initialize role selects when profiles load
   useEffect(() => {
@@ -57,12 +61,39 @@ export default function Settings() {
     }
   }, [profiles]);
   
-  // Load username from profile on component mount
+  // Load username and logo from profile on component mount
   useEffect(() => {
     if (profile?.name) {
       setUsername(profile.name);
     }
+    if (profile?.company_logo) {
+      setLogoPreview(profile.company_logo);
+    }
   }, [profile]);
+
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size must be less than 5MB');
+        return;
+      }
+
+      setCompanyLogo(file);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setLogoPreview(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+
+      // Upload immediately
+      try {
+        await updateProfileLogo.mutateAsync({ logoFile: file });
+      } catch (error) {
+        console.error('Error uploading logo:', error);
+      }
+    }
+  };
 
   const handleSaveUsername = async () => {
     if (username.trim()) {
@@ -184,7 +215,7 @@ export default function Settings() {
             <CardContent>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
+                  <Label htmlFor="username">Username <span className="text-red-500">*</span></Label>
                   <Input 
                     id="username"
                     type="text"
@@ -214,6 +245,39 @@ export default function Settings() {
                     className="bg-gray-100"
                   />
                   <p className="text-sm text-muted-foreground">Your role is managed by administrators</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="logo">Company Logo</Label>
+                  <div className="flex flex-col gap-4">
+                    {logoPreview && (
+                      <div className="w-32 h-32 border border-border rounded-lg overflow-hidden">
+                        <img 
+                          src={logoPreview} 
+                          alt="Logo preview" 
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="logo"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoChange}
+                        className="hidden"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => document.getElementById('logo')?.click()}
+                        className="flex items-center gap-2"
+                      >
+                        <Upload className="h-4 w-4" />
+                        Upload Logo
+                      </Button>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Upload your company logo (max 5MB)</p>
+                  </div>
                 </div>
                 <Button 
                   onClick={handleSaveUsername}

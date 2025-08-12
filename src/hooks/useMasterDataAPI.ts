@@ -243,7 +243,7 @@ export const useCreateJournal = () => {
 
       const token = getAuthToken();
 
-      const response = await fetch("https://pbw-backend-api.vercel.app/api/dashboard?action=addNewJournal", {
+      const response = await fetch("https://pbw-backend-api.vercel.app/api/dashboard?action=addJournalCOA", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
