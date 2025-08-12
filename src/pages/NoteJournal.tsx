@@ -6,15 +6,15 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Paperclip, Calendar } from "lucide-react";
-import { useChartOfAccounts } from '@/hooks/useChartOfAccounts';
+import { Plus, Paperclip, Calendar, ArrowLeft, Trash2 } from "lucide-react";
+import { useCOAAccounts, useCreateJournal } from '@/hooks/useMasterDataAPI';
 import { formatInputCurrency, parseInputCurrency, formatCurrency } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { useCreateJournal } from '@/hooks/useMasterDataAPI';
 import { format } from 'date-fns';
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { useNavigate } from 'react-router-dom';
 
 interface JournalEntry {
   id: string;
@@ -33,9 +33,10 @@ const NoteJournal = () => {
   const [tag, setTag] = useState('');
   const [memo, setMemo] = useState('');
   
-  const { data: chartOfAccounts } = useChartOfAccounts();
+  const { data: chartOfAccounts } = useCOAAccounts();
   const { toast } = useToast();
   const { createJournal, loading: creatingJournal } = useCreateJournal();
+  const navigate = useNavigate();
 
   const formatPriceDisplay = (price: number) => {
     return price === 0 ? '' : new Intl.NumberFormat("id-ID", {
@@ -164,15 +165,25 @@ const NoteJournal = () => {
       <Sidebar />
       <div className="flex-1 overflow-auto">
         <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
-          <div className="text-sm text-white/70 mb-1">Transaksi</div>
-          <h1 className="text-2xl font-semibold text-white">Jurnal Umum</h1>
+          <div className="text-sm text-white/70 mb-1">Transaction</div>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/master-data')}
+              className="text-white hover:bg-white/20 p-2"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-2xl font-semibold text-white">General Journal</h1>
+          </div>
         </div>
         
         <div className="p-6 space-y-6">
           {/* Transaction Header */}
           <div className="grid grid-cols-3 gap-4 bg-blue-50 p-4 rounded-lg">
             <div className="space-y-2">
-              <Label htmlFor="transaction-number">No Transaksi</Label>
+              <Label htmlFor="transaction-number">Transaction Number</Label>
               <Input
                 id="transaction-number"
                 value={transactionNumber}
@@ -181,7 +192,7 @@ const NoteJournal = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="transaction-date">Tgl Transaksi</Label>
+              <Label htmlFor="transaction-date">Transaction Date</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -221,10 +232,10 @@ const NoteJournal = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-blue-100">
-                  <TableHead className="w-[250px]">Akun</TableHead>
-                  <TableHead>Deskripsi</TableHead>
+                  <TableHead className="w-[250px]">Account</TableHead>
+                  <TableHead>Description</TableHead>
                   <TableHead className="w-[150px] text-right">Debit</TableHead>
-                  <TableHead className="w-[150px] text-right">Kredit</TableHead>
+                  <TableHead className="w-[150px] text-right">Credit</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -237,12 +248,12 @@ const NoteJournal = () => {
                         onValueChange={(value) => handleAccountChange(entry.id, value)}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Pilih akun" />
+                          <SelectValue placeholder="Select account" />
                         </SelectTrigger>
                         <SelectContent>
                           {chartOfAccounts?.map((account) => (
-                            <SelectItem key={account.id} value={account.number.toString()}>
-                              {account.number} - {account.description}
+                            <SelectItem key={account.id} value={account.account_code}>
+                              {account.account_code} - {account.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -252,7 +263,7 @@ const NoteJournal = () => {
                       <Input
                         value={entry.description}
                         onChange={(e) => handleDescriptionChange(entry.id, e.target.value)}
-                        placeholder="Masukkan deskripsi"
+                        placeholder="Enter description"
                       />
                     </TableCell>
                     <TableCell>
@@ -283,7 +294,7 @@ const NoteJournal = () => {
                         disabled={entries.length === 1}
                         className="text-red-500 hover:text-red-700"
                       >
-                        –
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -295,7 +306,7 @@ const NoteJournal = () => {
           {/* Add Data Button */}
           <Button onClick={addNewRow} variant="default" className="bg-teal-600 hover:bg-teal-700 text-white">
             <Plus className="mr-2 h-4 w-4" />
-            Tambah Data
+            Add Row
           </Button>
 
           {/* Totals */}
@@ -307,7 +318,7 @@ const NoteJournal = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Total Kredit</Label>
+              <Label>Total Credit</Label>
               <div className="text-right font-mono text-lg bg-green-50 p-2 rounded border">
                 Rp. {formatPriceDisplay(totalCredit)}
               </div>
@@ -321,7 +332,7 @@ const NoteJournal = () => {
                 ? 'bg-green-100 text-green-800' 
                 : 'bg-red-100 text-red-800'
             }`}>
-              {isBalanced ? '✓ Seimbang' : '✗ Tidak Seimbang'}
+              {isBalanced ? '✓ Balanced' : '✗ Not Balanced'}
             </div>
           </div>
 
@@ -332,31 +343,31 @@ const NoteJournal = () => {
               id="memo"
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
-              placeholder="Masukkan memo (opsional)"
+              placeholder="Enter memo (optional)"
               rows={3}
             />
           </div>
 
           {/* Attachment */}
           <div className="space-y-2">
-            <Label>📎 Lampiran</Label>
+            <Label>📎 Attachment</Label>
             <Button variant="outline" className="w-full">
               <Paperclip className="mr-2 h-4 w-4" />
-              Lampirkan File
+              Attach File
             </Button>
           </div>
 
           {/* Submit Buttons */}
           <div className="flex justify-end space-x-2">
-            <Button variant="outline">
-              Batal
+            <Button variant="outline" onClick={() => navigate('/master-data')}>
+              Cancel
             </Button>
             <Button 
               onClick={handleSubmit}
               disabled={!isBalanced || creatingJournal}
               className="bg-blue-600 hover:bg-blue-700"
             >
-              {creatingJournal ? 'Menyimpan...' : 'Simpan Jurnal'}
+              {creatingJournal ? 'Saving...' : 'Save Journal'}
             </Button>
           </div>
         </div>
