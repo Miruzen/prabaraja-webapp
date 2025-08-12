@@ -5,17 +5,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useChartOfAccounts } from '@/hooks/useChartOfAccounts';
-import { useJournalTransactions } from '@/hooks/useJournalTransactions';
+import { useCOAAccounts, useJournalTransactionsAPI } from '@/hooks/useMasterDataAPI';
 import { CreateCOADialog } from '@/components/masterdata/CreateCOADialog';
+import { CreateJournalDialog } from '@/components/masterdata/CreateJournalDialog';
 
 const MasterData = () => {
   const navigate = useNavigate();
   const [selectedCoaCode, setSelectedCoaCode] = useState<string>('');
   const [showJournalEntries, setShowJournalEntries] = useState(false);
   
-  const { data: chartOfAccounts, isLoading: coaLoading } = useChartOfAccounts();
-  const { data: journalTransactions, isLoading: journalLoading } = useJournalTransactions(selectedCoaCode);
+  const { data: chartOfAccounts, loading: coaLoading } = useCOAAccounts();
+  const { data: journalTransactions, loading: journalLoading } = useJournalTransactionsAPI(selectedCoaCode);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -54,9 +54,11 @@ const MasterData = () => {
         <div className="p-6">
           {/* Action Buttons */}
           <div className="flex gap-4 mb-6">
-            <Button variant="outline" onClick={() => navigate('/note-journal')}>
-              Note Journal
-            </Button>
+            <CreateJournalDialog coaAccounts={chartOfAccounts || []}>
+              <Button variant="outline">
+                Note Journal
+              </Button>
+            </CreateJournalDialog>
             <CreateCOADialog>
               <Button>
                 Create New COA

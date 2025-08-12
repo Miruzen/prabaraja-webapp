@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useCreateChartOfAccount } from '@/hooks/useChartOfAccounts';
-import { useToast } from '@/hooks/use-toast';
-import { formatInputCurrency, parseInputCurrency } from '@/lib/utils';
+import { useCreateCOAAccount } from '@/hooks/useMasterDataAPI';
+import { toast } from 'sonner';
+import { parseInputCurrency } from '@/lib/utils';
 
 interface CreateCOADialogProps {
   children: React.ReactNode;
@@ -21,8 +21,7 @@ export const CreateCOADialog = ({ children }: CreateCOADialogProps) => {
     balance: 0
   });
 
-  const { toast } = useToast();
-  const createMutation = useCreateChartOfAccount();
+  const { createCOAAccount, loading: isCreating } = useCreateCOAAccount();
 
   const formatPriceDisplay = (price: number) => {
     return new Intl.NumberFormat("id-ID", {
@@ -39,27 +38,30 @@ export const CreateCOADialog = ({ children }: CreateCOADialogProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.number || !formData.description || !formData.account_type) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
     try {
-      await createMutation.mutateAsync({
+      await createCOAAccount({
         number: parseInt(formData.number),
         description: formData.description,
         account_type: formData.account_type,
         balance: formData.balance
       });
       
-      toast({
-        title: "Success",
-        description: "Chart of Account created successfully",
-      });
+      toast.success('Chart of Account created successfully');
       
       setOpen(false);
       setFormData({ number: '', description: '', account_type: '', balance: 0 });
+      
+      // Refresh the page to show new data
+      window.location.reload();
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create Chart of Account",
-        variant: "destructive",
-      });
+      toast.error('Failed to create Chart of Account');
+      console.error('Error creating COA:', error);
     }
   };
 
@@ -131,8 +133,8 @@ export const CreateCOADialog = ({ children }: CreateCOADialogProps) => {
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? 'Creating...' : 'Create'}
+            <Button type="submit" disabled={isCreating}>
+              {isCreating ? 'Creating...' : 'Create'}
             </Button>
           </div>
         </form>
