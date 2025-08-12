@@ -46,7 +46,7 @@ export function ActiveAccountMenu({
   // };
 
   return (
-    <DropdownMenuContent align="end" className="w-[200px] bg-white">
+    <DropdownMenuContent align="end" className="w-[200px] bg-background border z-50">
       <DropdownMenuItem onClick={onHistoryClick} className="cursor-pointer">
         <History className="mr-2 h-4 w-4 text-[#8B5CF6]" />
         History

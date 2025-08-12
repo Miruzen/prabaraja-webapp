@@ -9,7 +9,7 @@ interface ArchivedAccountMenuProps {
 
 export function ArchivedAccountMenu({ onUnarchive, onDelete }: ArchivedAccountMenuProps) {
   return (
-    <DropdownMenuContent align="end" className="w-[200px] bg-white">
+    <DropdownMenuContent align="end" className="w-[200px] bg-background border z-50">
       <DropdownMenuItem onClick={onUnarchive} className="cursor-pointer">
         <ArchiveRestore className="mr-2 h-4 w-4 text-[#10B981]" />
         Unarchive

@@ -67,7 +67,8 @@ export function TransferFundsDialog({
   
   const numericAmount = parseInputCurrency(watchAmount);
   
-  const selectedFromAccount = activeAccounts.find(acc => acc.code === watchFromAccount);
+  // Use fromAccount prop directly for source account data
+  const selectedFromAccount = fromAccount;
   const selectedToAccount = activeAccounts.find(acc => acc.code === watchToAccount);
   
   const getAccountBalance = (balanceString: string) => {
@@ -76,7 +77,7 @@ export function TransferFundsDialog({
     return parseInt(cleanString) || 0;
   };
   
-  const fromAccountBalance = selectedFromAccount ? getAccountBalance(selectedFromAccount.balance) : 0;
+  const fromAccountBalance = getAccountBalance(fromAccount.balance);
   const insufficientFunds = numericAmount > 0 && numericAmount > fromAccountBalance;
   
   // Check for invalid account type transfers
