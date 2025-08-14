@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Truck, User, Calendar, CreditCard, Package, Tag, MapPin, FileText, Clock, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import CustomerInfoSection from "@/components/sales/CustomerInfoSection";
 import SalesItemsSection from "@/components/sales/SalesItemsSection";
+import { SalesTaxCalculation } from "@/components/sales/SalesTaxCalculation";
 import { formatPriceWithSeparator } from "@/utils/salesUtils";
 import { useCreateSale } from "@/hooks/useSales";
 import { useCreateOrderDelivery, useCreateQuotation } from "@/hooks/useSalesData";
@@ -122,6 +123,14 @@ const CreateNewSales = () => {
   const [validUntil, setValidUntil] = useState("");
   const [termsAndConditions, setTermsAndConditions] = useState("");
   
+  // Tax calculation state
+  const [taxData, setTaxData] = useState({
+    dpp: 0,
+    ppn: 0,
+    pph: 0,
+    grandTotal: 0,
+  });
+  
   const [isFormValid, setIsFormValid] = useState(false);
 
   // Get page title based on type
@@ -227,6 +236,11 @@ const CreateNewSales = () => {
     }, 0);
   };
 
+  // Handle tax calculation changes
+  const handleTaxChange = (newTaxData: typeof taxData) => {
+    setTaxData(newTaxData);
+  };
+
   const formatPrice = (price: number) => {
     return formatPriceWithSeparator(price);
   };
@@ -245,7 +259,8 @@ const CreateNewSales = () => {
     }
 
     try {
-      const calculatedTotal = calculateTotal();
+      const calculatedTotal = (type === "delivery" || type === "order" || type === "quotation") ? 
+        (taxData.grandTotal || calculateTotal()) : calculateTotal();
       const numericInvoiceNumber = parseInt(invoiceNumber);
 
       if (type === "delivery") {
@@ -606,6 +621,14 @@ const CreateNewSales = () => {
                   availableProducts={productCatalog}
                 />
               </div>
+
+              {/* Tax Calculation Section - only for Sales Invoices, Order & Delivery, and Quotations */}
+              {(type === "delivery" || type === "order" || type === "quotation") && (
+                <SalesTaxCalculation
+                  subtotal={calculateTotal()}
+                  onTaxChange={handleTaxChange}
+                />
+              )}
 
               <div className="bg-white p-6 rounded-lg border">
                 <div className="flex justify-between items-center mb-4">

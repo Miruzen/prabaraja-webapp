@@ -191,6 +191,27 @@ const SalesInvoiceDetail = () => {
                 </div>
 
                 <div className="mt-4 space-y-2 border-t pt-4">
+                  {/* Tax Calculation Details */}
+                  {(invoice as any).tax_details && (
+                    <div className="space-y-2 mb-4 bg-gray-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-gray-700">Tax Calculation Details</h4>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="flex justify-between">
+                          <span>DPP/VOT:</span>
+                          <span>{formatCurrency((invoice as any).tax_details.dpp || 0)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>PPN (VAT):</span>
+                          <span>{formatCurrency((invoice as any).tax_details.ppn || 0)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>PPH:</span>
+                          <span>{formatCurrency((invoice as any).tax_details.pph || 0)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="flex justify-between font-bold text-lg">
                     <span>Grand Total</span>
                     <span>{formatCurrency(invoice.grand_total)}</span>
