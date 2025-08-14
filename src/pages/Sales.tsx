@@ -8,7 +8,8 @@ import { SalesSummaryCards } from "@/components/sales/SalesSummaryCards";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { toast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
-import { useSalesInvoices, useOrderDeliveries, useQuotations } from "@/hooks/useSalesData";
+import { useSalesInvoices, useOrderDeliveries, useQuotations, useDeleteOrderDelivery, useDeleteQuotation } from "@/hooks/useSalesData";
+import { useDeleteSale } from "@/hooks/useSales";
 import { transformSalesInvoiceData, transformOrderDeliveryData, transformQuotationData } from "@/utils/salesDataUtils";
 
 type FilterCategory = "all" | "unpaid" | "paid" | "late" | "awaiting";
@@ -25,6 +26,11 @@ const Sales = () => {
   const { data: salesInvoices = [], isLoading: loadingSalesInvoices } = useSalesInvoices();
   const { data: orderDeliveries = [], isLoading: loadingOrderDeliveries } = useOrderDeliveries();
   const { data: quotations = [], isLoading: loadingQuotations } = useQuotations();
+  
+  // Delete mutation hooks
+  const deleteSale = useDeleteSale();
+  const deleteOrderDelivery = useDeleteOrderDelivery();
+  const deleteQuotation = useDeleteQuotation();
   
   // Get data based on active tab
   const getCurrentTabData = () => {
@@ -114,14 +120,47 @@ const Sales = () => {
   };
 
   // Handle delete action
-  const handleDeleteSale = (id: string) => {
-    // In a real app, this would call an API to delete the sale
-    // For now we'll just show a toast message
-    toast({
-      title: "Sale deleted",
-      description: `Sale with ID ${id} has been deleted.`,
-      variant: "default",
-    });
+  const handleDeleteSale = async (id: string) => {
+    try {
+      // Determine which table to delete from based on the transformed data
+      const allData = getCurrentTabData().data;
+      const itemToDelete = allData.find(item => item.id === id);
+      
+      if (!itemToDelete) {
+        toast({
+          title: "Error",
+          description: "Item not found",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Determine which delete function to use based on the number prefix
+      if (itemToDelete.number.startsWith('INV-')) {
+        // Use sales delete hook
+        await deleteSale.mutateAsync(id);
+      } else if (itemToDelete.number.startsWith('ORD-')) {
+        // Use order delivery delete hook
+        await deleteOrderDelivery.mutateAsync(id);
+      } else if (itemToDelete.number.startsWith('QUO-')) {
+        // Use quotation delete hook
+        await deleteQuotation.mutateAsync(id);
+      }
+
+      toast({
+        title: "Success",
+        description: "Item deleted successfully",
+        variant: "default",
+      });
+      
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete item",
+        variant: "destructive",
+      });
+    }
   };
 
   // Handle edit action

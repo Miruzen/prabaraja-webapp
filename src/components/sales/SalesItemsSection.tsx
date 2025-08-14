@@ -93,6 +93,13 @@ const SalesItemsSection = ({
     <Card>
       <CardHeader>
         <CardTitle>Items</CardTitle>
+        <div className="text-sm text-muted-foreground space-y-1">
+          <p>• <strong>Item Name:</strong> Enter the product or service name</p>
+          <p>• <strong>Qty:</strong> Quantity of items being sold</p>
+          <p>• <strong>Price:</strong> Unit price per item (in Rupiah)</p>
+          {allowProductSearch && <p>• <strong>%:</strong> Discount percentage (optional)</p>}
+          <p>• <strong>Subtotal:</strong> Calculated automatically (Qty × Price - Discount)</p>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">

@@ -45,7 +45,7 @@ interface LocationState {
   type: "delivery" | "order" | "quotation";
 }
 
-// Status data with colors and icons
+// Status data with colors and icons for Orders
 const statusOptions = {
   pending_payment: { 
     label: "Pending Payment", 
@@ -71,6 +71,35 @@ const statusOptions = {
     label: "Cancelled", 
     icon: <XCircle className="h-4 w-4 text-red-500" />,
     color: "bg-red-100 text-red-800 border-red-200" 
+  }
+};
+
+// Status data for Quotations with colors and icons
+const quotationStatusOptions = {
+  sent: { 
+    label: "Sent", 
+    icon: <CheckCircle2 className="h-4 w-4 text-blue-500" />,
+    color: "bg-blue-100 text-blue-800 border-blue-200" 
+  },
+  accepted: { 
+    label: "Accepted", 
+    icon: <CheckCircle2 className="h-4 w-4 text-green-500" />,
+    color: "bg-green-100 text-green-800 border-green-200" 
+  },
+  rejected: { 
+    label: "Rejected", 
+    icon: <XCircle className="h-4 w-4 text-red-500" />,
+    color: "bg-red-100 text-red-800 border-red-200" 
+  },
+  expired: { 
+    label: "Expired", 
+    icon: <Clock className="h-4 w-4 text-gray-500" />,
+    color: "bg-gray-100 text-gray-800 border-gray-200" 
+  },
+  valid_until: { 
+    label: "Valid Until", 
+    icon: <Calendar className="h-4 w-4 text-amber-500" />,
+    color: "bg-amber-100 text-amber-800 border-amber-200" 
   }
 };
 
@@ -105,7 +134,10 @@ const CreateNewSales = () => {
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [invoiceDate, setInvoiceDate] = useState("");
   const [dueDate, setDueDate] = useState("");
-  const [status, setStatus] = useState(type === "order" ? "pending_payment" : "unpaid");
+  const [status, setStatus] = useState(
+    type === "order" ? "pending_payment" : 
+    type === "quotation" ? "sent" : "unpaid"
+  );
   const [items, setItems] = useState<SalesItemType[]>([
     { id: '1', name: '', quantity: 1, price: 0, discount: 0 }
   ]);
@@ -343,6 +375,9 @@ const CreateNewSales = () => {
 
   // Get the current status object from options
   const getCurrentStatusObject = () => {
+    if (type === "quotation") {
+      return quotationStatusOptions[status] || quotationStatusOptions.sent;
+    }
     return statusOptions[status] || statusOptions.pending_payment;
   };
 
@@ -494,6 +529,43 @@ const CreateNewSales = () => {
                   onChange={(e) => setValidUntil(e.target.value)}
                 />
               </div>
+              
+              <div className="space-y-2">
+                <label htmlFor="quotationStatus" className="text-sm font-medium flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-blue-500" />
+                  Status
+                </label>
+                <Select
+                  value={status}
+                  onValueChange={setStatus}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue>
+                      <div className="flex items-center gap-2">
+                        {getCurrentStatusObject().icon}
+                        <span>{getCurrentStatusObject().label}</span>
+                      </div>
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border shadow-lg z-50">
+                    {Object.entries(quotationStatusOptions).map(([value, { label, icon, color }]) => (
+                      <SelectItem 
+                        key={value} 
+                        value={value}
+                        className="hover:bg-gray-50 cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${color}`}>
+                            {icon}
+                            <span>{label}</span>
+                          </div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
               <div className="space-y-2 md:col-span-2">
                 <label htmlFor="termsAndConditions" className="text-sm font-medium flex items-center gap-2">
                   <FileText className="h-4 w-4 text-blue-500" />
@@ -516,9 +588,9 @@ const CreateNewSales = () => {
   };
   
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex h-screen bg-background">
       <Sidebar />
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col overflow-hidden">
         {type === "delivery" ? (
           <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6">
             <div className="flex items-center space-x-2">
@@ -575,7 +647,7 @@ const CreateNewSales = () => {
           </div>
         )}
 
-        <div className="p-6 flex-1 overflow-auto">
+        <div className="p-6 flex-1 overflow-y-auto">
           <form onSubmit={handleSubmit}>
             <div className="space-y-6">
               <CustomerInfoSection 
