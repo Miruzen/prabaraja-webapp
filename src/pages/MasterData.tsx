@@ -33,11 +33,22 @@ const MasterData = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('id-ID');
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return 'Invalid Date';
+    }
+    return date.toLocaleDateString('id-ID');
   };
 
-  const generateJournalNumber = (date: string, id: string) => {
-    const dateFormatted = new Date(date).toISOString().slice(0, 10).replace(/-/g, '');
+  const generateJournalNumber = (dateString: string, id: string) => {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      // Fallback to current date if invalid
+      const fallbackDate = new Date();
+      const dateFormatted = fallbackDate.toISOString().slice(0, 10).replace(/-/g, '');
+      return `JRN-${dateFormatted}-${id.slice(-4)}`;
+    }
+    const dateFormatted = date.toISOString().slice(0, 10).replace(/-/g, '');
     return `JRN-${dateFormatted}-${id.slice(-4)}`;
   };
 
