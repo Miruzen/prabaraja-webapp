@@ -78,27 +78,27 @@ const statusOptions = {
 const quotationStatusOptions = {
   sent: { 
     label: "Sent", 
-    icon: <CheckCircle2 className="h-4 w-4 text-blue-500" />,
+    icon: <CheckCircle2 className="h-4 w-4" />,
     color: "bg-blue-100 text-blue-800 border-blue-200" 
   },
   accepted: { 
     label: "Accepted", 
-    icon: <CheckCircle2 className="h-4 w-4 text-green-500" />,
+    icon: <CheckCircle2 className="h-4 w-4" />,
     color: "bg-green-100 text-green-800 border-green-200" 
   },
   rejected: { 
     label: "Rejected", 
-    icon: <XCircle className="h-4 w-4 text-red-500" />,
+    icon: <XCircle className="h-4 w-4" />,
     color: "bg-red-100 text-red-800 border-red-200" 
   },
   expired: { 
     label: "Expired", 
-    icon: <Clock className="h-4 w-4 text-gray-500" />,
+    icon: <Clock className="h-4 w-4" />,
     color: "bg-gray-100 text-gray-800 border-gray-200" 
   },
   valid_until: { 
     label: "Valid Until", 
-    icon: <Calendar className="h-4 w-4 text-amber-500" />,
+    icon: <Calendar className="h-4 w-4" />,
     color: "bg-amber-100 text-amber-800 border-amber-200" 
   }
 };
@@ -419,23 +419,23 @@ const CreateNewSales = () => {
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue>
-                      <div className="flex items-center gap-2">
+                      <Badge className={`flex items-center gap-2 ${getCurrentStatusObject().color}`}>
                         {getCurrentStatusObject().icon}
                         <span>{getCurrentStatusObject().label}</span>
-                      </div>
+                      </Badge>
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(statusOptions).map(([value, { label, icon }]) => (
+                    {Object.entries(statusOptions).map(([value, { label, icon, color }]) => (
                       <SelectItem 
                         key={value} 
                         value={value}
                         className="flex items-center gap-2"
                       >
-                        <div className="flex items-center gap-2">
+                        <Badge className={`flex items-center gap-2 ${color}`}>
                           {icon}
                           <span>{label}</span>
-                        </div>
+                        </Badge>
                       </SelectItem>
                     ))}
                   </SelectContent>

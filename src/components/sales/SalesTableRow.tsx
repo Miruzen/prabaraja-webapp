@@ -4,6 +4,17 @@ import { Link, useNavigate } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Edit, MoreVertical, Trash } from "lucide-react";
+import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface SalesData {
   id: string;
@@ -24,6 +35,7 @@ interface SalesTableRowProps {
 
 export const SalesTableRow = ({ row, onDelete, onEdit }: SalesTableRowProps) => {
   const navigate = useNavigate();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   
   const handleCustomerClick = () => {
     if (row.customerId) {
@@ -41,10 +53,19 @@ export const SalesTableRow = ({ row, onDelete, onEdit }: SalesTableRowProps) => 
     }
   };
 
-  const handleDelete = () => {
+  const handleDeleteClick = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
     if (onDelete) {
       onDelete(row.id);
     }
+    setDeleteDialogOpen(false);
+  };
+
+  const cancelDelete = () => {
+    setDeleteDialogOpen(false);
   };
 
   // Determine the correct detail route based on the number prefix
@@ -102,13 +123,34 @@ export const SalesTableRow = ({ row, onDelete, onEdit }: SalesTableRowProps) => 
               <Edit className="mr-2 h-4 w-4" />
               Edit
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleDelete} className="text-red-600">
+            <DropdownMenuItem onClick={handleDeleteClick} className="text-red-600">
               <Trash className="mr-2 h-4 w-4" />
               Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </TableCell>
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this record?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the record.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelDelete}>No</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Yes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TableRow>
   );
 };

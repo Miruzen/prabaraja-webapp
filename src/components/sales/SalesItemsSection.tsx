@@ -104,9 +104,21 @@ const SalesItemsSection = ({
       <CardContent>
         <div className="space-y-4">
           {items.map((item) => (
-            <div key={item.id} className="grid grid-cols-12 gap-4 items-center">
-              <div className={allowProductSearch ? "col-span-4" : "col-span-5"}>
-                {allowProductSearch ? (
+            <div key={item.id} className="space-y-4">
+              {/* Labels Row */}
+              <div className="grid grid-cols-12 gap-4 text-sm font-medium text-muted-foreground">
+                <div className={allowProductSearch ? "col-span-4" : "col-span-5"}>Item Name</div>
+                <div className="col-span-2">Qty</div>
+                <div className="col-span-2">Price</div>
+                {allowProductSearch && <div className="col-span-1">%</div>}
+                <div className="col-span-2">Subtotal</div>
+                <div className="col-span-1"></div>
+              </div>
+              
+              {/* Input Row */}
+              <div className="grid grid-cols-12 gap-4 items-center">
+                <div className={allowProductSearch ? "col-span-4" : "col-span-5"}>
+                  {allowProductSearch ? (
                   <div className="relative">
                     <Input 
                       placeholder="Search product" 
@@ -188,6 +200,7 @@ const SalesItemsSection = ({
                 >
                   <X className="h-4 w-4" />
                 </Button>
+                </div>
               </div>
             </div>
           ))}
