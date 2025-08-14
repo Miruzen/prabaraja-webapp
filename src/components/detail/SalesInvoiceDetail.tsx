@@ -148,7 +148,16 @@ const SalesInvoiceDetail = () => {
                 <div className="space-y-4">
                   <div>
                     <p className="text-sm text-gray-500">Customer Name</p>
-                    <p className="font-medium">{invoice.customer_name}</p>
+                    {invoice.customer_id ? (
+                      <Link 
+                        to={`/contact-details/${invoice.customer_id}`}
+                        className="font-medium text-primary hover:underline"
+                      >
+                        {invoice.customer_name}
+                      </Link>
+                    ) : (
+                      <p className="font-medium">{invoice.customer_name}</p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -191,25 +200,29 @@ const SalesInvoiceDetail = () => {
                 </div>
 
                 <div className="mt-4 space-y-2 border-t pt-4">
-                  {/* Tax Calculation Details */}
-                  {(invoice as any).tax_details && (
-                    <div className="space-y-2 mb-4 bg-gray-50 p-4 rounded-lg">
-                      <h4 className="font-medium text-gray-700">Tax Calculation Details</h4>
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div className="flex justify-between">
-                          <span>DPP/VOT:</span>
-                          <span>{formatCurrency((invoice as any).tax_details.dpp || 0)}</span>
+                  {/* Enhanced Tax Calculation Details */}
+                  {invoice.tax_details && (
+                    <Card className="mb-4">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base">Tax Calculation</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="flex justify-between">
+                            <span className="text-sm text-gray-600">DPP/VOT:</span>
+                            <span className="font-medium">{formatCurrency(invoice.tax_details.dpp)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-gray-600">PPN (VAT):</span>
+                            <span className="font-medium">{formatCurrency(invoice.tax_details.ppn)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-gray-600">PPH:</span>
+                            <span className="font-medium">{formatCurrency(invoice.tax_details.pph)}</span>
+                          </div>
                         </div>
-                        <div className="flex justify-between">
-                          <span>PPN (VAT):</span>
-                          <span>{formatCurrency((invoice as any).tax_details.ppn || 0)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>PPH:</span>
-                          <span>{formatCurrency((invoice as any).tax_details.pph || 0)}</span>
-                        </div>
-                      </div>
-                    </div>
+                      </CardContent>
+                    </Card>
                   )}
                   
                   <div className="flex justify-between font-bold text-lg">

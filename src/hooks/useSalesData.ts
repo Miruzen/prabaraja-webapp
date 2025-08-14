@@ -7,12 +7,18 @@ export interface SalesInvoice {
   id: string;
   user_id: string;
   number: number;
+  customer_id?: string;
   customer_name: string;
   invoice_date: string;
   due_date: string;
   status: 'Paid' | 'Unpaid' | 'Late Payment' | 'Awaiting Payment';
   items: any[];
   grand_total: number;
+  tax_details?: {
+    dpp: number;
+    ppn: number;
+    pph: number;
+  };
   created_at: string;
   updated_at?: string;
 }
@@ -21,6 +27,7 @@ export interface OrderDelivery {
   id: string;
   user_id: string;
   number: number;
+  customer_id?: string;
   customer_name: string;
   customer_email: string;
   customer_phone: string;
@@ -33,6 +40,11 @@ export interface OrderDelivery {
   payment_method: string;
   items: any[];
   grand_total: number;
+  tax_details?: {
+    dpp: number;
+    ppn: number;
+    pph: number;
+  };
   notes?: string;
   created_at: string;
   updated_at?: string;
@@ -42,12 +54,18 @@ export interface Quotation {
   id: string;
   user_id: string;
   number: number;
+  customer_id?: string;
   customer_name: string;
   quotation_date: string;
   valid_until: string;
   status: string;
   items: any[];
   total: number;
+  tax_details?: {
+    dpp: number;
+    ppn: number;
+    pph: number;
+  };
   terms?: string;
   created_at: string;
   updated_at?: string;
