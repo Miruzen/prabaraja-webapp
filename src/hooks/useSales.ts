@@ -13,6 +13,12 @@ export interface Sale {
   status: 'Paid' | 'Unpaid' | 'Late Payment' | 'Awaiting Payment';
   items: any[];
   grand_total: number;
+  tax_details?: {
+    dpp: number;
+    ppn: number;
+    pph: number;
+    grandTotal: number;
+  };
   created_at: string;
   updated_at?: string;
 }

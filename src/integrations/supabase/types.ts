@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -656,6 +656,7 @@ export type Database = {
           shipping_address: string
           shipping_method: string
           status: string
+          tax_details: Json | null
           tracking_number: string
           updated_at: string | null
           user_id: string
@@ -676,6 +677,7 @@ export type Database = {
           shipping_address: string
           shipping_method: string
           status: string
+          tax_details?: Json | null
           tracking_number: string
           updated_at?: string | null
           user_id: string
@@ -696,6 +698,7 @@ export type Database = {
           shipping_address?: string
           shipping_method?: string
           status?: string
+          tax_details?: Json | null
           tracking_number?: string
           updated_at?: string | null
           user_id?: string
@@ -837,6 +840,7 @@ export type Database = {
           number: number
           quotation_date: string
           status: string
+          tax_details: Json | null
           terms: string | null
           total: number
           updated_at: string | null
@@ -851,6 +855,7 @@ export type Database = {
           number: number
           quotation_date: string
           status: string
+          tax_details?: Json | null
           terms?: string | null
           total: number
           updated_at?: string | null
@@ -865,6 +870,7 @@ export type Database = {
           number?: number
           quotation_date?: string
           status?: string
+          tax_details?: Json | null
           terms?: string | null
           total?: number
           updated_at?: string | null
@@ -971,6 +977,7 @@ export type Database = {
           items: Json
           number: number
           status: string
+          tax_details: Json | null
           updated_at: string | null
           user_id: string
         }
@@ -984,6 +991,7 @@ export type Database = {
           items: Json
           number: number
           status: string
+          tax_details?: Json | null
           updated_at?: string | null
           user_id: string
         }
@@ -997,6 +1005,7 @@ export type Database = {
           items?: Json
           number?: number
           status?: string
+          tax_details?: Json | null
           updated_at?: string | null
           user_id?: string
         }
@@ -1108,18 +1117,18 @@ export type Database = {
       }
       update_offer: {
         Args: {
-          p_id: string
-          p_user_id: string
-          p_type: string
           p_date: string
           p_discount_terms: string
-          p_expiry_date: string
           p_due_date: string
+          p_expiry_date: string
+          p_grand_total: number
+          p_id: string
+          p_items: Json
           p_status: string
           p_tags: string[]
-          p_items: Json
-          p_grand_total: number
+          p_type: string
           p_updated_at: string
+          p_user_id: string
         }
         Returns: undefined
       }

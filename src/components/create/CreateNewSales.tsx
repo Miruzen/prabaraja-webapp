@@ -321,6 +321,7 @@ const CreateNewSales = () => {
           status: saleStatus,
           items: items,
           grand_total: calculatedTotal,
+          tax_details: taxData,
         };
 
         await createSale.mutateAsync(saleData);
@@ -343,6 +344,7 @@ const CreateNewSales = () => {
           items: items,
           grand_total: calculatedTotal,
           notes: notes || null,
+          tax_details: taxData,
         };
 
         await createOrderDelivery.mutateAsync(orderData);
@@ -359,6 +361,7 @@ const CreateNewSales = () => {
           items: items,
           total: calculatedTotal,
           terms: termsAndConditions || null,
+          tax_details: taxData,
         };
 
         await createQuotation.mutateAsync(quotationData);
