@@ -14,9 +14,22 @@ interface CreateJournalDialogProps {
 
 export function CreateJournalDialog({ children, coaAccounts }: CreateJournalDialogProps) {
   const [open, setOpen] = useState(false);
+  // Helper function to safely format date
+  const getSafeISODate = (date: Date = new Date()): string => {
+    try {
+      if (!date || isNaN(date.getTime())) {
+        date = new Date();
+      }
+      return date.toISOString().split('T')[0];
+    } catch (error) {
+      console.error('Date formatting error:', error);
+      return new Date().toISOString().split('T')[0];
+    }
+  };
+
   const [formData, setFormData] = useState({
     journal_code: `JRNL-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9999) + 1).padStart(4, '0')}`,
-    date: new Date().toISOString().split('T')[0],
+    date: getSafeISODate(),
     tag: '',
     memo: '',
     attachment_url: '',
@@ -49,6 +62,13 @@ export function CreateJournalDialog({ children, coaAccounts }: CreateJournalDial
   const handleSubmit = async () => {
     if (!formData.account_code || !formData.description || !formData.date) {
       toast.error('Please fill in all required fields');
+      return;
+    }
+
+    // Validate date
+    const dateObj = new Date(formData.date);
+    if (!formData.date || isNaN(dateObj.getTime())) {
+      toast.error('Please select a valid date');
       return;
     }
 
@@ -91,7 +111,7 @@ export function CreateJournalDialog({ children, coaAccounts }: CreateJournalDial
       setOpen(false);
       setFormData({
         journal_code: `JRNL-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9999) + 1).padStart(4, '0')}`,
-        date: new Date().toISOString().split('T')[0],
+        date: getSafeISODate(),
         tag: '',
         memo: '',
         attachment_url: '',

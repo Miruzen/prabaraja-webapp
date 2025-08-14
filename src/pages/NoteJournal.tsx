@@ -127,6 +127,16 @@ const NoteJournal = () => {
       return;
     }
 
+    // Validate transaction date
+    if (!transactionDate || isNaN(transactionDate.getTime())) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a valid transaction date",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       // Create journal entries using the new API structure
       const validEntries = entries.filter(entry => entry.debit > 0 || entry.credit > 0);
@@ -142,10 +152,13 @@ const NoteJournal = () => {
         const totalDebit = validEntries.reduce((sum, entry) => sum + entry.debit, 0);
         const totalCredit = validEntries.reduce((sum, entry) => sum + entry.credit, 0);
 
+        // Safely format date
+        const formattedDate = transactionDate.toISOString().split('T')[0];
+
         const payload: CreateJournalPayload = {
           action: "addNewJournal",
           journal_code: transactionNumber,
-          date: transactionDate.toISOString().split('T')[0],
+          date: formattedDate,
           tag: tag || "General",
           journal_details: journalDetails,
           memo: memo,
