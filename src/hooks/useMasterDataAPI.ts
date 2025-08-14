@@ -279,3 +279,99 @@ export const useCreateJournal = () => {
     error,
   };
 };
+
+export const useEditCOAAccount = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const editCOAAccount = async (payload: any) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const token = getAuthToken();
+
+      const response = await fetch("https://pbw-backend-api.vercel.app/api/dashboard?action=editAccountCOA", {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.error) {
+        throw new Error("API returned unsuccessful response");
+      }
+
+      return result.data;
+    } catch (err) {
+      console.error("Error editing COA account:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to edit COA account";
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    editCOAAccount,
+    loading,
+    error,
+  };
+};
+
+export const useDeleteCOAAccount = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const deleteCOAAccount = async (accountId: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const token = getAuthToken();
+
+      const response = await fetch("https://pbw-backend-api.vercel.app/api/dashboard?action=deleteAccountCOA", {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: accountId }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.error) {
+        throw new Error("API returned unsuccessful response");
+      }
+
+      return result.data;
+    } catch (err) {
+      console.error("Error deleting COA account:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to delete COA account";
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    deleteCOAAccount,
+    loading,
+    error,
+  };
+};

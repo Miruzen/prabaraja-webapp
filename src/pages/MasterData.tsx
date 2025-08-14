@@ -5,16 +5,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCOAAccounts, useJournalTransactionsAPI } from '@/hooks/useMasterDataAPI';
+import { useCOAAccounts, useJournalTransactionsAPI, COAAccount } from '@/hooks/useMasterDataAPI';
 import { CreateCOADialog } from '@/components/masterdata/CreateCOADialog';
 import { CreateJournalDialog } from '@/components/masterdata/CreateJournalDialog';
+import { EditCOADialog } from '@/components/masterdata/EditCOADialog';
+import { DeleteCOADialog } from '@/components/masterdata/DeleteCOADialog';
+import { Pencil, Trash2 } from 'lucide-react';
 
 const MasterData = () => {
   const navigate = useNavigate();
   const [selectedCoaCode, setSelectedCoaCode] = useState<string>('');
   const [showJournalEntries, setShowJournalEntries] = useState(false);
+  const [editingAccount, setEditingAccount] = useState<COAAccount | null>(null);
+  const [deletingAccount, setDeletingAccount] = useState<COAAccount | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   
-  const { data: chartOfAccounts, loading: coaLoading } = useCOAAccounts();
+  const { data: chartOfAccounts, loading: coaLoading, refetch: refetchCOA } = useCOAAccounts();
   const { data: journalTransactions, loading: journalLoading } = useJournalTransactionsAPI(selectedCoaCode);
 
   const formatCurrency = (amount: number) => {
@@ -40,6 +47,24 @@ const MasterData = () => {
       balance += (transactions[i].debit || 0) - (transactions[i].credit || 0);
     }
     return balance;
+  };
+
+  const handleEdit = (account: COAAccount) => {
+    setEditingAccount(account);
+    setEditDialogOpen(true);
+  };
+
+  const handleDelete = (account: COAAccount) => {
+    setDeletingAccount(account);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleEditSuccess = () => {
+    refetchCOA();
+  };
+
+  const handleDeleteSuccess = () => {
+    refetchCOA();
   };
 
   return (
@@ -76,26 +101,27 @@ const MasterData = () => {
 
             <TabsContent value="coa" className="space-y-4">
               <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Code</TableHead>
-                      <TableHead>Account Name</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>User</TableHead>
-                      <TableHead className="text-right">Balance in IDR</TableHead>
-                    </TableRow>
-                  </TableHeader>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Code</TableHead>
+                        <TableHead>Account Name</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>User</TableHead>
+                        <TableHead className="text-right">Balance in IDR</TableHead>
+                        <TableHead className="text-center">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
                   <TableBody>
                     {coaLoading ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8">
+                        <TableCell colSpan={6} className="text-center py-8">
                           Loading...
                         </TableCell>
                       </TableRow>
                     ) : chartOfAccounts?.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8">
+                        <TableCell colSpan={6} className="text-center py-8">
                           No chart of accounts found
                         </TableCell>
                       </TableRow>
@@ -108,6 +134,26 @@ const MasterData = () => {
                           <TableCell>All</TableCell>
                           <TableCell className="text-right font-mono">
                             {formatCurrency(account.entry_balance || 0)}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex items-center justify-center space-x-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleEdit(account)}
+                                className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDelete(account)}
+                                className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))
@@ -204,6 +250,24 @@ const MasterData = () => {
           </Tabs>
         </div>
       </div>
+
+      {/* Edit Dialog */}
+      {editingAccount && (
+        <EditCOADialog
+          account={editingAccount}
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          onSuccess={handleEditSuccess}
+        />
+      )}
+
+      {/* Delete Dialog */}
+      <DeleteCOADialog
+        account={deletingAccount}
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onSuccess={handleDeleteSuccess}
+      />
     </div>
   );
 };
