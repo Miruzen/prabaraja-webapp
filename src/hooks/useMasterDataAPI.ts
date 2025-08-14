@@ -85,17 +85,9 @@ export interface EditCOAAccountPayload {
   action: "editAccountCOA";
   id: string;
   name: string;
-  account_code: string;
-  category: string;
-  level: number;
-  parent_code: string | null;
-  parent_id: string | null;
-  detail_type: string;
-  detail_desc: string | null;
-  tax: string;
-  bank_name: string | null;
-  entry_balance: number;
   description: string;
+  bank_name: string | null;
+  tax: string;
   user_access: string;
   lock_option: boolean;
 }
@@ -108,9 +100,9 @@ export interface EditJournalPayload {
   tag: string;
   journal_details: JournalDetail[];
   memo: string;
+  attachment_url: string | null;
   total_debit: number;
   total_credit: number;
-  attachment_url: string | null;
 }
 
 const getAuthToken = () => {
@@ -538,7 +530,7 @@ export const useLockAccountCOA = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const lockAccountCOA = async (accountId: string, lockStatus: boolean) => {
+  const lockAccountCOA = async (accountCode: string, lockStatus: boolean) => {
     try {
       setLoading(true);
       setError(null);
@@ -553,7 +545,7 @@ export const useLockAccountCOA = () => {
         },
         body: JSON.stringify({ 
           action: "lockAccountCOA",
-          id: accountId,
+          account_code: accountCode,
           lock_option: lockStatus
         }),
       });

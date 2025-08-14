@@ -17,36 +17,20 @@ interface EditCOADialogProps {
 }
 
 interface EditFormData {
-  account_code: string;
   name: string;
-  category: string;
-  level: number;
-  parent_code: string | null;
-  parent_id: string | null;
-  detail_type: string;
-  detail_desc: string;
-  tax: string;
-  bank_name: string | null;
-  entry_balance: number;
   description: string;
+  bank_name: string | null;
+  tax: string;
   user_access: string;
   lock_option: boolean;
 }
 
 export const EditCOADialog = ({ account, open, onOpenChange, onSuccess }: EditCOADialogProps) => {
   const [formData, setFormData] = useState<EditFormData>({
-    account_code: '',
     name: '',
-    category: '',
-    level: 1,
-    parent_code: null,
-    parent_id: null,
-    detail_type: 'Parent Account',
-    detail_desc: '',
+    description: '',
     tax: 'Non-Taxable',
     bank_name: null,
-    entry_balance: 0,
-    description: '',
     user_access: 'All Users',
     lock_option: false
   });
@@ -57,41 +41,20 @@ export const EditCOADialog = ({ account, open, onOpenChange, onSuccess }: EditCO
   useEffect(() => {
     if (account) {
       setFormData({
-        account_code: account.account_code,
         name: account.name,
-        category: account.category,
-        level: account.level,
-        parent_code: account.parent_code,
-        parent_id: account.parent_id,
-        detail_type: account.detail_type,
-        detail_desc: account.detail_desc || '',
+        description: account.description || '',
         tax: account.tax || 'Non-Taxable',
         bank_name: account.bank_name,
-        entry_balance: account.entry_balance || 0,
-        description: account.description || '',
         user_access: account.user_access,
         lock_option: account.lock_option
       });
     }
   }, [account]);
 
-  const formatPriceDisplay = (price: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
-
-  const handlePriceChange = (field: 'entry_balance') => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInputCurrency(e.target.value);
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.account_code || !formData.name || !formData.category) {
+    if (!formData.name) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -101,17 +64,9 @@ export const EditCOADialog = ({ account, open, onOpenChange, onSuccess }: EditCO
         action: "editAccountCOA",
         id: account.id,
         name: formData.name,
-        account_code: formData.account_code,
-        category: formData.category,
-        level: formData.level,
-        parent_code: formData.parent_code,
-        parent_id: formData.parent_id,
-        detail_type: formData.detail_type,
-        detail_desc: formData.detail_desc,
-        tax: formData.tax,
-        bank_name: formData.bank_name,
-        entry_balance: formData.entry_balance,
         description: formData.description,
+        bank_name: formData.bank_name,
+        tax: formData.tax,
         user_access: formData.user_access,
         lock_option: formData.lock_option
       };
@@ -133,17 +88,6 @@ export const EditCOADialog = ({ account, open, onOpenChange, onSuccess }: EditCO
           <DialogTitle>Edit Chart of Account</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="account_code">Account Code <span className="text-red-500">*</span></Label>
-            <Input
-              id="account_code"
-              value={formData.account_code}
-              onChange={(e) => setFormData(prev => ({ ...prev, account_code: e.target.value }))}
-              placeholder="Enter account code"
-              required
-            />
-          </div>
-          
           <div className="space-y-2">
             <Label htmlFor="name">Account Name <span className="text-red-500">*</span></Label>
             <Input
@@ -167,33 +111,52 @@ export const EditCOADialog = ({ account, open, onOpenChange, onSuccess }: EditCO
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="category">Category <span className="text-red-500">*</span></Label>
-            <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
+            <Label htmlFor="bank_name">Bank Name</Label>
+            <Input
+              id="bank_name"
+              value={formData.bank_name || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, bank_name: e.target.value || null }))}
+              placeholder="Enter bank name (optional)"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="tax">Tax</Label>
+            <Select value={formData.tax} onValueChange={(value) => setFormData(prev => ({ ...prev, tax: value }))}>
               <SelectTrigger>
-                <SelectValue placeholder="Select category" />
+                <SelectValue placeholder="Select tax type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Kas & Bank">Kas & Bank</SelectItem>
-                <SelectItem value="Akun Piutang">Akun Piutang</SelectItem>
-                <SelectItem value="Persediaan">Persediaan</SelectItem>
-                <SelectItem value="Aktiva Lancar Lainnya">Aktiva Lancar Lainnya</SelectItem>
-                <SelectItem value="Aktiva Tetap">Aktiva Tetap</SelectItem>
-                <SelectItem value="Hutang">Hutang</SelectItem>
-                <SelectItem value="Modal">Modal</SelectItem>
-                <SelectItem value="Pendapatan">Pendapatan</SelectItem>
-                <SelectItem value="Beban">Beban</SelectItem>
+                <SelectItem value="Non-Taxable">Non-Taxable</SelectItem>
+                <SelectItem value="Taxable">Taxable</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="entry_balance">Balance</Label>
-            <Input
-              id="entry_balance"
-              value={formatPriceDisplay(formData.entry_balance)}
-              onChange={handlePriceChange('entry_balance')}
-              placeholder="Enter balance"
-            />
+            <Label htmlFor="user_access">User Access</Label>
+            <Select value={formData.user_access} onValueChange={(value) => setFormData(prev => ({ ...prev, user_access: value }))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select user access" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All Users">All Users</SelectItem>
+                <SelectItem value="Limited Users">Limited Users</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="lock_option">Lock Option</Label>
+            <Select value={formData.lock_option.toString()} onValueChange={(value) => setFormData(prev => ({ ...prev, lock_option: value === 'true' }))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select lock option" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="false">Unlocked</SelectItem>
+                <SelectItem value="true">Locked</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
