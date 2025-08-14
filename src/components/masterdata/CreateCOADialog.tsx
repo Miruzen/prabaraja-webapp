@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useCreateCOAAccount, type CreateCOAAccountPayload } from '@/hooks/useMasterDataAPI';
+import { useCreateCOAAccount, useCOAAccounts, type CreateCOAAccountPayload } from '@/hooks/useMasterDataAPI';
 import { toast } from 'sonner';
 import { parseInputCurrency } from '@/lib/utils';
 
@@ -33,6 +33,7 @@ export const CreateCOADialog = ({ children }: CreateCOADialogProps) => {
   });
 
   const { createCOAAccount, loading: isCreating } = useCreateCOAAccount();
+  const { data: existingAccounts } = useCOAAccounts();
 
   // Category code mapping for auto-generation
   const categoryCodeMap: Record<string, string> = {
@@ -77,6 +78,26 @@ export const CreateCOADialog = ({ children }: CreateCOADialogProps) => {
       return;
     }
 
+    // Check for duplicate account code
+    const isDuplicateCode = existingAccounts?.some(
+      account => account.account_code.toLowerCase() === formData.account_code.toLowerCase()
+    );
+    
+    if (isDuplicateCode) {
+      toast.error('Account code already exists. Please use a different account code.');
+      return;
+    }
+
+    // Check for duplicate account name
+    const isDuplicateName = existingAccounts?.some(
+      account => account.name.toLowerCase() === formData.name.toLowerCase()
+    );
+    
+    if (isDuplicateName) {
+      toast.error('Account name already exists. Please use a different account name.');
+      return;
+    }
+
     try {
       const payload: CreateCOAAccountPayload = {
         action: "addNewAccountCOA",
@@ -95,6 +116,9 @@ export const CreateCOADialog = ({ children }: CreateCOADialogProps) => {
         user_access: formData.user_access,
         lock_option: formData.lock_option
       };
+
+      // Debug payload before sending
+      console.log('COA Creation Payload:', JSON.stringify(payload, null, 2));
 
       await createCOAAccount(payload);
       

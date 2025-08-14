@@ -154,6 +154,9 @@ const NoteJournal = () => {
           attachment_url: null,
         };
 
+        // Debug payload before sending
+        console.log('Journal Payload:', JSON.stringify(payload, null, 2));
+
         await createJournal(payload);
 
         toast({
@@ -267,7 +270,7 @@ const NoteJournal = () => {
                           <SelectValue placeholder="Select account" />
                         </SelectTrigger>
                         <SelectContent>
-                          {chartOfAccounts?.map((account) => (
+                          {chartOfAccounts?.filter(account => account.level === 3).map((account) => (
                             <SelectItem key={account.id} value={account.account_code}>
                               {account.account_code} - {account.name}
                             </SelectItem>
