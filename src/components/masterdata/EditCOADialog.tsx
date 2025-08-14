@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { parseInputCurrency } from '@/lib/utils';
-import { COAAccount } from '@/hooks/useMasterDataAPI';
+import { COAAccount, EditCOAAccountPayload, useEditCOAAccount } from '@/hooks/useMasterDataAPI';
 
 interface EditCOADialogProps {
   account: COAAccount;
@@ -17,32 +17,60 @@ interface EditCOADialogProps {
 }
 
 interface EditFormData {
-  number: string;
+  account_code: string;
+  name: string;
+  category: string;
+  level: number;
+  parent_code: string | null;
+  parent_id: string | null;
+  detail_type: string;
+  detail_desc: string;
+  tax: string;
+  bank_name: string | null;
+  entry_balance: number;
   description: string;
-  account_type: string;
-  balance: number;
-  detail_description: string;
+  user_access: string;
+  lock_option: boolean;
 }
 
 export const EditCOADialog = ({ account, open, onOpenChange, onSuccess }: EditCOADialogProps) => {
   const [formData, setFormData] = useState<EditFormData>({
-    number: '',
+    account_code: '',
+    name: '',
+    category: '',
+    level: 1,
+    parent_code: null,
+    parent_id: null,
+    detail_type: 'Parent Account',
+    detail_desc: '',
+    tax: 'Non-Taxable',
+    bank_name: null,
+    entry_balance: 0,
     description: '',
-    account_type: '',
-    balance: 0,
-    detail_description: ''
+    user_access: 'All Users',
+    lock_option: false
   });
-  const [isUpdating, setIsUpdating] = useState(false);
+  
+  const { editCOAAccount, loading: isUpdating } = useEditCOAAccount();
 
   // Initialize form data when account changes
   useEffect(() => {
     if (account) {
       setFormData({
-        number: account.account_code,
-        description: account.name,
-        account_type: account.category,
-        balance: account.entry_balance || 0,
-        detail_description: account.description || ''
+        account_code: account.account_code,
+        name: account.name,
+        category: account.category,
+        level: account.level,
+        parent_code: account.parent_code,
+        parent_id: account.parent_id,
+        detail_type: account.detail_type,
+        detail_desc: account.detail_desc || '',
+        tax: account.tax || 'Non-Taxable',
+        bank_name: account.bank_name,
+        entry_balance: account.entry_balance || 0,
+        description: account.description || '',
+        user_access: account.user_access,
+        lock_option: account.lock_option
       });
     }
   }, [account]);
@@ -55,71 +83,46 @@ export const EditCOADialog = ({ account, open, onOpenChange, onSuccess }: EditCO
     }).format(price);
   };
 
-  const handlePriceChange = (field: 'balance') => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePriceChange = (field: 'entry_balance') => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInputCurrency(e.target.value);
     setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const updateCOAAccount = async (payload: any) => {
-    try {
-      const authDataRaw = localStorage.getItem("sb-xwfkrjtqcqmmpclioakd-auth-token");
-      if (!authDataRaw) {
-        throw new Error("No access token found");
-      }
-      const authData = JSON.parse(authDataRaw);
-      const token = authData.access_token;
-
-      const response = await fetch("https://pbw-backend-api.vercel.app/api/dashboard?action=editAccountCOA", {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ...payload, id: account.id }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      if (result.error) {
-        throw new Error("API returned unsuccessful response");
-      }
-
-      return result.data;
-    } catch (error) {
-      console.error("Error updating COA account:", error);
-      throw error;
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.number || !formData.description || !formData.account_type) {
+    if (!formData.account_code || !formData.name || !formData.category) {
       toast.error('Please fill in all required fields');
       return;
     }
 
     try {
-      setIsUpdating(true);
-      
-      await updateCOAAccount({
-        number: parseInt(formData.number),
-        account_type: formData.account_type,
+      const payload: EditCOAAccountPayload = {
+        action: "editAccountCOA",
+        id: account.id,
+        name: formData.name,
+        account_code: formData.account_code,
+        category: formData.category,
+        level: formData.level,
+        parent_code: formData.parent_code,
+        parent_id: formData.parent_id,
+        detail_type: formData.detail_type,
+        detail_desc: formData.detail_desc,
+        tax: formData.tax,
+        bank_name: formData.bank_name,
+        entry_balance: formData.entry_balance,
         description: formData.description,
-        balance: formData.balance,
-        detail_description: formData.detail_description
-      });
+        user_access: formData.user_access,
+        lock_option: formData.lock_option
+      };
+      
+      await editCOAAccount(payload);
       
       toast.success('Chart of Account updated successfully');
       onOpenChange(false);
       onSuccess();
     } catch (error) {
       toast.error('Failed to update account');
-    } finally {
-      setIsUpdating(false);
     }
   };
 
@@ -131,41 +134,41 @@ export const EditCOADialog = ({ account, open, onOpenChange, onSuccess }: EditCO
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="number">Account Code <span className="text-red-500">*</span></Label>
+            <Label htmlFor="account_code">Account Code <span className="text-red-500">*</span></Label>
             <Input
-              id="number"
-              value={formData.number}
-              onChange={(e) => setFormData(prev => ({ ...prev, number: e.target.value }))}
+              id="account_code"
+              value={formData.account_code}
+              onChange={(e) => setFormData(prev => ({ ...prev, account_code: e.target.value }))}
               placeholder="Enter account code"
               required
             />
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="description">Account Name <span className="text-red-500">*</span></Label>
+            <Label htmlFor="name">Account Name <span className="text-red-500">*</span></Label>
             <Input
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               placeholder="Enter account name"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="detail_description">Description</Label>
+            <Label htmlFor="description">Description</Label>
             <Textarea
-              id="detail_description"
-              value={formData.detail_description}
-              onChange={(e) => setFormData(prev => ({ ...prev, detail_description: e.target.value }))}
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               placeholder="Enter description (optional)"
               rows={3}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="account_type">Category <span className="text-red-500">*</span></Label>
-            <Select value={formData.account_type} onValueChange={(value) => setFormData(prev => ({ ...prev, account_type: value }))}>
+            <Label htmlFor="category">Category <span className="text-red-500">*</span></Label>
+            <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
               <SelectTrigger>
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
@@ -184,11 +187,11 @@ export const EditCOADialog = ({ account, open, onOpenChange, onSuccess }: EditCO
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="balance">Balance</Label>
+            <Label htmlFor="entry_balance">Balance</Label>
             <Input
-              id="balance"
-              value={formatPriceDisplay(formData.balance)}
-              onChange={handlePriceChange('balance')}
+              id="entry_balance"
+              value={formatPriceDisplay(formData.entry_balance)}
+              onChange={handlePriceChange('entry_balance')}
               placeholder="Enter balance"
             />
           </div>

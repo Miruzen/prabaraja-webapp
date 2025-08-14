@@ -43,19 +43,74 @@ export interface JournalApiResponse {
   data: JournalTransaction[];
 }
 
-export interface CreateCOAPayload {
-  number: number;
-  account_type: string;
+// Updated payload interfaces to match backend expectations
+export interface CreateCOAAccountPayload {
+  action: "addNewAccountCOA";
+  name: string;
+  account_code: string;
+  category: string;
+  level: number;
+  parent_code: string | null;
+  parent_id: string | null;
+  detail_type: string;
+  detail_desc: string | null;
+  tax: string;
+  bank_name: string | null;
+  entry_balance: number;
   description: string;
-  balance: number;
+  user_access: string;
+  lock_option: boolean;
+}
+
+export interface JournalDetail {
+  account_code: string;
+  debit: number;
+  credit: number;
+  description: string;
 }
 
 export interface CreateJournalPayload {
-  coa_code: string;
+  action: "addNewJournal";
+  journal_code: string;
+  date: string;
+  tag: string;
+  journal_details: JournalDetail[];
+  memo: string;
+  total_debit: number;
+  total_credit: number;
+  attachment_url: string | null;
+}
+
+export interface EditCOAAccountPayload {
+  action: "editAccountCOA";
+  id: string;
+  name: string;
+  account_code: string;
+  category: string;
+  level: number;
+  parent_code: string | null;
+  parent_id: string | null;
+  detail_type: string;
+  detail_desc: string | null;
+  tax: string;
+  bank_name: string | null;
+  entry_balance: number;
   description: string;
-  transaction_date: string;
-  credit: number;
-  debit: number;
+  user_access: string;
+  lock_option: boolean;
+}
+
+export interface EditJournalPayload {
+  action: "editJournal";
+  id: string;
+  journal_code: string;
+  date: string;
+  tag: string;
+  journal_details: JournalDetail[];
+  memo: string;
+  total_debit: number;
+  total_credit: number;
+  attachment_url: string | null;
 }
 
 const getAuthToken = () => {
@@ -188,14 +243,14 @@ export const useCreateCOAAccount = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const createCOAAccount = async (payload: CreateCOAPayload) => {
+  const createCOAAccount = async (payload: CreateCOAAccountPayload) => {
     try {
       setLoading(true);
       setError(null);
 
       const token = getAuthToken();
 
-      const response = await fetch("https://pbw-backend-api.vercel.app/api/dashboard?action=addNewAccountCOA", {
+      const response = await fetch("https://pbw-backend-api.vercel.app/api/dashboard", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -243,7 +298,7 @@ export const useCreateJournal = () => {
 
       const token = getAuthToken();
 
-      const response = await fetch("https://pbw-backend-api.vercel.app/api/dashboard?action=AddNewJournal", {
+      const response = await fetch("https://pbw-backend-api.vercel.app/api/dashboard", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -284,14 +339,14 @@ export const useEditCOAAccount = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const editCOAAccount = async (payload: any) => {
+  const editCOAAccount = async (payload: EditCOAAccountPayload) => {
     try {
       setLoading(true);
       setError(null);
 
       const token = getAuthToken();
 
-      const response = await fetch("https://pbw-backend-api.vercel.app/api/dashboard?action=editAccountCOA", {
+      const response = await fetch("https://pbw-backend-api.vercel.app/api/dashboard", {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -339,13 +394,16 @@ export const useDeleteCOAAccount = () => {
 
       const token = getAuthToken();
 
-      const response = await fetch("https://pbw-backend-api.vercel.app/api/dashboard?action=deleteAccountCOA", {
+      const response = await fetch("https://pbw-backend-api.vercel.app/api/dashboard", {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ id: accountId }),
+        body: JSON.stringify({ 
+          action: "deleteAccountCOA",
+          id: accountId 
+        }),
       });
 
       if (!response.ok) {
@@ -371,6 +429,158 @@ export const useDeleteCOAAccount = () => {
 
   return {
     deleteCOAAccount,
+    loading,
+    error,
+  };
+};
+
+// New missing API functions
+export const useEditJournal = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const editJournal = async (payload: EditJournalPayload) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const token = getAuthToken();
+
+      const response = await fetch("https://pbw-backend-api.vercel.app/api/dashboard", {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.error) {
+        throw new Error("API returned unsuccessful response");
+      }
+
+      return result.data;
+    } catch (err) {
+      console.error("Error editing journal:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to edit journal";
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    editJournal,
+    loading,
+    error,
+  };
+};
+
+export const useDeleteJournal = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const deleteJournal = async (journalId: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const token = getAuthToken();
+
+      const response = await fetch("https://pbw-backend-api.vercel.app/api/dashboard", {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          action: "deleteJournal",
+          id: journalId 
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.error) {
+        throw new Error("API returned unsuccessful response");
+      }
+
+      return result.data;
+    } catch (err) {
+      console.error("Error deleting journal:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to delete journal";
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    deleteJournal,
+    loading,
+    error,
+  };
+};
+
+export const useLockAccountCOA = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const lockAccountCOA = async (accountId: string, lockStatus: boolean) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const token = getAuthToken();
+
+      const response = await fetch("https://pbw-backend-api.vercel.app/api/dashboard", {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          action: "lockAccountCOA",
+          id: accountId,
+          lock_option: lockStatus
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.error) {
+        throw new Error("API returned unsuccessful response");
+      }
+
+      return result.data;
+    } catch (err) {
+      console.error("Error locking/unlocking COA account:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to lock/unlock COA account";
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    lockAccountCOA,
     loading,
     error,
   };

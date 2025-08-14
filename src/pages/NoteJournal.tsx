@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Paperclip, Calendar, ArrowLeft, Trash2 } from "lucide-react";
-import { useCOAAccounts, useCreateJournal } from '@/hooks/useMasterDataAPI';
+import { useCOAAccounts, useCreateJournal, type CreateJournalPayload, type JournalDetail } from '@/hooks/useMasterDataAPI';
 import { formatInputCurrency, parseInputCurrency, formatCurrency } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -128,23 +128,39 @@ const NoteJournal = () => {
     }
 
     try {
-      // Create journal entries using the API
-      for (const entry of entries) {
-        if (entry.debit > 0 || entry.credit > 0) {
-          await createJournal({
-            coa_code: entry.account,
-            description: entry.description,
-            transaction_date: transactionDate.toISOString().split('T')[0],
-            credit: entry.credit,
-            debit: entry.debit,
-          });
-        }
-      }
+      // Create journal entries using the new API structure
+      const validEntries = entries.filter(entry => entry.debit > 0 || entry.credit > 0);
+      
+      if (validEntries.length > 0) {
+        const journalDetails: JournalDetail[] = validEntries.map(entry => ({
+          account_code: entry.account,
+          debit: entry.debit,
+          credit: entry.credit,
+          description: entry.description,
+        }));
 
-      toast({
-        title: "Success",
-        description: "Journal entry created successfully",
-      });
+        const totalDebit = validEntries.reduce((sum, entry) => sum + entry.debit, 0);
+        const totalCredit = validEntries.reduce((sum, entry) => sum + entry.credit, 0);
+
+        const payload: CreateJournalPayload = {
+          action: "addNewJournal",
+          journal_code: transactionNumber,
+          date: transactionDate.toISOString().split('T')[0],
+          tag: tag || "General",
+          journal_details: journalDetails,
+          memo: memo,
+          total_debit: totalDebit,
+          total_credit: totalCredit,
+          attachment_url: null,
+        };
+
+        await createJournal(payload);
+
+        toast({
+          title: "Success",
+          description: "Journal entry created successfully",
+        });
+      }
 
       // Reset form
       setEntries([{ id: '1', account: '', description: '', debit: 0, credit: 0 }]);

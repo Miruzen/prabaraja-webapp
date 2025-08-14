@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useCreateCOAAccount } from '@/hooks/useMasterDataAPI';
+import { useCreateCOAAccount, type CreateCOAAccountPayload } from '@/hooks/useMasterDataAPI';
 import { toast } from 'sonner';
 import { parseInputCurrency } from '@/lib/utils';
 
@@ -16,11 +16,20 @@ interface CreateCOADialogProps {
 export const CreateCOADialog = ({ children }: CreateCOADialogProps) => {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
-    number: '',
+    account_code: '',
+    name: '',
+    category: '',
+    level: 1,
+    parent_code: null as string | null,
+    parent_id: null as string | null,
+    detail_type: 'Parent Account',
+    detail_desc: '',
+    tax: 'Non-Taxable',
+    bank_name: null as string | null,
+    entry_balance: 0,
     description: '',
-    account_type: '',
-    balance: 0,
-    detail_description: ''
+    user_access: 'All Users',
+    lock_option: false
   });
 
   const { createCOAAccount, loading: isCreating } = useCreateCOAAccount();
@@ -40,12 +49,12 @@ export const CreateCOADialog = ({ children }: CreateCOADialogProps) => {
 
   // Auto-generate account code when category changes
   useEffect(() => {
-    if (formData.account_type && categoryCodeMap[formData.account_type]) {
-      const baseCode = parseInt(categoryCodeMap[formData.account_type]);
+    if (formData.category && categoryCodeMap[formData.category]) {
+      const baseCode = parseInt(categoryCodeMap[formData.category]);
       const suggestedCode = (baseCode + 1).toString();
-      setFormData(prev => ({ ...prev, number: suggestedCode }));
+      setFormData(prev => ({ ...prev, account_code: suggestedCode }));
     }
-  }, [formData.account_type]);
+  }, [formData.category]);
 
   const formatPriceDisplay = (price: number) => {
     return new Intl.NumberFormat("id-ID", {
@@ -57,29 +66,57 @@ export const CreateCOADialog = ({ children }: CreateCOADialogProps) => {
 
   const handleBalanceChange = (value: string) => {
     const numericValue = parseInputCurrency(value);
-    setFormData(prev => ({ ...prev, balance: numericValue }));
+    setFormData(prev => ({ ...prev, entry_balance: numericValue }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.number || !formData.description || !formData.account_type) {
+    if (!formData.account_code || !formData.name || !formData.category) {
       toast.error('Please fill in all required fields');
       return;
     }
 
     try {
-      await createCOAAccount({
-        number: parseInt(formData.number),
+      const payload: CreateCOAAccountPayload = {
+        action: "addNewAccountCOA",
+        name: formData.name,
+        account_code: formData.account_code,
+        category: formData.category,
+        level: formData.level,
+        parent_code: formData.parent_code,
+        parent_id: formData.parent_id,
+        detail_type: formData.detail_type,
+        detail_desc: formData.detail_desc || null,
+        tax: formData.tax,
+        bank_name: formData.bank_name,
+        entry_balance: formData.entry_balance,
         description: formData.description,
-        account_type: formData.account_type,
-        balance: formData.balance
-      });
+        user_access: formData.user_access,
+        lock_option: formData.lock_option
+      };
+
+      await createCOAAccount(payload);
       
       toast.success('Chart of Account created successfully');
       
       setOpen(false);
-      setFormData({ number: '', description: '', account_type: '', balance: 0, detail_description: '' });
+      setFormData({
+        account_code: '',
+        name: '',
+        category: '',
+        level: 1,
+        parent_code: null,
+        parent_id: null,
+        detail_type: 'Parent Account',
+        detail_desc: '',
+        tax: 'Non-Taxable',
+        bank_name: null,
+        entry_balance: 0,
+        description: '',
+        user_access: 'All Users',
+        lock_option: false
+      });
       
       // Refresh the page to show new data
       window.location.reload();
@@ -100,41 +137,41 @@ export const CreateCOADialog = ({ children }: CreateCOADialogProps) => {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="number">Account Code <span className="text-red-500">*</span></Label>
+            <Label htmlFor="account_code">Account Code <span className="text-red-500">*</span></Label>
             <Input
-              id="number"
-              value={formData.number}
-              onChange={(e) => setFormData(prev => ({ ...prev, number: e.target.value }))}
+              id="account_code"
+              value={formData.account_code}
+              onChange={(e) => setFormData(prev => ({ ...prev, account_code: e.target.value }))}
               placeholder="Enter account code"
               required
             />
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="description">Account Name <span className="text-red-500">*</span></Label>
+            <Label htmlFor="name">Account Name <span className="text-red-500">*</span></Label>
             <Input
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               placeholder="Enter account name"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="detail_description">Description</Label>
+            <Label htmlFor="description">Description</Label>
             <Textarea
-              id="detail_description"
-              value={formData.detail_description}
-              onChange={(e) => setFormData(prev => ({ ...prev, detail_description: e.target.value }))}
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               placeholder="Enter description (optional)"
               rows={3}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="account_type">Category <span className="text-red-500">*</span></Label>
-            <Select value={formData.account_type} onValueChange={(value) => setFormData(prev => ({ ...prev, account_type: value }))}>
+            <Label htmlFor="category">Category <span className="text-red-500">*</span></Label>
+            <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
               <SelectTrigger>
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
@@ -153,12 +190,12 @@ export const CreateCOADialog = ({ children }: CreateCOADialogProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="balance">Initial Balance (IDR)</Label>
+            <Label htmlFor="entry_balance">Initial Balance (IDR)</Label>
             <Input
-              id="balance"
+              id="entry_balance"
               type="text"
               inputMode="numeric"
-              value={formatPriceDisplay(formData.balance)}
+              value={formatPriceDisplay(formData.entry_balance)}
               onChange={(e) => handleBalanceChange(e.target.value)}
               placeholder="0"
             />

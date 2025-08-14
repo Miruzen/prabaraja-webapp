@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCreateJournal, type COAAccount } from '@/hooks/useMasterDataAPI';
+import { useCreateJournal, type COAAccount, type CreateJournalPayload, type JournalDetail } from '@/hooks/useMasterDataAPI';
 
 interface CreateJournalDialogProps {
   children: React.ReactNode;
@@ -15,9 +15,13 @@ interface CreateJournalDialogProps {
 export function CreateJournalDialog({ children, coaAccounts }: CreateJournalDialogProps) {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
-    coa_code: '',
+    journal_code: `JRNL-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9999) + 1).padStart(4, '0')}`,
+    date: new Date().toISOString().split('T')[0],
+    tag: '',
+    memo: '',
+    attachment_url: '',
+    account_code: '',
     description: '',
-    transaction_date: new Date().toISOString().split('T')[0],
     debit: '0',
     credit: '0',
   });
@@ -43,7 +47,7 @@ export function CreateJournalDialog({ children, coaAccounts }: CreateJournalDial
   };
 
   const handleSubmit = async () => {
-    if (!formData.coa_code || !formData.description || !formData.transaction_date) {
+    if (!formData.account_code || !formData.description || !formData.date) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -62,20 +66,37 @@ export function CreateJournalDialog({ children, coaAccounts }: CreateJournalDial
     }
 
     try {
-      await createJournal({
-        coa_code: formData.coa_code,
-        description: formData.description,
-        transaction_date: formData.transaction_date,
+      const journalDetail: JournalDetail = {
+        account_code: formData.account_code,
         debit: debitAmount,
         credit: creditAmount,
-      });
+        description: formData.description,
+      };
+
+      const payload: CreateJournalPayload = {
+        action: "addNewJournal",
+        journal_code: formData.journal_code,
+        date: formData.date,
+        tag: formData.tag || "General",
+        journal_details: [journalDetail],
+        memo: formData.memo,
+        total_debit: debitAmount,
+        total_credit: creditAmount,
+        attachment_url: formData.attachment_url || null,
+      };
+
+      await createJournal(payload);
       
       toast.success('Journal entry created successfully');
       setOpen(false);
       setFormData({
-        coa_code: '',
+        journal_code: `JRNL-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9999) + 1).padStart(4, '0')}`,
+        date: new Date().toISOString().split('T')[0],
+        tag: '',
+        memo: '',
+        attachment_url: '',
+        account_code: '',
         description: '',
-        transaction_date: new Date().toISOString().split('T')[0],
         debit: '0',
         credit: '0',
       });
@@ -102,8 +123,35 @@ export function CreateJournalDialog({ children, coaAccounts }: CreateJournalDial
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="coa_code">COA Account</Label>
-            <Select value={formData.coa_code} onValueChange={(value) => handleInputChange('coa_code', value)}>
+            <Label htmlFor="journal_code">Journal Code</Label>
+            <Input
+              id="journal_code"
+              value={formData.journal_code}
+              onChange={(e) => handleInputChange('journal_code', e.target.value)}
+              placeholder="Journal code"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="date">Date</Label>
+            <Input
+              id="date"
+              type="date"
+              value={formData.date}
+              onChange={(e) => handleInputChange('date', e.target.value)}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="tag">Tag</Label>
+            <Input
+              id="tag"
+              value={formData.tag}
+              onChange={(e) => handleInputChange('tag', e.target.value)}
+              placeholder="Enter tag (e.g., Monthly Closing)"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="account_code">COA Account</Label>
+            <Select value={formData.account_code} onValueChange={(value) => handleInputChange('account_code', value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select COA Account" />
               </SelectTrigger>
@@ -125,15 +173,6 @@ export function CreateJournalDialog({ children, coaAccounts }: CreateJournalDial
               placeholder="Enter description"
             />
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="transaction_date">Transaction Date</Label>
-            <Input
-              id="transaction_date"
-              type="date"
-              value={formData.transaction_date}
-              onChange={(e) => handleInputChange('transaction_date', e.target.value)}
-            />
-          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label htmlFor="debit">Debit Amount</Label>
@@ -153,6 +192,15 @@ export function CreateJournalDialog({ children, coaAccounts }: CreateJournalDial
                 placeholder="0"
               />
             </div>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="memo">Memo</Label>
+            <Input
+              id="memo"
+              value={formData.memo}
+              onChange={(e) => handleInputChange('memo', e.target.value)}
+              placeholder="Enter memo (optional)"
+            />
           </div>
         </div>
         <DialogFooter>
