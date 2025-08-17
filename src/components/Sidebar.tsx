@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRoleAccess } from '@/hooks/useRoleAccess';
+import { useCurrentUserProfile } from '@/hooks/useProfiles';
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -38,7 +38,7 @@ const NavItem = ({ icon, label, href, isActive }: NavItemProps) => (
 export const Sidebar = () => {
   const currentPath = window.location.pathname;
   const { signOut, user } = useAuth();
-  const { profile } = useRoleAccess();
+  const { data: profile, isLoading: profileLoading, error: profileError } = useCurrentUserProfile();
 
   const handleLogout = async () => {
     await signOut();
@@ -63,12 +63,24 @@ export const Sidebar = () => {
       {/* User info section */}
       {user && (
         <div className="p-4 border-b border-sidebar-border">
-          {profile?.company_logo ? (
+          {profileLoading ? (
+            <div className="flex items-center justify-center p-2">
+              <div className="animate-pulse bg-sidebar-hover rounded h-12 w-24"></div>
+            </div>
+          ) : profile?.company_logo ? (
             <div className="flex items-center justify-center p-2">
               <img 
                 src={profile.company_logo} 
                 alt="Company Logo" 
                 className="max-h-12 max-w-full object-contain"
+                onError={(e) => {
+                  console.error('Failed to load company logo:', profile.company_logo);
+                  console.error('Profile data:', profile);
+                  e.currentTarget.style.display = 'none';
+                }}
+                onLoad={() => {
+                  console.log('Company logo loaded successfully:', profile.company_logo);
+                }}
               />
             </div>
           ) : (
@@ -79,6 +91,11 @@ export const Sidebar = () => {
               <div className="text-sm font-medium text-sidebar-text truncate">
                 {profile?.name || user.user_metadata?.name || user.email}
               </div>
+              {profileError && (
+                <div className="text-xs text-red-500 mt-1">
+                  Profile error: {profileError.message}
+                </div>
+              )}
             </>
           )}
         </div>

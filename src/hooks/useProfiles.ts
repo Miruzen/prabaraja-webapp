@@ -109,28 +109,49 @@ export const useUpdateProfileName = () => {
   });
 };
 
-// Hook to get current user profile
+// Hook to get current user profile with enhanced debugging
 export const useCurrentUserProfile = () => {
   const { user } = useAuth();
 
   return useQuery({
     queryKey: ['profile', user?.id],
     queryFn: async () => {
-      if (!user?.id) return null;
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching current user profile:', error);
-        throw error;
+      if (!user?.id) {
+        console.warn('No user ID available for profile fetch');
+        return null;
       }
 
-      return data as UserProfile | null;
+      console.log('Fetching profile for user:', user.id);
+
+      // Try using the security definer function first
+      const { data: functionData, error: functionError } = await supabase
+        .rpc('get_current_user_profile');
+
+      if (functionError) {
+        console.error('Error fetching profile via function:', functionError);
+        
+        // Fallback to direct table query
+        console.log('Attempting fallback to direct table query...');
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error fetching current user profile via direct query:', error);
+          throw error;
+        }
+
+        console.log('Profile data from direct query:', data);
+        return data as UserProfile | null;
+      }
+
+      console.log('Profile data from function:', functionData);
+      return functionData?.[0] as UserProfile | null;
     },
     enabled: !!user?.id,
+    retry: 1,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };

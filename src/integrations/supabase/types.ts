@@ -1115,6 +1115,18 @@ export type Database = {
           id: string
         }[]
       }
+      get_current_user_profile: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          company_logo: string
+          created_at: string
+          email: string
+          id: string
+          name: string
+          role: string
+          updated_at: string
+        }[]
+      }
       update_offer: {
         Args: {
           p_date: string
