@@ -48,7 +48,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({ products }) => {
   const deleteProductMutation = useDeleteProduct();
 
   const handleEdit = (product: ProductWithId) => {
-    navigate(`/add-product?edit=${product.id}`);
+    navigate(`/edit-product/${product.id}`);
   };
 
   const handleDeleteClick = (productId: string) => {

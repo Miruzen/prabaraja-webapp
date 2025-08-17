@@ -17,6 +17,7 @@ import Purchases from "./pages/Purchases";
 import Sales from "./pages/Sales";
 import Products from "./pages/Products";
 import AddProduct from "./pages/AddProduct";
+import EditProduct from "./pages/EditProduct";
 import AddWarehouse from "./pages/AddWarehouse";
 import AdjustStock from "./pages/AdjustStock";
 import Contacts from "./pages/Contacts";
@@ -96,6 +97,12 @@ function App() {
               <Route path="/add-product" element={
                 <ProtectedRoute>
                   <AddProduct />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/edit-product/:id" element={
+                <ProtectedRoute>
+                  <EditProduct />
                 </ProtectedRoute>
               } />
               
