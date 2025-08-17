@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProducts, useUpdateProduct } from "@/hooks/useProducts";
 import { useProductCategories } from "@/hooks/useProductCategories";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 
 const EditProduct = () => {
   const { id } = useParams<{ id: string }>();
@@ -133,12 +133,20 @@ const EditProduct = () => {
     <div className="flex h-screen bg-background overflow-hidden">
       <Sidebar />
       <div className="flex-1 overflow-auto">
-        <div className="p-6 max-w-2xl mx-auto">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold">Edit Product</h1>
-            <p className="text-muted-foreground">Update product information</p>
+        <div className="bg-gradient-to-b from-[#818CF8] to-[#C084FC] p-6 flex items-center gap-4">
+          <button
+            onClick={() => navigate("/products")}
+            className="text-white hover:bg-white/10 rounded-full p-2 mr-4"
+            aria-label="Back to Products"
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <div>
+            <h2 className="text-2xl font-semibold text-white">Edit Product</h2>
+            <p className="text-white/80">Update product information</p>
           </div>
-
+        </div>
+        <div className="p-6 max-w-2xl mx-auto">
           <Card>
             <CardHeader>
               <CardTitle>Product Details</CardTitle>
