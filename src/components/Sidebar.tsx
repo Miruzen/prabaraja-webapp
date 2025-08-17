@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCurrentUserProfile } from '@/hooks/useProfiles';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -38,7 +38,7 @@ const NavItem = ({ icon, label, href, isActive }: NavItemProps) => (
 export const Sidebar = () => {
   const currentPath = window.location.pathname;
   const { signOut, user } = useAuth();
-  const { data: profile } = useCurrentUserProfile();
+  const { profile } = useRoleAccess();
 
   const handleLogout = async () => {
     await signOut();
