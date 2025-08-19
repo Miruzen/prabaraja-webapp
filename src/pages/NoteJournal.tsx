@@ -283,7 +283,7 @@ const NoteJournal = () => {
                           <SelectValue placeholder="Select account" />
                         </SelectTrigger>
                         <SelectContent>
-                          {chartOfAccounts?.filter(account => account.level === 3).map((account) => (
+                          {chartOfAccounts?.filter(account => [1, 2, 3].includes(account.level)).map((account) => (
                             <SelectItem key={account.id} value={account.account_code}>
                               {account.account_code} - {account.name}
                             </SelectItem>
