@@ -370,10 +370,29 @@ export function PurchaseContent() {
           });
           break;
         case "offer":
-          await updateOfferMutation.mutateAsync({
-            id,
-            updates: { status: "completed" }
-          });
+          // When an offer is approved, create a new request with pending status
+          const offerToApprove = allPurchases.find(p => p.id === id) as OfferPurchase;
+          if (offerToApprove) {
+            // Create a new request based on the approved offer
+            await createRequestMutation.mutateAsync({
+              number: Math.floor(Math.random() * 1000000), // Generate new number
+              type: "request",
+              date: new Date().toISOString().split('T')[0],
+              due_date: offerToApprove.dueDate?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
+              status: "pending",
+              tags: offerToApprove.tags,
+              items: offerToApprove.items,
+              grand_total: offerToApprove.amount,
+              requested_by: "System",
+              urgency: "Medium"
+            });
+            
+            // Update the original offer status to completed
+            await updateOfferMutation.mutateAsync({
+              id,
+              updates: { status: "completed" }
+            });
+          }
           break;
         case "order":
           await updateOrderMutation.mutateAsync({

@@ -144,7 +144,6 @@ export function TransactionsTable({
           />
         );
       case "requests":
-      case "approval":
         const requests = filteredTransactions.filter(isRequest);
         console.log('Requests to render:', requests.length);
         return (
@@ -152,8 +151,18 @@ export function TransactionsTable({
             requests={requests}
             onDelete={handleDelete}
             onEdit={handleEdit}
-            onApprove={activeTab === "approval" ? onApproveTransaction : undefined}
-            onReject={activeTab === "approval" ? onRejectTransaction : undefined}
+          />
+        );
+      case "approval":
+        const offersForApproval = filteredTransactions.filter(isOffer);
+        console.log('Offers for approval to render:', offersForApproval.length);
+        return (
+          <OffersTable
+            offers={offersForApproval}
+            onDelete={handleDelete}
+            onEdit={handleEdit}
+            onApprove={onApproveTransaction}
+            onReject={onRejectTransaction}
           />
         );
       default:

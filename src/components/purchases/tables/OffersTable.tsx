@@ -1,6 +1,6 @@
     import { useState } from "react";
     import { format } from "date-fns";
-    import { Circle, MoreVertical, Edit, Trash } from "lucide-react";
+    import { Circle, MoreVertical, Edit, Trash, Check, X } from "lucide-react";
     import { Link } from "react-router-dom";
     import {
     Table,
@@ -25,13 +25,21 @@
     AlertDialogTitle,
     } from "@/components/ui/alert-dialog";
 
-    interface OffersTableProps {
-    offers: OfferPurchase[];
-    onDelete: (id: string) => void;
-    onEdit: (id: string) => void;
-    }
+interface OffersTableProps {
+  offers: OfferPurchase[];
+  onDelete: (id: string) => void;
+  onEdit: (id: string) => void;
+  onApprove?: (id: string) => void;
+  onReject?: (id: string) => void;
+}
 
-    export function OffersTable({ offers, onDelete, onEdit }: OffersTableProps) {
+export function OffersTable({ 
+  offers, 
+  onDelete, 
+  onEdit,
+  onApprove,
+  onReject
+}: OffersTableProps) {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [offerToDelete, setOfferToDelete] = useState<string | null>(null);
 
@@ -120,10 +128,28 @@
                         </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
-                        <DropdownMenuItem onClick={() => onEdit(offer.id)}>
+                          {offer.status === "pending" && onApprove && onReject && (
+                            <>
+                              <DropdownMenuItem 
+                                onClick={() => onApprove(offer.id)}
+                                className="text-green-600"
+                              >
+                                <Check className="mr-2 h-4 w-4" />
+                                Approve
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => onReject(offer.id)}
+                                className="text-red-600"
+                              >
+                                <X className="mr-2 h-4 w-4" />
+                                Reject
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                          <DropdownMenuItem onClick={() => onEdit(offer.id)}>
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
-                        </DropdownMenuItem>
+                          </DropdownMenuItem>
                         <DropdownMenuItem 
                             onClick={() => handleDeleteClick(offer.id)}
                             className="text-red-600"
