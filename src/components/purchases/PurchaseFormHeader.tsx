@@ -1,4 +1,4 @@
-import { FileText, Truck, ShoppingCart, Tag, HelpCircle, ArrowLeft } from "lucide-react"; // Added ArrowLeft
+import { FileText, Truck, ShoppingCart, Tag, HelpCircle, ArrowLeft, Quote } from "lucide-react"; // Added ArrowLeft
 import { PurchaseType } from "@/types/purchase";
 import { Link } from "react-router-dom"; // Import Link for navigation
 
@@ -14,6 +14,7 @@ export function PurchaseFormHeader({ purchaseType }: PurchaseFormHeaderProps) {
       case "order": return <ShoppingCart className="h-6 w-6 text-blue-500" />;
       case "offer": return <Tag className="h-6 w-6 text-green-500" />;
       case "request": return <HelpCircle className="h-6 w-6 text-pink-500" />;
+      case "quotation": return <Quote className="h-6 w-6 text-cyan-500" />;
     }
   };
 
@@ -24,6 +25,7 @@ export function PurchaseFormHeader({ purchaseType }: PurchaseFormHeaderProps) {
       case "order": return "Order";
       case "offer": return "Offer";
       case "request": return "Request";
+      case "quotation": return "Purchase Quotation";
     }
   };
 

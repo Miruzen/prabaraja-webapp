@@ -13,6 +13,8 @@ import {
   useCreateRequest,
   useCreateShipment
 } from "@/hooks/usePurchases";
+import { useCreatePurchaseQuotation } from "@/hooks/usePurchaseQuotations";
+import { CreatePurchaseQuotationForm } from "@/components/purchases/forms/CreatePurchaseQuotationForm";
 
 const CreateNewPurchase = () => {
   const location = useLocation();
@@ -26,6 +28,7 @@ const CreateNewPurchase = () => {
   const createOrderMutation = useCreateOrder();
   const createRequestMutation = useCreateRequest();
   const createShipmentMutation = useCreateShipment();
+  const createQuotationMutation = useCreatePurchaseQuotation();
 
   const handleSubmit = async (formData: any) => {
     try {
@@ -91,6 +94,18 @@ const CreateNewPurchase = () => {
             shipping_date: formData.shippingDate || formData.date
           });
           break;
+        case "quotation":
+          await createQuotationMutation.mutateAsync({
+            number: formData.number,
+            vendor_name: formData.vendorName,
+            quotation_date: formData.quotationDate,
+            valid_until: formData.validUntil,
+            status: formData.status,
+            items: formData.items,
+            total: formData.total,
+            terms: formData.terms
+          });
+          break;
       }
 
       toast.success("Purchase created successfully");
@@ -103,7 +118,7 @@ const CreateNewPurchase = () => {
 
   const isLoading = createInvoiceMutation.isPending || createOfferMutation.isPending || 
                    createOrderMutation.isPending || createRequestMutation.isPending || 
-                   createShipmentMutation.isPending;
+                   createShipmentMutation.isPending || createQuotationMutation.isPending;
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -112,12 +127,16 @@ const CreateNewPurchase = () => {
         <PurchaseFormHeader purchaseType={purchaseType} />
 
         <div className="p-6 max-w-5xl mx-auto">
-          <CreatePurchaseForm 
-            purchaseType={purchaseType}
-            setPurchaseType={setPurchaseType}
-            onSubmit={handleSubmit}
-            isLoading={isLoading}
-          />
+          {purchaseType === "quotation" ? (
+            <CreatePurchaseQuotationForm onSubmit={handleSubmit} />
+          ) : (
+            <CreatePurchaseForm 
+              purchaseType={purchaseType}
+              setPurchaseType={setPurchaseType}
+              onSubmit={handleSubmit}
+              isLoading={isLoading}
+            />
+          )}
         </div>
       </div>
     </div>
