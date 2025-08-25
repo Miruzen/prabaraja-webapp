@@ -49,10 +49,10 @@ export function TransactionsTable({
     console.log('Filtering transaction:', { id: transaction.id, type: transaction.type, status: transaction.status });
     
     if (activeTab === "approval") {
-      // For approval tab, show only pending requests
-      const isPendingRequest = isRequest(transaction) && transaction.status === "pending";
-      console.log('Approval filter - isPendingRequest:', isPendingRequest);
-      return isPendingRequest;
+      // For approval tab, show only pending offers
+      const isPendingOffer = isOffer(transaction) && transaction.status === "pending";
+      console.log('Approval filter - isPendingOffer:', isPendingOffer);
+      return isPendingOffer;
     }
     
     // For other tabs, match the transaction type with the tab name (corrected logic)
