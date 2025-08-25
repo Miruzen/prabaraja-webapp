@@ -213,22 +213,22 @@ export function CreatePurchaseQuotationForm({ onSubmit }: CreatePurchaseQuotatio
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <form onSubmit={handleSubmit} className="space-y-8 p-6 max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      <form onSubmit={handleSubmit} className="space-y-6 p-6 max-w-6xl mx-auto">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-xl shadow-lg">
-          <h1 className="text-2xl font-bold flex items-center gap-3">
-            <FileText className="h-7 w-7" />
+        <div className="bg-white p-6 rounded-lg shadow-sm">
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+            <FileText className="h-7 w-7 text-gray-600" />
             Create Purchase Quotation
           </h1>
-          <p className="mt-2 opacity-90">Request quotes from vendors with detailed specifications</p>
+          <p className="mt-2 text-gray-600">Request quotes from vendors with detailed specifications</p>
         </div>
 
         {/* Vendor Information */}
-        <Card className="border-l-4 border-l-blue-500 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100">
-            <CardTitle className="flex items-center gap-2 text-blue-800">
-              <Building2 className="h-5 w-5" />
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-gray-900">
+              <Building2 className="h-5 w-5 text-gray-600" />
               Vendor Information
             </CardTitle>
           </CardHeader>
@@ -282,10 +282,10 @@ export function CreatePurchaseQuotationForm({ onSubmit }: CreatePurchaseQuotatio
         </Card>
 
         {/* Quotation Details */}
-        <Card className="border-l-4 border-l-purple-500 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-purple-50 to-purple-100">
-            <CardTitle className="flex items-center gap-2 text-purple-800">
-              <CalendarDays className="h-5 w-5" />
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-gray-900">
+              <CalendarDays className="h-5 w-5 text-gray-600" />
               Quotation Details
             </CardTitle>
           </CardHeader>
@@ -363,10 +363,10 @@ export function CreatePurchaseQuotationForm({ onSubmit }: CreatePurchaseQuotatio
         </Card>
 
         {/* Items */}
-        <Card className="border-l-4 border-l-green-500 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-green-50 to-green-100">
-            <CardTitle className="flex items-center gap-2 text-green-800">
-              <Package className="h-5 w-5" />
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-gray-900">
+              <Package className="h-5 w-5 text-gray-600" />
               Items
             </CardTitle>
           </CardHeader>
@@ -439,7 +439,6 @@ export function CreatePurchaseQuotationForm({ onSubmit }: CreatePurchaseQuotatio
               type="button" 
               variant="outline" 
               onClick={addItem}
-              className="border-green-300 text-green-700 hover:bg-green-50"
             >
               <Plus className="mr-2 h-4 w-4" />
               Add Item
@@ -448,10 +447,10 @@ export function CreatePurchaseQuotationForm({ onSubmit }: CreatePurchaseQuotatio
         </Card>
         
         {/* Tax Calculation */}
-        <Card className="border-l-4 border-l-orange-500 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-orange-50 to-orange-100">
-            <CardTitle className="flex items-center gap-2 text-orange-800">
-              <Calculator className="h-5 w-5" />
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-gray-900">
+              <Calculator className="h-5 w-5 text-gray-600" />
               Tax Calculation
             </CardTitle>
           </CardHeader>
@@ -464,10 +463,10 @@ export function CreatePurchaseQuotationForm({ onSubmit }: CreatePurchaseQuotatio
         </Card>
         
         {/* Quotation Summary */}
-        <Card className="border-l-4 border-l-indigo-500 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-indigo-50 to-indigo-100">
-            <CardTitle className="flex items-center gap-2 text-indigo-800">
-              <Receipt className="h-5 w-5" />
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-gray-900">
+              <Receipt className="h-5 w-5 text-gray-600" />
               Quotation Summary
             </CardTitle>
           </CardHeader>
@@ -489,9 +488,9 @@ export function CreatePurchaseQuotationForm({ onSubmit }: CreatePurchaseQuotatio
                 <span className="text-gray-600">PPH:</span>
                 <span className="font-medium text-red-600">-{formatCurrency(taxData.pph)}</span>
               </div>
-              <div className="flex justify-between items-center py-3 border-t-2 border-indigo-200">
-                <span className="text-lg font-bold text-indigo-800">Grand Total:</span>
-                <span className="text-xl font-bold text-indigo-800">
+              <div className="flex justify-between items-center py-3 border-t-2 border-gray-200">
+                <span className="text-lg font-bold text-gray-900">Grand Total:</span>
+                <span className="text-xl font-bold text-gray-900">
                   {formatCurrency(taxData.grandTotal || calculateSubtotal())}
                 </span>
               </div>
@@ -512,7 +511,7 @@ export function CreatePurchaseQuotationForm({ onSubmit }: CreatePurchaseQuotatio
           <Button 
             type="submit" 
             disabled={!isFormValid}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-8 py-2"
+            className="px-8 py-2"
           >
             <FileText className="mr-2 h-4 w-4" />
             Create Quotation
@@ -586,7 +585,6 @@ export function CreatePurchaseQuotationForm({ onSubmit }: CreatePurchaseQuotatio
               <Button
                 onClick={handleCreateNewVendor}
                 disabled={!newVendorData.name || !newVendorData.email || !newVendorData.phone || !newVendorData.address}
-                className="bg-green-600 hover:bg-green-700"
               >
                 Create Vendor
               </Button>
