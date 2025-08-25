@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Purchase, PurchaseType, InvoicePurchase, OfferPurchase, OrderPurchase, RequestPurchase, ShipmentPurchase } from "@/types/purchase";
+import { Purchase, PurchaseType, InvoicePurchase, OfferPurchase, OrderPurchase, RequestPurchase, ShipmentPurchase, QuotationPurchase } from "@/types/purchase";
 import { PurchaseNavTabs } from "./PurchaseNavTabs";
 import { PurchaseFilters } from "./PurchaseFilters";
 import { PurchaseAddButton } from "./PurchaseAddButton";
@@ -30,6 +30,12 @@ import {
   useUpdateRequest,
   useUpdateShipment
 } from "@/hooks/usePurchases";
+import { 
+  usePurchaseQuotations,
+  useCreatePurchaseQuotation,
+  useUpdatePurchaseQuotation,
+  useDeletePurchaseQuotation
+} from "@/hooks/usePurchaseQuotations";
 
 export function PurchaseContent() {
   const [activeTab, setActiveTab] = useState<string>("invoices");
@@ -44,6 +50,7 @@ export function PurchaseContent() {
   const { data: orders = [], isLoading: ordersLoading } = useOrders();
   const { data: requests = [], isLoading: requestsLoading } = useRequests();
   const { data: shipments = [], isLoading: shipmentsLoading } = useShipments();
+  const { data: quotations = [], isLoading: quotationsLoading } = usePurchaseQuotations();
 
   // Create mutations
   const createInvoiceMutation = useCreateInvoice();
@@ -51,6 +58,7 @@ export function PurchaseContent() {
   const createOrderMutation = useCreateOrder();
   const createRequestMutation = useCreateRequest();
   const createShipmentMutation = useCreateShipment();
+  const createQuotationMutation = useCreatePurchaseQuotation();
 
   // Delete mutations
   const deleteInvoiceMutation = useDeleteInvoice();
@@ -58,6 +66,7 @@ export function PurchaseContent() {
   const deleteOrderMutation = useDeleteOrder();
   const deleteRequestMutation = useDeleteRequest();
   const deleteShipmentMutation = useDeleteShipment();
+  const deleteQuotationMutation = useDeletePurchaseQuotation();
 
   // Update mutations
   const updateInvoiceMutation = useUpdateInvoice();
@@ -65,8 +74,9 @@ export function PurchaseContent() {
   const updateOrderMutation = useUpdateOrder();
   const updateRequestMutation = useUpdateRequest();
   const updateShipmentMutation = useUpdateShipment();
+  const updateQuotationMutation = useUpdatePurchaseQuotation();
 
-  const isLoading = invoicesLoading || offersLoading || ordersLoading || requestsLoading || shipmentsLoading;
+  const isLoading = invoicesLoading || offersLoading || ordersLoading || requestsLoading || shipmentsLoading || quotationsLoading;
 
   // Transform data to unified Purchase format with proper field mapping
   const transformInvoicesToPurchases = (invoices: any[]): InvoicePurchase[] => {
@@ -156,6 +166,25 @@ export function PurchaseContent() {
     }));
   };
 
+  const transformQuotationsToP = (quotations: any[]): QuotationPurchase[] => {
+    return quotations.map(quotation => ({
+      id: quotation.id,
+      date: new Date(quotation.quotation_date),
+      number: `QUO-${quotation.number}`,
+      approver: '',
+      status: quotation.status as any,
+      tags: [],
+      type: "quotation" as const,
+      items: quotation.items as any[],
+      amount: quotation.total,
+      itemCount: Array.isArray(quotation.items) ? quotation.items.length : 0,
+      vendorName: quotation.vendor_name,
+      quotationDate: new Date(quotation.quotation_date),
+      validUntil: new Date(quotation.valid_until),
+      terms: quotation.terms
+    }));
+  };
+
   // Get all purchases for the active tab - FIXED LOGIC
   const getAllPurchases = (): Purchase[] => {
     const invoicePurchases = transformInvoicesToPurchases(invoices);
@@ -163,6 +192,7 @@ export function PurchaseContent() {
     const orderPurchases = transformOrdersToP(orders);
     const requestPurchases = transformRequestsToP(requests);
     const shipmentPurchases = transformShipmentsToP(shipments);
+    const quotationPurchases = transformQuotationsToP(quotations);
 
     console.log('PurchaseContent - getAllPurchases called for activeTab:', activeTab);
     console.log('Data counts:', {
@@ -170,11 +200,12 @@ export function PurchaseContent() {
       offers: offerPurchases.length,
       orders: orderPurchases.length,
       requests: requestPurchases.length,
-      shipments: shipmentPurchases.length
+      shipments: shipmentPurchases.length,
+      quotations: quotationPurchases.length
     });
 
     // Return all purchases for the TransactionsTable to filter appropriately
-    const allPurchases = [...invoicePurchases, ...offerPurchases, ...orderPurchases, ...requestPurchases, ...shipmentPurchases];
+    const allPurchases = [...invoicePurchases, ...offerPurchases, ...orderPurchases, ...requestPurchases, ...shipmentPurchases, ...quotationPurchases];
     
     console.log('PurchaseContent - total purchases:', allPurchases.length);
     console.log('PurchaseContent - purchase types distribution:', 
@@ -201,7 +232,7 @@ export function PurchaseContent() {
   console.log('PurchaseContent - filteredPurchases count:', filteredPurchases.length);
 
   // Calculate stats for StatsCards
-  const allPurchases = [...transformInvoicesToPurchases(invoices), ...transformOffersToP(offers), ...transformOrdersToP(orders), ...transformRequestsToP(requests), ...transformShipmentsToP(shipments)];
+  const allPurchases = [...transformInvoicesToPurchases(invoices), ...transformOffersToP(offers), ...transformOrdersToP(orders), ...transformRequestsToP(requests), ...transformShipmentsToP(shipments), ...transformQuotationsToP(quotations)];
   
   const unpaidAmount = allPurchases
     .filter(p => p.status === "pending" || p.status === "Half-paid")
@@ -275,6 +306,18 @@ export function PurchaseContent() {
             shipping_date: data.shippingDate
           });
           break;
+        case "quotation":
+          await createQuotationMutation.mutateAsync({
+            number: baseData.number,
+            vendor_name: data.vendorName,
+            quotation_date: baseData.date,
+            valid_until: data.validUntil,
+            status: baseData.status,
+            items: baseData.items,
+            total: baseData.grand_total,
+            terms: data.terms
+          });
+          break;
       }
 
       setIsDialogOpen(false);
@@ -322,6 +365,9 @@ export function PurchaseContent() {
           break;
         case "shipment":
           await deleteShipmentMutation.mutateAsync(id);
+          break;
+        case "quotation":
+          await deleteQuotationMutation.mutateAsync(id);
           break;
         default:
           throw new Error(`Unknown purchase type: ${purchaseType}`);
@@ -406,6 +452,12 @@ export function PurchaseContent() {
             updates: { status: "completed" }
           });
           break;
+        case "quotation":
+          await updateQuotationMutation.mutateAsync({
+            id,
+            updates: { status: "completed" }
+          });
+          break;
         default:
           throw new Error(`Unknown purchase type: ${purchaseType}`);
       }
@@ -470,6 +522,12 @@ export function PurchaseContent() {
             updates: { status: "cancelled" }
           });
           break;
+        case "quotation":
+          await updateQuotationMutation.mutateAsync({
+            id,
+            updates: { status: "cancelled" }
+          });
+          break;
         default:
           throw new Error(`Unknown purchase type: ${purchaseType}`);
       }
@@ -486,7 +544,7 @@ export function PurchaseContent() {
     navigate(`/receive-payment/${id}`);
   };
 
-  // Get the default purchase type based on the active tab
+// Get the default purchase type based on the active tab
   const getDefaultPurchaseType = (): PurchaseType => {
     switch(activeTab) {
       case "invoices": return "invoice";
@@ -494,6 +552,7 @@ export function PurchaseContent() {
       case "orders": return "order";
       case "offers": return "offer";
       case "requests": return "request";
+      case "quotation": return "quotation";
       default: return "invoice";
     }
   };

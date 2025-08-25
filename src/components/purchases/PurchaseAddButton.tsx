@@ -46,11 +46,14 @@ export function PurchaseAddButton({ onAddPurchase }: PurchaseAddButtonProps) {
         <DropdownMenuItem onClick={() => handleAddPurchase("order")}>
           <ShoppingCart className="mr-2 h-4 w-4 text-blue-500" /> New Order
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleAddPurchase("request")}>
+          <FileQuestion className="mr-2 h-4 w-4 text-pink-500" /> New Request
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => handleAddPurchase("offer")}>
           <Tag className="mr-2 h-4 w-4 text-green-500" /> New Offer
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleAddPurchase("request")}>
-          <FileQuestion className="mr-2 h-4 w-4 text-pink-500" /> New Request
+        <DropdownMenuItem onClick={() => handleAddPurchase("quotation")}>
+          <FileText className="mr-2 h-4 w-4 text-indigo-500" /> New Quotation
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

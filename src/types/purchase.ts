@@ -7,7 +7,7 @@ export interface PurchaseItem {
   price: number;
 }
 
-export type PurchaseType = "invoice" | "shipment" | "order" | "offer" | "request";
+export type PurchaseType = "invoice" | "shipment" | "order" | "offer" | "request" | "quotation";
 export type PurchaseStatus = "pending" | "completed" | "cancelled" | "Half-paid";
 export type PurchasePriority = "High" | "Medium" | "Low";
 
@@ -60,13 +60,22 @@ export interface RequestPurchase extends BasePurchase {
   urgency: PurchasePriority;
 }
 
+export interface QuotationPurchase extends BasePurchase {
+  type: "quotation";
+  vendorName: string;
+  quotationDate: Date;
+  validUntil: Date;
+  terms?: string;
+}
+
 // Union type for all purchases
 export type Purchase = 
   | InvoicePurchase 
   | ShipmentPurchase 
   | OrderPurchase 
   | OfferPurchase 
-  | RequestPurchase;
+  | RequestPurchase
+  | QuotationPurchase;
 
 // Type guards
 export const isInvoice = (p: Purchase): p is InvoicePurchase => p.type === "invoice";
@@ -74,6 +83,7 @@ export const isShipment = (p: Purchase): p is ShipmentPurchase => p.type === "sh
 export const isOrder = (p: Purchase): p is OrderPurchase => p.type === "order";
 export const isOffer = (p: Purchase): p is OfferPurchase => p.type === "offer";
 export const isRequest = (p: Purchase): p is RequestPurchase => p.type === "request";
+export const isQuotation = (p: Purchase): p is QuotationPurchase => p.type === "quotation";
 
 // Local storage key
 export const PURCHASES_STORAGE_KEY = "purchases";

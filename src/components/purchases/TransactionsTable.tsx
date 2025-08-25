@@ -7,13 +7,15 @@ import {
   isShipment, 
   isOrder, 
   isOffer, 
-  isRequest 
+  isRequest,
+  isQuotation
 } from "@/types/purchase";
 import { InvoicesTable } from "./tables/InvoicesTable";
 import { ShipmentsTable } from "./tables/ShipmentsTable";
 import { OrdersTable } from "./tables/OrdersTable";
 import { OffersTable } from "./tables/OffersTable";
 import { RequestsTable } from "./tables/RequestsTable";
+import { PurchaseQuotationsTable } from "./tables/PurchaseQuotationsTable";
 import { Dialog } from "@radix-ui/react-dialog";
 import { DialogHeader, DialogFooter, DialogContent, DialogTitle } from "../ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -62,7 +64,8 @@ export function TransactionsTable({
       "shipments": "shipment", 
       "orders": "order",
       "offers": "offer",
-      "requests": "request"
+      "requests": "request",
+      "quotation": "quotation"
     };
     
     const expectedType = tabToTypeMap[activeTab];
@@ -151,6 +154,17 @@ export function TransactionsTable({
             requests={requests}
             onDelete={handleDelete}
             onEdit={handleEdit}
+          />
+        );
+      case "quotation":
+        const quotations = filteredTransactions.filter(isQuotation);
+        console.log('Quotations to render:', quotations.length);
+        return (
+          <PurchaseQuotationsTable
+            quotations={quotations}
+            onDelete={handleDelete}
+            onEdit={handleEdit}
+            onView={(id) => navigate(`/purchase-quotation/${id}`)}
           />
         );
       case "approval":
